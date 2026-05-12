@@ -10,6 +10,6 @@ export const environment = {
     messagingSenderId: '30333030614',
     appId: '1:30333030614:web:971bafe7d5c3c3d27e7977',
   } satisfies FirebaseOptions,
-  apiUrl: 'https://your-railway-app.railway.app',
-  wsUrl: 'wss://your-railway-app.railway.app',
+  apiUrl: 'https://interv-production.up.railway.app',
+  wsUrl: 'wss://interv-production.up.railway.app',
 };
