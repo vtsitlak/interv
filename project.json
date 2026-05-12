@@ -1,5 +1,5 @@
 {
-  "name": "intervai",
+  "name": "interv",
   "$schema": "node_modules/nx/schemas/project-schema.json",
   "includedScripts": [],
   "projectType": "application",
@@ -11,7 +11,7 @@
       "executor": "@angular/build:application",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/intervai",
+        "outputPath": "dist/interv",
         "browser": "./src/main.ts",
         "tsConfig": "tsconfig.app.json",
         "inlineStyleLanguage": "scss",
@@ -21,10 +21,16 @@
             "input": "public"
           }
         ],
-        "styles": ["./src/styles.scss"]
+        "styles": ["./src/styles.css"]
       },
       "configurations": {
         "production": {
+          "fileReplacements": [
+            {
+              "replace": "src/environments/environment.ts",
+              "with": "src/environments/environment.prod.ts"
+            }
+          ],
           "budgets": [
             {
               "type": "initial",
@@ -52,10 +58,10 @@
       "executor": "@angular/build:dev-server",
       "configurations": {
         "production": {
-          "buildTarget": "intervai:build:production"
+          "buildTarget": "interv:build:production"
         },
         "development": {
-          "buildTarget": "intervai:build:development"
+          "buildTarget": "interv:build:development"
         }
       },
       "defaultConfiguration": "development"
@@ -78,9 +84,9 @@
       "continuous": true,
       "executor": "@nx/web:file-server",
       "options": {
-        "buildTarget": "intervai:build",
+        "buildTarget": "interv:build",
         "port": 4200,
-        "staticFilePath": "dist/intervai/browser",
+        "staticFilePath": "dist/interv/browser",
         "spa": true
       }
     }

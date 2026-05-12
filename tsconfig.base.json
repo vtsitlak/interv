@@ -1,0 +1,39 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "bundler",
+    "emitDecoratorMetadata": false,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "es2022",
+    "module": "preserve",
+    "lib": ["es2020", "dom"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "paths": {
+      "@interv/ui": ["./libs/shared/ui/src/index.ts"],
+      "@interv/models": ["./libs/shared/models/src/index.ts"],
+      "@interv/util": ["./libs/shared/util/src/index.ts"],
+      "@interv/feature-login": ["./libs/auth/feature-login/src/index.ts"],
+      "@interv/feature-auth": ["./libs/auth/feature-auth/src/index.ts"],
+      "@interv/feature-dashboard": ["./libs/owner/feature-dashboard/src/index.ts"],
+      "@interv/feature-profile-edit": [
+        "./libs/owner/feature-profile-edit/src/index.ts"
+      ],
+      "@interv/feature-profile": ["./libs/recruiter/feature-profile/src/index.ts"],
+      "@interv/feature-interview": [
+        "./libs/recruiter/feature-interview/src/index.ts"
+      ],
+      "@interv/feature-feedback": [
+        "./libs/recruiter/feature-feedback/src/index.ts"
+      ],
+      "@interv/state-auth": ["./libs/states/auth/src/index.ts"],
+      "@interv/state-profile": ["./libs/states/profile/src/index.ts"],
+      "@interv/state-interview": ["./libs/states/interview/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "tmp"]
+}

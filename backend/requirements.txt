@@ -1,0 +1,8 @@
+# Pin cryptography<42 on Windows + Python 3.9 to avoid _rust DLL load failures with 43.x wheels.
+cryptography>=41.0.7,<42
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+firebase-admin>=6.5.0
+google-genai>=1.0.0

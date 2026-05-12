@@ -1,8 +1,8 @@
 module.exports = {
-  displayName: 'intervai',
+  displayName: 'interv',
   preset: './jest.preset.js',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
-  coverageDirectory: './coverage/intervai',
+  coverageDirectory: './coverage/interv',
   transform: {
     '^.+\\.(ts|mjs|js|html)$': [
       'jest-preset-angular',

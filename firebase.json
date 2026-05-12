@@ -1,0 +1,8 @@
+{
+  "hosting": {
+    "site": "getinterv",
+    "public": "dist/interv/browser",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "rewrites": [{ "source": "**", "destination": "/index.html" }]
+  }
+}

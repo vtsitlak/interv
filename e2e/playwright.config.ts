@@ -22,13 +22,25 @@ export default defineConfig({
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
   },
-  /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'npx nx run intervai:serve',
-    url: 'http://localhost:4200',
-    reuseExistingServer: true,
-    cwd: workspaceRoot,
-  },
+  /* Run local dev server + FastAPI backend before starting the tests */
+  webServer: [
+    {
+      command: 'npx nx run interv:serve',
+      url: 'http://localhost:4200',
+      reuseExistingServer: true,
+      cwd: workspaceRoot,
+    },
+    {
+      command:
+        process.platform === 'win32'
+          ? 'venv\\Scripts\\uvicorn main:app --host 127.0.0.1 --port 8000'
+          : 'venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000',
+      url: 'http://127.0.0.1:8000/health',
+      reuseExistingServer: true,
+      cwd: `${workspaceRoot}/backend`,
+      timeout: 60_000,
+    },
+  ],
   projects: [
     {
       name: 'chromium',

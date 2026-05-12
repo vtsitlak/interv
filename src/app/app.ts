@@ -1,13 +1,18 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { NxWelcome } from './nx-welcome';
+import { AuthFacade } from '@interv/state-auth';
 
 @Component({
-  imports: [NxWelcome, RouterModule],
+  imports: [RouterModule],
   selector: 'app-root',
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
 export class App {
-  protected title = 'intervai';
+  protected title = 'interv';
+  private readonly authFacade = inject(AuthFacade);
+
+  constructor() {
+    void this.authFacade.tryHandleRedirectResult();
+  }
 }

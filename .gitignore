@@ -4,9 +4,29 @@
 dist
 tmp
 out-tsc
+build/
+*.tsbuildinfo
 
 # dependencies
 node_modules
+.pnp
+.pnp.js
+.yarn/cache
+.yarn/install-state.gz
+
+# Nx
+.nx/cache
+.nx/workspace-data
+.nx/installation
+migrations.json
+
+# Angular
+.angular
+
+# Vite / esbuild
+vite.config.*.timestamp*
+vitest.config.*.timestamp*
+.vite
 
 # IDEs and editors
 /.idea
@@ -24,23 +44,77 @@ node_modules
 !.vscode/launch.json
 !.vscode/extensions.json
 
+# Cursor
+.claude/worktrees
+.claude/settings.local.json
+.cursor/projects/
+.cursor/agent-transcripts/
+
 # misc
 /.sass-cache
 /connect.lock
 /coverage
+coverage/
 /libpeerconnection.log
-npm-debug.log
-yarn-error.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 testem.log
 /typings
 
 # System Files
 .DS_Store
 Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-.nx/cache
-.nx/workspace-data
-.claude/worktrees
-.claude/settings.local.json
+# Playwright / e2e
+/test-results/
+/playwright-report/
+/playwright/.cache/
+/blob-report/
 
-.angular
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+*-firebase-adminsdk-*.json
+serviceAccountKey.json
+service-account*.json
+
+# Google Cloud
+gha-creds-*.json
+application_default_credentials.json
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Python (backend)
+backend/venv/
+backend/.venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/**/*.py[cod]
+backend/*.egg-info/
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/.ruff_cache/
+backend/.coverage
+backend/htmlcov/
+backend/.chroma/
+backend/chroma/
+backend/.cache/
+
+# Logs
+*.log
+logs/
+
+# Local backup files
+*.bak
+*.swp
+*.swo
+*~
