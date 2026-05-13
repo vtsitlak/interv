@@ -9,6 +9,9 @@ from services.rate_limit import check_interview_rate_limit
 
 router = APIRouter(prefix='/chat', tags=['chat'])
 
+# Must match ASSISTANT_STREAM_DONE_SIGNAL in libs/states/interview (Angular).
+ASSISTANT_STREAM_DONE_SIGNAL = '__ASSISTANT_STREAM_DONE__'
+
 
 def get_profile(profile_id: str) -> dict:
     db = firestore.client()
@@ -97,6 +100,7 @@ async def chat_ws(
                 full_response = err
 
             history.append({'role': 'assistant', 'content': full_response})
+            await websocket.send_text(ASSISTANT_STREAM_DONE_SIGNAL)
 
     except WebSocketDisconnect:
         pass

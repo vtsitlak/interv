@@ -10,6 +10,7 @@ import {
 } from '@angular/fire/firestore';
 import { WS_URL } from '@interv/util';
 import {
+  ASSISTANT_STREAM_DONE_SIGNAL,
   ChatMessage,
   INTERVIEW_COMPLETE_SIGNAL,
   RecruiterInfo,
@@ -54,6 +55,7 @@ export class InterviewService {
     onComplete: () => void,
     onError: (error: string) => void,
     onOpen: () => void,
+    onAssistantTurnDone: () => void,
   ): void {
     this.disconnect();
     const base = this.wsUrl.replace(/\/$/, '');
@@ -65,6 +67,10 @@ export class InterviewService {
     this.socket.onmessage = (event) => {
       if (event.data === INTERVIEW_COMPLETE_SIGNAL) {
         onComplete();
+        return;
+      }
+      if (event.data === ASSISTANT_STREAM_DONE_SIGNAL) {
+        onAssistantTurnDone();
         return;
       }
       onMessage(event.data);

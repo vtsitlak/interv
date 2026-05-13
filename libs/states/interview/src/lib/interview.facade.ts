@@ -54,6 +54,7 @@ export class InterviewFacade {
         },
         (error) => this.store.setError(error),
         () => this.store.setConnecting(false),
+        () => this.store.finishStreaming(),
       );
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : String(e);
