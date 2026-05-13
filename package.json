@@ -16,6 +16,7 @@
     "build:interv:prod": "nx run interv:build --configuration=production",
     "deploy:firebase": "firebase deploy --only hosting",
     "deploy:firebase:ci": "firebase deploy --only hosting --non-interactive",
+    "deploy:firestore:rules": "firebase deploy --only firestore:rules",
     "release:hosting": "npm run build:interv:prod && npm run deploy:firebase"
   },
   "private": true,

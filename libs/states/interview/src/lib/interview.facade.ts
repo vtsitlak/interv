@@ -1,6 +1,7 @@
 import { inject, Injectable, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
-import { InterviewService } from './interview.service';
+import { WS_URL } from '@interv/util';
+import { InterviewService, type WsCloseMeta } from './interview.service';
 import { InterviewStore } from './interview.store';
 import type { RecruiterInfo } from './interview.models';
 
@@ -10,6 +11,7 @@ export class InterviewFacade {
   private readonly service = inject(InterviewService);
   private readonly router = inject(Router);
   private readonly ngZone = inject(NgZone);
+  private readonly wsUrlEnv = inject(WS_URL);
 
   readonly messages = this.store.messages;
   readonly isStreaming = this.store.isStreaming;
@@ -36,19 +38,37 @@ export class InterviewFacade {
       }
     };
 
-    try {
-      const interviewId = await this.service.createInterview(
-        profileId,
-        recruiterInfo,
-      );
+    const CREATE_INTERVIEW_DEADLINE_MS = 30_000;
 
-      // Only after Firestore succeeds: wait up to this long for WebSocket open.
+    try {
+      const interviewId = await Promise.race([
+        this.service.createInterview(profileId, recruiterInfo),
+        new Promise<string>((_, reject) =>
+          setTimeout(
+            () =>
+              reject(
+                new Error(
+                  'Firestore did not respond while creating the interview. Sign in (recruiter), deploy firestore.rules (firebase deploy --only firestore:rules), then check Rules allow auth users to create profiles/{profileId}/interviews.',
+                ),
+              ),
+            CREATE_INTERVIEW_DEADLINE_MS,
+          ),
+        ),
+      ]);
+
+      // Spinner on "Start interview" only covers Firestore; stop it before WS (which can lag).
+      this.ngZone.run(() => {
+        this.store.setConnecting(false);
+      });
+
+      // After Firestore: wait up to this long for WebSocket open (wsReady).
+      const wsAttemptUrl = `${this.wsUrlEnv.replace(/\/$/, '')}/chat/${profileId}/${interviewId}`;
       startupWatchdogId = setTimeout(() => {
         this.ngZone.run(() => {
-          if (!this.store.isConnecting()) return;
+          if (this.store.wsReady()) return;
           this.service.disconnect();
           this.store.setError(
-            'Could not connect to the live assistant in time. Run the backend (npm run start:backend) and verify wsUrl in environment.ts (e.g. ws://127.0.0.1:8000).',
+            `No answer from assistant at ${wsAttemptUrl} after 20s. Run npm run start:backend and use wsUrl that matches where uvicorn listens (dev: ws://127.0.0.1:8000).`,
           );
         });
       }, 20_000);
@@ -90,19 +110,23 @@ export class InterviewFacade {
             this.ngZone.run(() => {
               socketOpenedSuccessfully = true;
               clearStartupWatchdog();
-              this.store.setConnecting(false);
               this.store.setWsReady(true);
             }),
           () => this.ngZone.run(() => this.store.finishStreaming()),
-          () =>
+          (meta: WsCloseMeta) =>
             this.ngZone.run(() => {
               this.store.setWsReady(false);
-              this.store.setConnecting(false);
               clearStartupWatchdog();
               const err = this.store.error();
               if (!socketOpenedSuccessfully && err === null) {
+                const base = this.wsUrlEnv.replace(/\/$/, '');
+                const tried = `${base}/chat/${profileId}/${interviewId}`;
+                const codeHint =
+                  meta.code === 1006
+                    ? ' (no handshake — wrong host/port, or server not running)'
+                    : ` (close code ${meta.code}${meta.reason ? `: ${meta.reason}` : ''})`;
                 this.store.setError(
-                  'Cannot reach chat server (WebSocket). Start the backend and check wsUrl (dev: ws://127.0.0.1:8000).',
+                  `WebSocket failed: ${tried}${codeHint}. Dev: match wsUrl to uvicorn (--host 127.0.0.1 → use ws://127.0.0.1:8000, not localhost).`,
                 );
               }
             }),
