@@ -12,7 +12,11 @@
     "build": "nx build",
     "test": "nx test",
     "e2e": "nx e2e e2e",
-    "e2e:ui": "nx e2e e2e -- --ui"
+    "e2e:ui": "nx e2e e2e -- --ui",
+    "build:interv:prod": "nx run interv:build --configuration=production",
+    "deploy:firebase": "firebase deploy --only hosting",
+    "deploy:firebase:ci": "firebase deploy --only hosting --non-interactive",
+    "release:hosting": "npm run build:interv:prod && npm run deploy:firebase"
   },
   "private": true,
   "dependencies": {
@@ -68,6 +72,7 @@
     "eslint": "^9.8.0",
     "eslint-config-prettier": "^10.0.0",
     "eslint-plugin-playwright": "^1.6.2",
+    "firebase-tools": "^14.0.0",
     "jest": "^30.0.2",
     "jest-environment-jsdom": "^30.0.2",
     "jest-preset-angular": "~16.0.0",
