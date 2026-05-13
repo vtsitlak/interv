@@ -22,4 +22,11 @@ describe('InterviewStore', () => {
     expect(store.isStreaming()).toBe(true);
     expect(store.messages()[0].role).toBe('user');
   });
+
+  it('canSendMessage is false until wsReady when session exists', () => {
+    store.setSession('p1', 'i1', { name: 'A', role: 'R', company: 'C' });
+    expect(store.canSendMessage()).toBe(false);
+    store.setWsReady(true);
+    expect(store.canSendMessage()).toBe(true);
+  });
 });
