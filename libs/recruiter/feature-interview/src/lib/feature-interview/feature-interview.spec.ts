@@ -23,6 +23,7 @@ describe('FeatureInterview', () => {
           useValue: {
             disconnect: vi.fn(),
             isConnecting: () => false,
+            wsReady: () => false,
             messages: () => [],
             isStreaming: () => false,
             canSendMessage: () => true,

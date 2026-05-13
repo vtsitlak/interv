@@ -19,6 +19,7 @@ export const InterviewStore = signalStore(
   withComputed((store) => ({
     canSendMessage: computed(
       () =>
+        store.wsReady() &&
         !store.isStreaming() &&
         !store.isComplete() &&
         store.messageCount() < store.maxMessages(),
@@ -41,6 +42,10 @@ export const InterviewStore = signalStore(
       patchState(store, { isConnecting });
     },
 
+    setWsReady(ready: boolean): void {
+      patchState(store, { wsReady: ready });
+    },
+
     addUserMessage(content: string): ChatMessage {
       const message: ChatMessage = {
         role: 'user',
@@ -53,6 +58,18 @@ export const InterviewStore = signalStore(
         isStreaming: true,
       });
       return message;
+    },
+
+    undoLastPendingUserTurn(): void {
+      const msgs = [...store.messages()];
+      const last = msgs[msgs.length - 1];
+      if (last?.role !== 'user') return;
+      msgs.pop();
+      patchState(store, {
+        messages: msgs,
+        messageCount: Math.max(0, store.messageCount() - 1),
+        isStreaming: false,
+      });
     },
 
     startAssistantMessage(): void {

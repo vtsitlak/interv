@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, Injector, runInInjectionContext } from '@angular/core';
 import {
   Firestore,
   addDoc,
@@ -18,34 +18,38 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class InterviewService {
+  private readonly injector = inject(Injector);
   private readonly firestore = inject(Firestore);
   private readonly wsUrl = inject(WS_URL);
   private socket: WebSocket | null = null;
+
+  /** Firestore calls invoked from clicks / websocket must run inside an injection context. */
+  private runFirestore<T>(op: () => Promise<T>): Promise<T> {
+    return runInInjectionContext(this.injector, () => op());
+  }
 
   async createInterview(
     profileId: string,
     recruiterInfo: RecruiterInfo,
   ): Promise<string> {
-    const ref = collection(
-      this.firestore,
-      'profiles',
-      profileId,
-      'interviews',
-    );
-    const docRef = await addDoc(ref, {
-      profileId,
-      recruiterName: recruiterInfo.name,
-      recruiterRole: recruiterInfo.role,
-      recruiterCompany: recruiterInfo.company,
-      messages: [],
-      status: 'in_progress',
-      feedback: null,
-      recruiterMessageCount: 0,
-      maxMessages: 8,
-      createdAt: serverTimestamp(),
-      completedAt: null,
+    const fs = this.firestore;
+    return this.runFirestore(async () => {
+      const ref = collection(fs, 'profiles', profileId, 'interviews');
+      const docRef = await addDoc(ref, {
+        profileId,
+        recruiterName: recruiterInfo.name,
+        recruiterRole: recruiterInfo.role,
+        recruiterCompany: recruiterInfo.company,
+        messages: [],
+        status: 'in_progress',
+        feedback: null,
+        recruiterMessageCount: 0,
+        maxMessages: 8,
+        createdAt: serverTimestamp(),
+        completedAt: null,
+      });
+      return docRef.id;
     });
-    return docRef.id;
   }
 
   connect(
@@ -56,15 +60,17 @@ export class InterviewService {
     onError: (error: string) => void,
     onOpen: () => void,
     onAssistantTurnDone: () => void,
+    onConnectionClosed: () => void,
   ): void {
     this.disconnect();
     const base = this.wsUrl.replace(/\/$/, '');
     const url = `${base}/chat/${profileId}/${interviewId}`;
-    this.socket = new WebSocket(url);
+    const ws = new WebSocket(url);
+    this.socket = ws;
 
-    this.socket.onopen = () => onOpen();
+    ws.onopen = () => onOpen();
 
-    this.socket.onmessage = (event) => {
+    ws.onmessage = (event) => {
       if (event.data === INTERVIEW_COMPLETE_SIGNAL) {
         onComplete();
         return;
@@ -76,20 +82,32 @@ export class InterviewService {
       onMessage(event.data);
     };
 
-    this.socket.onerror = () => onError('Connection error');
-    this.socket.onclose = () => {
-      this.socket = null;
+    ws.onerror = () => onError('Connection error');
+    ws.onclose = () => {
+      if (this.socket === ws) {
+        this.socket = null;
+      }
+      onConnectionClosed();
     };
   }
 
-  send(message: string): void {
+  send(message: string): boolean {
     if (this.socket?.readyState === WebSocket.OPEN) {
       this.socket.send(message);
+      return true;
     }
+    return false;
   }
 
   disconnect(): void {
-    this.socket?.close();
+    const s = this.socket;
+    if (s) {
+      s.onopen = null;
+      s.onmessage = null;
+      s.onerror = null;
+      s.onclose = null;
+      s.close();
+    }
     this.socket = null;
   }
 
@@ -98,19 +116,16 @@ export class InterviewService {
     interviewId: string,
     message: ChatMessage,
   ): Promise<void> {
-    const ref = doc(
-      this.firestore,
-      'profiles',
-      profileId,
-      'interviews',
-      interviewId,
-    );
-    await updateDoc(ref, {
-      messages: arrayUnion({
-        role: message.role,
-        content: message.content,
-        timestamp: serverTimestamp(),
-      }),
+    const fs = this.firestore;
+    await this.runFirestore(async () => {
+      const ref = doc(fs, 'profiles', profileId, 'interviews', interviewId);
+      await updateDoc(ref, {
+        messages: arrayUnion({
+          role: message.role,
+          content: message.content,
+          timestamp: serverTimestamp(),
+        }),
+      });
     });
   }
 
@@ -118,16 +133,13 @@ export class InterviewService {
     profileId: string,
     interviewId: string,
   ): Promise<void> {
-    const ref = doc(
-      this.firestore,
-      'profiles',
-      profileId,
-      'interviews',
-      interviewId,
-    );
-    await updateDoc(ref, {
-      status: 'complete',
-      completedAt: serverTimestamp(),
+    const fs = this.firestore;
+    await this.runFirestore(async () => {
+      const ref = doc(fs, 'profiles', profileId, 'interviews', interviewId);
+      await updateDoc(ref, {
+        status: 'complete',
+        completedAt: serverTimestamp(),
+      });
     });
   }
 }

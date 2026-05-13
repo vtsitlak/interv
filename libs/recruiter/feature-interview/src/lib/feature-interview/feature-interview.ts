@@ -60,10 +60,14 @@ export class FeatureInterview implements OnInit, OnDestroy {
 
   async startInterview(): Promise<void> {
     if (this.recruiterForm().invalid() || !this.profileId) return;
-    this.isSetupComplete.set(true);
     const { name, role, company } = this.recruiterModel();
     const info: RecruiterInfo = { name, role, company };
-    await this.facade.startInterview(this.profileId, info);
+    try {
+      await this.facade.startInterview(this.profileId, info);
+      this.isSetupComplete.set(true);
+    } catch {
+      // Error text is shown via facade.error() in template
+    }
   }
 
   async sendMessage(): Promise<void> {

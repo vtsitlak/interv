@@ -22,6 +22,8 @@ export interface InterviewState {
   isStreaming: boolean;
   isComplete: boolean;
   isConnecting: boolean;
+  /** WebSocket accepted and ready for send/receive */
+  wsReady: boolean;
   error: string | null;
 }
 
@@ -35,6 +37,7 @@ export const INITIAL_INTERVIEW_STATE: InterviewState = {
   isStreaming: false,
   isComplete: false,
   isConnecting: false,
+  wsReady: false,
   error: null,
 };
 
