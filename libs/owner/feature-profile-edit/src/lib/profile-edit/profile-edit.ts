@@ -131,7 +131,7 @@ export class ProfileEditComponent implements OnInit {
     }));
   }
 
-  async onSave(event?: SubmitEvent): Promise<void> {
+  async onSave(event?: Event): Promise<void> {
     event?.preventDefault();
     if (this.profileForm().invalid()) {
       this.facade.reportInvalidForm();
