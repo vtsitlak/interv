@@ -5,6 +5,7 @@ import {
   arrayUnion,
   collection,
   doc,
+  enableNetwork,
   serverTimestamp,
   updateDoc,
 } from '@angular/fire/firestore';
@@ -35,28 +36,68 @@ export class InterviewService {
     return runInInjectionContext(this.injector, () => op());
   }
 
+  private mapFirestoreWriteError(err: unknown, pathHint: string): Error {
+    const code =
+      err !== null &&
+      typeof err === 'object' &&
+      'code' in err &&
+      typeof (err as { code: unknown }).code === 'string'
+        ? (err as { code: string }).code
+        : null;
+    const message =
+      err !== null &&
+      typeof err === 'object' &&
+      'message' in err &&
+      typeof (err as { message: unknown }).message === 'string'
+        ? (err as { message: string }).message
+        : err instanceof Error
+          ? err.message
+          : String(err);
+
+    if (code === 'permission-denied') {
+      return new Error(
+        `Firestore permission denied on ${pathHint}. Publish the rules in this repo (firestore.rules): run npm run deploy:firestore:rules, or paste them in Firebase Console → Firestore → Rules. Signed-in users must be allowed to create documents there.`,
+      );
+    }
+    if (code === 'unauthenticated') {
+      return new Error(
+        `Not signed in to Firebase (${pathHint}). Use /login with Google, then open this interview link again.`,
+      );
+    }
+    if (code) {
+      return new Error(`Firestore (${code}): ${message}`);
+    }
+    return err instanceof Error ? err : new Error(message);
+  }
+
   async createInterview(
     profileId: string,
     recruiterInfo: RecruiterInfo,
   ): Promise<string> {
+    const pathHint = `profiles/${profileId}/interviews`;
     const fs = this.firestore;
-    return this.runFirestore(async () => {
-      const ref = collection(fs, 'profiles', profileId, 'interviews');
-      const docRef = await addDoc(ref, {
-        profileId,
-        recruiterName: recruiterInfo.name,
-        recruiterRole: recruiterInfo.role,
-        recruiterCompany: recruiterInfo.company,
-        messages: [],
-        status: 'in_progress',
-        feedback: null,
-        recruiterMessageCount: 0,
-        maxMessages: 8,
-        createdAt: serverTimestamp(),
-        completedAt: null,
+    try {
+      return await this.runFirestore(async () => {
+        const ref = collection(fs, 'profiles', profileId, 'interviews');
+        await enableNetwork(fs);
+        const docRef = await addDoc(ref, {
+          profileId,
+          recruiterName: recruiterInfo.name,
+          recruiterRole: recruiterInfo.role,
+          recruiterCompany: recruiterInfo.company,
+          messages: [],
+          status: 'in_progress',
+          feedback: null,
+          recruiterMessageCount: 0,
+          maxMessages: 8,
+          createdAt: serverTimestamp(),
+          completedAt: null,
+        });
+        return docRef.id;
       });
-      return docRef.id;
-    });
+    } catch (e: unknown) {
+      throw this.mapFirestoreWriteError(e, pathHint);
+    }
   }
 
   connect(
@@ -127,30 +168,40 @@ export class InterviewService {
     interviewId: string,
     message: ChatMessage,
   ): Promise<void> {
+    const pathHint = `profiles/${profileId}/interviews/${interviewId}`;
     const fs = this.firestore;
-    await this.runFirestore(async () => {
-      const ref = doc(fs, 'profiles', profileId, 'interviews', interviewId);
-      await updateDoc(ref, {
-        messages: arrayUnion({
-          role: message.role,
-          content: message.content,
-          timestamp: serverTimestamp(),
-        }),
+    try {
+      await this.runFirestore(async () => {
+        const ref = doc(fs, 'profiles', profileId, 'interviews', interviewId);
+        await updateDoc(ref, {
+          messages: arrayUnion({
+            role: message.role,
+            content: message.content,
+            timestamp: serverTimestamp(),
+          }),
+        });
       });
-    });
+    } catch (e: unknown) {
+      throw this.mapFirestoreWriteError(e, pathHint);
+    }
   }
 
   async completeInterview(
     profileId: string,
     interviewId: string,
   ): Promise<void> {
+    const pathHint = `profiles/${profileId}/interviews/${interviewId}`;
     const fs = this.firestore;
-    await this.runFirestore(async () => {
-      const ref = doc(fs, 'profiles', profileId, 'interviews', interviewId);
-      await updateDoc(ref, {
-        status: 'complete',
-        completedAt: serverTimestamp(),
+    try {
+      await this.runFirestore(async () => {
+        const ref = doc(fs, 'profiles', profileId, 'interviews', interviewId);
+        await updateDoc(ref, {
+          status: 'complete',
+          completedAt: serverTimestamp(),
+        });
       });
-    });
+    } catch (e: unknown) {
+      throw this.mapFirestoreWriteError(e, pathHint);
+    }
   }
 }

@@ -48,7 +48,7 @@ export class InterviewFacade {
             () =>
               reject(
                 new Error(
-                  'Firestore did not respond while creating the interview. Sign in (recruiter), deploy firestore.rules (firebase deploy --only firestore:rules), then check Rules allow auth users to create profiles/{profileId}/interviews.',
+                  'Firestore did not create the interview in time. In Firebase Console: (1) Build → Firestore Database → confirm a Native (not Datastore-only) database exists for project interv-c6366. (2) Publish rules from this repo (npm run deploy:firestore:rules). (3) Check DevTools → Network is not blocking firestore.googleapis.com.',
                 ),
               ),
             CREATE_INTERVIEW_DEADLINE_MS,
@@ -135,7 +135,10 @@ export class InterviewFacade {
     } catch (e: unknown) {
       clearStartupWatchdog();
       const message = e instanceof Error ? e.message : String(e);
-      this.ngZone.run(() => this.store.setError(message));
+      this.ngZone.run(() => {
+        this.store.setConnecting(false);
+        this.store.setError(message);
+      });
       throw e;
     }
   }

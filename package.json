@@ -14,8 +14,8 @@
     "e2e": "nx e2e e2e",
     "e2e:ui": "nx e2e e2e -- --ui",
     "build:interv:prod": "nx run interv:build --configuration=production",
-    "deploy:firebase": "firebase deploy --only hosting",
-    "deploy:firebase:ci": "firebase deploy --only hosting --non-interactive",
+    "deploy:firebase": "firebase deploy --only hosting,firestore:rules",
+    "deploy:firebase:ci": "firebase deploy --only hosting,firestore:rules --non-interactive",
     "deploy:firestore:rules": "firebase deploy --only firestore:rules",
     "release:hosting": "npm run build:interv:prod && npm run deploy:firebase"
   },

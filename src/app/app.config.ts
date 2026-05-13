@@ -12,6 +12,22 @@ import { API_URL, WS_URL } from '@interv/util';
 import { appRoutes } from './app.routes';
 import { environment } from '../environments/environment';
 
+function provideFirestoreInstance(injector: Injector) {
+  const app = injector.get(FirebaseApp);
+  const settings = {
+    localCache: memoryLocalCache(),
+    // Helps on some corporate / proxy networks where WebChannel gets stuck.
+    experimentalAutoDetectLongPolling: true,
+  } as const;
+
+  try {
+    return initializeFirestore(app, settings);
+  } catch {
+    // Hot reload / duplicate init: default instance already exists.
+    return getFirestore(app);
+  }
+}
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(appRoutes),
@@ -19,13 +35,6 @@ export const appConfig: ApplicationConfig = {
     { provide: WS_URL, useValue: environment.wsUrl },
     provideFirebaseApp(() => initializeApp(environment.firebaseConfig)),
     provideAuth((injector: Injector) => getAuth(injector.get(FirebaseApp))),
-    provideFirestore((injector: Injector) => {
-      const app = injector.get(FirebaseApp);
-      if (environment.production) {
-        return getFirestore(app);
-      }
-      // Memory cache: permission-denied reads/writes fail fast (no stuck pending writes).
-      return initializeFirestore(app, { localCache: memoryLocalCache() });
-    }),
+    provideFirestore(provideFirestoreInstance),
   ],
 };

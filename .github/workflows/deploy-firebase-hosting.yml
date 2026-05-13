@@ -1,4 +1,4 @@
-# Deploys the Angular app to Firebase Hosting (site from firebase.json).
+# Deploys Hosting + Firestore rules (see firebase.json).
 #
 # Setup (one-time):
 # 1. Install Firebase CLI locally: npm i -g firebase-tools  (or use npx)
