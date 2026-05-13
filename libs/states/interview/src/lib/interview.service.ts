@@ -5,13 +5,14 @@ import {
   arrayUnion,
   collection,
   doc,
-  enableNetwork,
+  getDoc,
   serverTimestamp,
   updateDoc,
 } from '@angular/fire/firestore';
 import { WS_URL } from '@interv/util';
 import {
   ASSISTANT_STREAM_DONE_SIGNAL,
+  BACKEND_PROFILE_NOT_FOUND,
   ChatMessage,
   INTERVIEW_COMPLETE_SIGNAL,
   RecruiterInfo,
@@ -70,6 +71,30 @@ export class InterviewService {
     return err instanceof Error ? err : new Error(message);
   }
 
+  /**
+   * Ensures `profiles/{profileId}` exists (candidate must have saved their profile).
+   * Call before `createInterview` so we do not create orphan interview docs.
+   */
+  async assertCandidateProfileExists(profileId: string): Promise<void> {
+    const pathHint = `profiles/${profileId}`;
+    const fs = this.firestore;
+    try {
+      await this.runFirestore(async () => {
+        const snap = await getDoc(doc(fs, 'profiles', profileId));
+        if (!snap.exists()) {
+          throw new Error(
+            `No profile at ${pathHint}. Open the candidate’s public link /p/{theirUid} only after they complete /profile/edit (Firestore path uses their Firebase uid).`,
+          );
+        }
+      });
+    } catch (e: unknown) {
+      if (e instanceof Error && e.message.startsWith('No profile at')) {
+        throw e;
+      }
+      throw this.mapFirestoreWriteError(e, pathHint);
+    }
+  }
+
   async createInterview(
     profileId: string,
     recruiterInfo: RecruiterInfo,
@@ -79,7 +104,6 @@ export class InterviewService {
     try {
       return await this.runFirestore(async () => {
         const ref = collection(fs, 'profiles', profileId, 'interviews');
-        await enableNetwork(fs);
         const docRef = await addDoc(ref, {
           profileId,
           recruiterName: recruiterInfo.name,
@@ -125,6 +149,12 @@ export class InterviewService {
       }
       if (event.data === ASSISTANT_STREAM_DONE_SIGNAL) {
         onAssistantTurnDone();
+        return;
+      }
+      if (event.data === BACKEND_PROFILE_NOT_FOUND) {
+        onError(
+          'The API could not load this candidate’s profile from Firestore. Confirm profiles/{uid} exists (candidate saved /profile/edit) and that Railway uses the same Firebase project.',
+        );
         return;
       }
       onMessage(event.data);

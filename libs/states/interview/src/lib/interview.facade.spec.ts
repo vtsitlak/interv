@@ -9,11 +9,12 @@ describe('InterviewFacade', () => {
   let facade: InterviewFacade;
   let service: Pick<
     InterviewService,
-    'createInterview' | 'connect' | 'disconnect'
+    'assertCandidateProfileExists' | 'createInterview' | 'connect' | 'disconnect'
   >;
 
   beforeEach(() => {
     service = {
+      assertCandidateProfileExists: vi.fn().mockResolvedValue(undefined),
       createInterview: vi.fn().mockResolvedValue('int1'),
       connect: vi.fn(),
       disconnect: vi.fn(),
@@ -38,6 +39,7 @@ describe('InterviewFacade', () => {
       company: 'Acme',
     });
 
+    expect(service.assertCandidateProfileExists).toHaveBeenCalledWith('p1');
     expect(service.createInterview).toHaveBeenCalledWith('p1', {
       name: 'Jane',
       role: 'Recruiter',
