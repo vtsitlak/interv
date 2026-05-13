@@ -48,7 +48,7 @@ export class InterviewFacade {
             () =>
               reject(
                 new Error(
-                  'Firestore still has not finished creating the interview after 30s. Check your network, confirm Firestore is enabled for this Firebase project, and deploy rules from this repo: npm run deploy:firestore:rules (or paste firestore.rules in Firebase Console → Firestore → Rules → Publish).',
+                  'Firestore did not create the interview in time. In Firebase Console: (1) Build → Firestore Database → confirm a Native (not Datastore-only) database exists for project interv-c6366. (2) Publish rules from this repo (npm run deploy:firestore:rules). (3) Check DevTools → Network is not blocking firestore.googleapis.com.',
                 ),
               ),
             CREATE_INTERVIEW_DEADLINE_MS,

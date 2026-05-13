@@ -5,6 +5,7 @@ import {
   arrayUnion,
   collection,
   doc,
+  enableNetwork,
   serverTimestamp,
   updateDoc,
 } from '@angular/fire/firestore';
@@ -78,6 +79,7 @@ export class InterviewService {
     try {
       return await this.runFirestore(async () => {
         const ref = collection(fs, 'profiles', profileId, 'interviews');
+        await enableNetwork(fs);
         const docRef = await addDoc(ref, {
           profileId,
           recruiterName: recruiterInfo.name,
