@@ -1,8 +1,13 @@
 import { inject, Injectable } from '@angular/core';
 import { Auth, authState } from '@angular/fire/auth';
-import { Firestore } from '@angular/fire/firestore';
+import {
+  doc,
+  Firestore,
+  getDoc,
+  serverTimestamp,
+  setDoc,
+} from '@angular/fire/firestore';
 import type { User } from 'firebase/auth';
-import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { API_URL } from '@interv/util';
 import type { Profile, QAPair } from '@interv/models';
 import { filter, firstValueFrom, map, race, take, timer } from 'rxjs';

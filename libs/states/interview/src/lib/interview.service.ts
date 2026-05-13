@@ -6,9 +6,11 @@ import {
   collection,
   doc,
   getDoc,
+  getDocFromServer,
   serverTimestamp,
   updateDoc,
 } from '@angular/fire/firestore';
+import { Auth } from '@angular/fire/auth';
 import { WS_URL } from '@interv/util';
 import {
   ASSISTANT_STREAM_DONE_SIGNAL,
@@ -29,6 +31,7 @@ export interface WsCloseMeta {
 export class InterviewService {
   private readonly injector = inject(Injector);
   private readonly firestore = inject(Firestore);
+  private readonly auth = inject(Auth);
   private readonly wsUrl = inject(WS_URL);
   private socket: WebSocket | null = null;
 
@@ -80,15 +83,36 @@ export class InterviewService {
     const fs = this.firestore;
     try {
       await this.runFirestore(async () => {
-        const snap = await getDoc(doc(fs, 'profiles', profileId));
+        const d = doc(fs, 'profiles', profileId);
+        let snap = await getDoc(d);
+        if (
+          !snap.exists() &&
+          this.auth.currentUser?.uid === profileId
+        ) {
+          try {
+            snap = await getDocFromServer(d);
+          } catch {
+            /* keep local snap */
+          }
+        }
         if (!snap.exists()) {
+          const uid = this.auth.currentUser?.uid ?? null;
+          if (uid === profileId) {
+            throw new Error(
+              `No profile document at ${pathHint} yet. Go to /profile/edit, fill the form, and click Save & train AI once (wait for success). Then open your interview link again.`,
+            );
+          }
           throw new Error(
-            `No profile at ${pathHint}. Open the candidate’s public link /p/{theirUid} only after they complete /profile/edit (Firestore path uses their Firebase uid).`,
+            `No profile at ${pathHint}. The candidate (${profileId}) must sign in and complete Save & train AI on /profile/edit before anyone can interview them. If you are testing yourself, use the same Google account for both profile and interview.`,
           );
         }
       });
     } catch (e: unknown) {
-      if (e instanceof Error && e.message.startsWith('No profile at')) {
+      if (
+        e instanceof Error &&
+        (e.message.startsWith('No profile at') ||
+          e.message.startsWith('No profile document at'))
+      ) {
         throw e;
       }
       throw this.mapFirestoreWriteError(e, pathHint);

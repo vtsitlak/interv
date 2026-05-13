@@ -62,6 +62,27 @@ describe('ProfileEditComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it('onSave calls preventDefault when a submit event is passed', async () => {
+    component.profileModel.set({
+      name: 'Name',
+      title: 'Title',
+      photo: '',
+      summary: 'Summary',
+      cvText: 'Long cv',
+      links: [],
+      personalQA: [{ question: 'Q', answer: 'A' }],
+    });
+    const event = new SubmitEvent('submit', {
+      bubbles: true,
+      cancelable: true,
+    });
+    const preventDefault = vi.spyOn(event, 'preventDefault');
+
+    await component.onSave(event);
+
+    expect(preventDefault).toHaveBeenCalled();
+  });
+
   it('onSave calls saveProfile and ingestToRAG when valid', async () => {
     component.profileModel.set({
       name: 'Name',
