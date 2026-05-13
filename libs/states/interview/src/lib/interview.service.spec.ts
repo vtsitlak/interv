@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { Auth } from '@angular/fire/auth';
 import { Firestore } from '@angular/fire/firestore';
 import { WS_URL } from '@interv/util';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -11,6 +12,7 @@ describe('InterviewService', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: Firestore, useValue: {} },
+        { provide: Auth, useValue: { currentUser: null } },
         { provide: WS_URL, useValue: 'ws://127.0.0.1:8000' },
       ],
     });
