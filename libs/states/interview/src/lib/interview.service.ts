@@ -16,6 +16,13 @@ import {
   RecruiterInfo,
 } from './interview.models';
 
+/** Passed when the browser closes the WebSocket (failure codes help debug dev vs prod). */
+export interface WsCloseMeta {
+  readonly code: number;
+  readonly reason: string;
+  readonly wasClean: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class InterviewService {
   private readonly injector = inject(Injector);
@@ -60,7 +67,7 @@ export class InterviewService {
     onError: (error: string) => void,
     onOpen: () => void,
     onAssistantTurnDone: () => void,
-    onConnectionClosed: () => void,
+    onConnectionClosed: (meta: WsCloseMeta) => void,
   ): void {
     this.disconnect();
     const base = this.wsUrl.replace(/\/$/, '');
@@ -83,11 +90,15 @@ export class InterviewService {
     };
 
     ws.onerror = () => onError('Connection error');
-    ws.onclose = () => {
+    ws.onclose = (ev: CloseEvent) => {
       if (this.socket === ws) {
         this.socket = null;
       }
-      onConnectionClosed();
+      onConnectionClosed({
+        code: ev.code,
+        reason: typeof ev.reason === 'string' ? ev.reason : '',
+        wasClean: ev.wasClean,
+      });
     };
   }
 

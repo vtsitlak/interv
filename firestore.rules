@@ -1,0 +1,32 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * Candidate profile document (typically profiles/{firebaseAuthUid}).
+     * Owners write their own doc; authenticated recruiters need read access for context.
+     */
+    match /profiles/{profileId} {
+      allow read: if request.auth != null;
+
+      allow create: if request.auth != null && request.auth.uid == profileId;
+
+      allow update, delete: if request.auth != null && request.auth.uid == profileId;
+
+      /**
+       * Recruiter interview sessions live under profiles/{candidateId}/interviews/{docId}.
+       * The recruiter is usually not candidateId — rules must NOT require uid == profileId here.
+       */
+      match /interviews/{interviewId} {
+        allow read: if request.auth != null;
+
+        allow create: if request.auth != null;
+
+        allow update: if request.auth != null;
+
+        allow delete: if request.auth != null && request.auth.uid == profileId;
+      }
+    }
+  }
+}
