@@ -1,0 +1,44 @@
+# Deploys the Angular app to Firebase Hosting (site from firebase.json).
+#
+# Setup (one-time):
+# 1. Install Firebase CLI locally: npm i -g firebase-tools  (or use npx)
+# 2. Run: firebase login:ci
+# 3. In GitHub repo → Settings → Secrets and variables → Actions → New repository secret
+#    Name: FIREBASE_TOKEN   Value: <token from step 2>
+
+name: Deploy Firebase Hosting
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: firebase-hosting-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (production)
+        run: npm run build:interv:prod
+
+      - name: Deploy to Firebase Hosting
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: npm run deploy:firebase:ci
