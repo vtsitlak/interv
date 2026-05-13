@@ -39,3 +39,6 @@ export const INITIAL_INTERVIEW_STATE: InterviewState = {
 };
 
 export const INTERVIEW_COMPLETE_SIGNAL = 'INTERVIEW_COMPLETE';
+
+/** Sent by the WebSocket server after each assistant reply (not part of message text). */
+export const ASSISTANT_STREAM_DONE_SIGNAL = '__ASSISTANT_STREAM_DONE__';
