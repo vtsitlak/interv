@@ -41,6 +41,7 @@ export class InterviewFacade {
     const CREATE_INTERVIEW_DEADLINE_MS = 30_000;
 
     try {
+      await this.service.assertCandidateProfileExists(profileId);
       const interviewId = await Promise.race([
         this.service.createInterview(profileId, recruiterInfo),
         new Promise<string>((_, reject) =>

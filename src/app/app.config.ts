@@ -5,23 +5,19 @@ import { provideAuth, getAuth } from '@angular/fire/auth';
 import {
   getFirestore,
   initializeFirestore,
+  memoryLocalCache,
   provideFirestore,
 } from '@angular/fire/firestore';
-import { memoryLocalCache } from 'firebase/firestore';
 import { API_URL, WS_URL } from '@interv/util';
 import { appRoutes } from './app.routes';
 import { environment } from '../environments/environment';
 
 function provideFirestoreInstance(injector: Injector) {
   const app = injector.get(FirebaseApp);
-  const settings = {
-    localCache: memoryLocalCache(),
-    // Helps on some corporate / proxy networks where WebChannel gets stuck.
-    experimentalAutoDetectLongPolling: true,
-  } as const;
-
   try {
-    return initializeFirestore(app, settings);
+    return initializeFirestore(app, {
+      localCache: memoryLocalCache(),
+    });
   } catch {
     // Hot reload / duplicate init: default instance already exists.
     return getFirestore(app);

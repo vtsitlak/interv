@@ -1,5 +1,7 @@
 import asyncio
 
+from typing import Any, Optional
+
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from firebase_admin import firestore
 from google.cloud.firestore import Increment
@@ -13,10 +15,12 @@ router = APIRouter(prefix='/chat', tags=['chat'])
 ASSISTANT_STREAM_DONE_SIGNAL = '__ASSISTANT_STREAM_DONE__'
 
 
-def get_profile(profile_id: str) -> dict:
+def get_profile(profile_id: str) -> Optional[dict[str, Any]]:
     db = firestore.client()
     doc = db.collection('profiles').document(profile_id).get()
-    return doc.to_dict() if doc.exists else {}
+    if not doc.exists:
+        return None
+    return doc.to_dict() or {}
 
 
 def build_system_prompt(profile: dict) -> str:
@@ -65,7 +69,7 @@ async def chat_ws(
     await websocket.accept()
 
     profile = get_profile(profile_id)
-    if not profile:
+    if profile is None:
         await websocket.send_text('Profile not found')
         await websocket.close()
         return
