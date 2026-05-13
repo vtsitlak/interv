@@ -1,3 +1,4 @@
+import { DOCUMENT } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -5,6 +6,7 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import {
   applyEach,
   form,
@@ -49,12 +51,14 @@ const EMPTY_MODEL: ProfileFormModel = {
 @Component({
   selector: 'lib-profile-edit',
   standalone: true,
-  imports: [FormField, RouterLink],
+  imports: [FormField, FormsModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './profile-edit.html',
   styleUrl: './profile-edit.scss',
 })
 export class ProfileEditComponent implements OnInit {
+  private readonly doc = inject(DOCUMENT);
+
   readonly facade = inject(ProfileFacade);
 
   readonly profileModel = signal<ProfileFormModel>({ ...EMPTY_MODEL });
@@ -73,7 +77,21 @@ export class ProfileEditComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.stripAccidentalQueryString();
     void this.bootstrap();
+  }
+
+  /**
+   * If the browser navigated with a native GET form submit, secrets can land in the URL.
+   * Strip the query string once so reloads and history stay clean.
+   */
+  private stripAccidentalQueryString(): void {
+    const win = this.doc.defaultView;
+    if (!win?.location.search) {
+      return;
+    }
+    const clean = `${win.location.pathname}${win.location.hash}`;
+    win.history.replaceState(win.history.state, '', clean);
   }
 
   private async bootstrap(): Promise<void> {

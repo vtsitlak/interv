@@ -1,6 +1,7 @@
 import { inject, Injectable, Injector, runInInjectionContext } from '@angular/core';
 import {
   Firestore,
+  Timestamp,
   addDoc,
   arrayUnion,
   collection,
@@ -231,7 +232,7 @@ export class InterviewService {
           messages: arrayUnion({
             role: message.role,
             content: message.content,
-            timestamp: serverTimestamp(),
+            timestamp: Timestamp.fromDate(message.timestamp),
           }),
         });
       });
