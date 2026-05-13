@@ -48,7 +48,7 @@ export class InterviewFacade {
             () =>
               reject(
                 new Error(
-                  'Firestore did not respond while creating the interview. Sign in (recruiter), deploy firestore.rules (firebase deploy --only firestore:rules), then check Rules allow auth users to create profiles/{profileId}/interviews.',
+                  'Firestore still has not finished creating the interview after 30s. Check your network, confirm Firestore is enabled for this Firebase project, and deploy rules from this repo: npm run deploy:firestore:rules (or paste firestore.rules in Firebase Console → Firestore → Rules → Publish).',
                 ),
               ),
             CREATE_INTERVIEW_DEADLINE_MS,
@@ -135,7 +135,10 @@ export class InterviewFacade {
     } catch (e: unknown) {
       clearStartupWatchdog();
       const message = e instanceof Error ? e.message : String(e);
-      this.ngZone.run(() => this.store.setError(message));
+      this.ngZone.run(() => {
+        this.store.setConnecting(false);
+        this.store.setError(message);
+      });
       throw e;
     }
   }
