@@ -1,0 +1,93 @@
+<div class="min-h-screen bg-base-200 flex flex-col">
+  @if (!isSetupComplete()) {
+    <div class="flex-1 flex items-center justify-center px-4">
+      <lib-interview-setup
+        [profileId]="profileId"
+        [error]="facade.error()"
+        [isConnecting]="facade.isConnecting()"
+        (startInterview)="onSetupStart($event)"
+      />
+    </div>
+  }
+
+  @if (isSetupComplete()) {
+    @if (!facade.wsReady() && !facade.error()) {
+      <div class="alert alert-info rounded-none rounded-t-none mx-0 px-4 py-3 text-sm">
+        Connecting to the live assistant… buttons unlock when ready.
+      </div>
+    }
+    <div class="navbar bg-base-100 shadow-sm px-4">
+      <div class="flex-1">
+        <span class="font-semibold">AI Interview</span>
+      </div>
+      <div class="flex-none text-sm text-base-content/50">
+        {{ facade.messageCount() }} / {{ facade.maxMessages() }} questions
+      </div>
+    </div>
+
+    <div
+      class="flex-1 overflow-y-auto px-4 py-6 space-y-4 max-w-2xl mx-auto w-full"
+    >
+      @if (facade.messages().length === 0) {
+        <div class="text-center text-base-content/40 mt-20">
+          <p class="text-lg">Say hello to get started</p>
+        </div>
+      }
+
+      @for (message of facade.messages(); track $index) {
+        <div
+          class="chat"
+          [class.chat-end]="message.role === 'user'"
+          [class.chat-start]="message.role === 'assistant'"
+        >
+          <div
+            class="chat-bubble"
+            [class.chat-bubble-primary]="message.role === 'user'"
+          >
+            {{ message.content }}
+
+            @if (
+              message.role === 'assistant' &&
+              facade.isStreaming() &&
+              $index === facade.messages().length - 1
+            ) {
+              <span
+                class="inline-block w-2 h-4 bg-current animate-pulse ml-1 rounded-sm"
+              ></span>
+            }
+          </div>
+        </div>
+      }
+
+      @if (facade.error()) {
+        <div class="alert alert-error">{{ facade.error() }}</div>
+      }
+    </div>
+
+    <div class="bg-base-100 border-t border-base-300 px-4 py-3">
+      <div class="max-w-2xl mx-auto flex gap-3">
+        <textarea
+          class="textarea textarea-bordered flex-1 resize-none"
+          rows="2"
+          placeholder="Type your answer..."
+          [value]="chatText()"
+          (input)="chatText.set($any($event.target).value)"
+          (keydown)="onKeydown($event)"
+          [disabled]="!facade.canSendMessage()"
+        ></textarea>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="!facade.canSendMessage() || !chatText().trim()"
+          (click)="sendMessage()"
+        >
+          @if (facade.isStreaming()) {
+            <span class="loading loading-spinner loading-sm"></span>
+          } @else {
+            Send
+          }
+        </button>
+      </div>
+    </div>
+  }
+</div>

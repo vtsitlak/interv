@@ -100,11 +100,11 @@ export class InterviewService {
           const uid = this.auth.currentUser?.uid ?? null;
           if (uid === profileId) {
             throw new Error(
-              `No profile document at ${pathHint} yet. Go to /profile/edit, fill the form, and click Save & train AI once (wait for success). Then open your interview link again.`,
+              `No profile document at ${pathHint} yet. Go to /profile, fill the form, and click Save & train AI once (wait for success). Then open your interview link again.`,
             );
           }
           throw new Error(
-            `No profile at ${pathHint}. The candidate (${profileId}) must sign in and complete Save & train AI on /profile/edit before anyone can interview them. If you are testing yourself, use the same Google account for both profile and interview.`,
+            `No profile at ${pathHint}. The candidate (${profileId}) must sign in and complete Save & train AI on /profile before anyone can interview them. If you are testing yourself, use the same Google account for both profile and interview.`,
           );
         }
       });
@@ -178,7 +178,7 @@ export class InterviewService {
       }
       if (event.data === BACKEND_PROFILE_NOT_FOUND) {
         onError(
-          'The API could not load this candidate’s profile from Firestore. Confirm profiles/{uid} exists (candidate saved /profile/edit) and that Railway uses the same Firebase project.',
+          'The API could not load this candidate’s profile from Firestore. Confirm profiles/{uid} exists (candidate saved /profile) and that Railway uses the same Firebase project.',
         );
         return;
       }

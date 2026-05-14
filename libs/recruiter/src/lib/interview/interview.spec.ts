@@ -1,0 +1,63 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { InterviewFacade } from '@interv/state-interview';
+import { InterviewComponent } from './interview';
+
+describe('InterviewComponent', () => {
+  let component: InterviewComponent;
+  let fixture: ComponentFixture<InterviewComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [InterviewComponent],
+      providers: [
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { paramMap: convertToParamMap({ profileId: 'p1' }) },
+          },
+        },
+        {
+          provide: InterviewFacade,
+          useValue: {
+            disconnect: vi.fn(),
+            isConnecting: () => false,
+            wsReady: () => false,
+            messages: () => [],
+            isStreaming: () => false,
+            canSendMessage: () => true,
+            messageCount: () => 0,
+            maxMessages: () => 8,
+            error: () => null,
+            startInterview: vi.fn().mockResolvedValue(undefined),
+            sendMessage: vi.fn().mockResolvedValue(undefined),
+          },
+        },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(InterviewComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+
+  it('onSetupStart calls facade and completes setup on success', async () => {
+    const facade = TestBed.inject(InterviewFacade);
+    await component.onSetupStart({
+      name: 'Jane',
+      role: 'Recruiter',
+      company: 'Acme',
+    });
+    expect(facade.startInterview).toHaveBeenCalledWith('p1', {
+      name: 'Jane',
+      role: 'Recruiter',
+      company: 'Acme',
+    });
+    expect(component.isSetupComplete()).toBe(true);
+  });
+});
