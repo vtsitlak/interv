@@ -7,6 +7,8 @@ import type { RecruiterInfo } from './interview.models';
 
 const CREATE_INTERVIEW_DEADLINE_MS = 30_000;
 const WS_OPEN_DEADLINE_MS = 20_000;
+/** Max wait for assistant reply after a recruiter message (prod RAG/Gemini can be slow). */
+const TURN_RESPONSE_TIMEOUT_MS = 120_000;
 
 @Injectable({ providedIn: 'root' })
 export class InterviewFacade {
@@ -15,6 +17,7 @@ export class InterviewFacade {
   private readonly router = inject(Router);
   private readonly ngZone = inject(NgZone);
   private readonly wsUrlEnv = inject(WS_URL);
+  private turnTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
   readonly messages = this.store.messages;
   readonly isStreaming = this.store.isStreaming;
@@ -26,10 +29,47 @@ export class InterviewFacade {
   readonly maxMessages = this.store.maxMessages;
   readonly error = this.store.error;
 
+  private clearTurnTimeout(): void {
+    if (this.turnTimeoutId !== undefined) {
+      clearTimeout(this.turnTimeoutId);
+      this.turnTimeoutId = undefined;
+    }
+  }
+
+  private armTurnTimeout(): void {
+    this.clearTurnTimeout();
+    this.turnTimeoutId = setTimeout(() => {
+      this.ngZone.run(() => {
+        if (!this.store.isStreaming()) return;
+        this.store.finishStreaming();
+        this.store.setError(
+          'No response from the assistant in time. Check GEMINI_API_KEY on the server, redeploy the API, and try again.',
+        );
+      });
+    }, TURN_RESPONSE_TIMEOUT_MS);
+  }
+
+  private handleAssistantTurnDone(): void {
+    this.clearTurnTimeout();
+    this.store.finishStreaming();
+  }
+
+  private handleStreamError(error: string, socketWasOpen: boolean): void {
+    if (this.store.isStreaming()) {
+      this.clearTurnTimeout();
+      this.store.finishStreaming();
+    }
+    if (!socketWasOpen) {
+      return;
+    }
+    this.store.setError(error);
+  }
+
   async startInterview(
     profileId: string,
     recruiterInfo: RecruiterInfo,
   ): Promise<void> {
+    this.clearTurnTimeout();
     this.store.setConnecting(true);
     this.store.clearError();
 
@@ -125,6 +165,7 @@ export class InterviewFacade {
             }),
           async () =>
             this.ngZone.run(async () => {
+              this.clearTurnTimeout();
               this.store.finishStreaming();
               this.store.setComplete();
               await this.service.completeInterview(profileId, interviewId);
@@ -142,14 +183,15 @@ export class InterviewFacade {
                 );
                 return;
               }
-              this.store.setError(error);
+              this.handleStreamError(error, true);
             }),
           () =>
             this.ngZone.run(() => {
               socketOpenedSuccessfully = true;
               succeed();
             }),
-          () => this.ngZone.run(() => this.store.finishStreaming()),
+          () =>
+            this.ngZone.run(() => this.handleAssistantTurnDone()),
           (meta: WsCloseMeta) =>
             this.ngZone.run(() => {
               if (socketOpenedSuccessfully) {
@@ -197,14 +239,19 @@ export class InterviewFacade {
     }
 
     if (!this.service.send(content)) {
+      this.clearTurnTimeout();
       this.store.finishStreaming();
       this.store.setError(
         'Could not send on the live connection. Refresh the page and try again.',
       );
+      return;
     }
+
+    this.armTurnTimeout();
   }
 
   disconnect(): void {
+    this.clearTurnTimeout();
     this.service.disconnect();
     this.store.reset();
   }

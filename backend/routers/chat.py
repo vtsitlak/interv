@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from typing import Any, Optional
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -9,9 +10,13 @@ from services.rag import get_relevant_context
 from services.rate_limit import check_interview_rate_limit
 
 router = APIRouter(prefix='/chat', tags=['chat'])
+logger = logging.getLogger(__name__)
 
 # Must match ASSISTANT_STREAM_DONE_SIGNAL in libs/states/interview (Angular).
 ASSISTANT_STREAM_DONE_SIGNAL = '__ASSISTANT_STREAM_DONE__'
+
+RAG_TIMEOUT_SEC = 15
+GEMINI_TIMEOUT_SEC = 90
 
 
 def get_profile(profile_id: str) -> Optional[dict[str, Any]]:
@@ -56,6 +61,50 @@ Rules:
 - Never break character"""
 
 
+async def _retrieve_context(profile_id: str, user_message: str) -> str:
+    try:
+        return await asyncio.wait_for(
+            asyncio.to_thread(get_relevant_context, profile_id, user_message),
+            timeout=RAG_TIMEOUT_SEC,
+        )
+    except asyncio.TimeoutError:
+        logger.warning('RAG retrieval timed out for profile %s', profile_id)
+        return ''
+    except Exception as exc:  # noqa: BLE001
+        logger.warning('RAG retrieval failed for profile %s: %s', profile_id, exc)
+        return ''
+
+
+async def _stream_gemini_to_client(
+    websocket: WebSocket,
+    system_prompt: str,
+    history: list[dict[str, str]],
+    user_message: str,
+) -> str:
+    full_response = ''
+
+    async def _consume() -> None:
+        nonlocal full_response
+        async for chunk in stream_response(system_prompt, history, user_message):
+            if chunk:
+                await websocket.send_text(chunk)
+                full_response += chunk
+
+    try:
+        await asyncio.wait_for(_consume(), timeout=GEMINI_TIMEOUT_SEC)
+    except asyncio.TimeoutError:
+        msg = 'Error: The assistant took too long to respond. Please try again.'
+        await websocket.send_text(msg)
+        full_response = msg
+    except Exception as exc:  # noqa: BLE001
+        msg = f'Error generating response: {exc}'
+        logger.exception('Gemini stream failed')
+        await websocket.send_text(msg)
+        full_response = msg
+
+    return full_response
+
+
 @router.websocket('/{profile_id}/{interview_id}')
 async def chat_ws(
     websocket: WebSocket,
@@ -82,31 +131,32 @@ async def chat_ws(
                 await websocket.close()
                 return
 
-            context = await asyncio.to_thread(
-                get_relevant_context,
-                profile_id,
-                user_message,
-            )
-            system_prompt = build_system_prompt(profile, context)
-
-            history.append({'role': 'user', 'content': user_message})
-
-            full_response = ''
             try:
-                async for chunk in stream_response(
+                context = await _retrieve_context(profile_id, user_message)
+                system_prompt = build_system_prompt(profile, context)
+
+                history.append({'role': 'user', 'content': user_message})
+
+                full_response = await _stream_gemini_to_client(
+                    websocket,
                     system_prompt,
                     history[:-1],
                     user_message,
-                ):
-                    await websocket.send_text(chunk)
-                    full_response += chunk
-            except Exception as exc:  # noqa: BLE001
-                err = f'Error generating response: {exc}'
-                await websocket.send_text(err)
-                full_response = err
+                )
 
-            history.append({'role': 'assistant', 'content': full_response})
-            await websocket.send_text(ASSISTANT_STREAM_DONE_SIGNAL)
+                history.append({'role': 'assistant', 'content': full_response})
+            except Exception as exc:  # noqa: BLE001
+                logger.exception('Chat turn failed for %s/%s', profile_id, interview_id)
+                err = f'Error: {exc}'
+                try:
+                    await websocket.send_text(err)
+                except Exception:  # noqa: BLE001
+                    break
+            finally:
+                try:
+                    await websocket.send_text(ASSISTANT_STREAM_DONE_SIGNAL)
+                except Exception:  # noqa: BLE001
+                    break
 
     except WebSocketDisconnect:
         pass
