@@ -42,4 +42,18 @@ app.include_router(sessions.router)
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    import os
+
+    from services.vector_store import (
+        is_vector_store_available,
+        vector_store_unavailable_reason,
+    )
+
+    return {
+        "status": "ok",
+        "geminiConfigured": bool(os.getenv("GEMINI_API_KEY")),
+        "chromaPersistDir": os.getenv("CHROMA_PERSIST_DIR", "./chroma_db"),
+        "chromaAvailable": is_vector_store_available(),
+        "chromaError": vector_store_unavailable_reason(),
+        "skipRag": os.getenv("SKIP_RAG", "").strip().lower() in ("1", "true", "yes"),
+    }

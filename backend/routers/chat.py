@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import time
 from typing import Any, Optional
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -12,11 +13,13 @@ from services.rate_limit import check_interview_rate_limit
 router = APIRouter(prefix='/chat', tags=['chat'])
 logger = logging.getLogger(__name__)
 
-# Must match ASSISTANT_STREAM_DONE_SIGNAL in libs/states/interview (Angular).
+# Must match libs/states/interview (Angular).
 ASSISTANT_STREAM_DONE_SIGNAL = '__ASSISTANT_STREAM_DONE__'
+ASSISTANT_PROCESSING_SIGNAL = '__ASSISTANT_PROCESSING__'
 
-RAG_TIMEOUT_SEC = 15
-GEMINI_TIMEOUT_SEC = 90
+RAG_TIMEOUT_SEC = 12
+GEMINI_TIMEOUT_SEC = 75
+TURN_TIMEOUT_SEC = 100
 
 
 def get_profile(profile_id: str) -> Optional[dict[str, Any]]:
@@ -102,7 +105,58 @@ async def _stream_gemini_to_client(
         await websocket.send_text(msg)
         full_response = msg
 
+    if not full_response.strip():
+        msg = 'Error: The assistant returned an empty response.'
+        await websocket.send_text(msg)
+        full_response = msg
+
     return full_response
+
+
+async def _process_turn(
+    websocket: WebSocket,
+    profile: dict,
+    profile_id: str,
+    interview_id: str,
+    user_message: str,
+    history: list[dict[str, str]],
+) -> None:
+    started = time.monotonic()
+
+    await websocket.send_text(ASSISTANT_PROCESSING_SIGNAL)
+    logger.info('Turn started %s/%s', profile_id, interview_id)
+
+    allowed = await check_interview_rate_limit(profile_id, interview_id)
+    if not allowed:
+        await websocket.send_text('INTERVIEW_COMPLETE')
+        await websocket.close()
+        return
+
+    context = await _retrieve_context(profile_id, user_message)
+    logger.info(
+        'RAG done in %.1fs for %s (context len=%d)',
+        time.monotonic() - started,
+        profile_id,
+        len(context),
+    )
+
+    system_prompt = build_system_prompt(profile, context)
+    history.append({'role': 'user', 'content': user_message})
+
+    full_response = await _stream_gemini_to_client(
+        websocket,
+        system_prompt,
+        history[:-1],
+        user_message,
+    )
+    history.append({'role': 'assistant', 'content': full_response})
+
+    logger.info(
+        'Turn finished in %.1fs for %s/%s',
+        time.monotonic() - started,
+        profile_id,
+        interview_id,
+    )
 
 
 @router.websocket('/{profile_id}/{interview_id}')
@@ -125,31 +179,36 @@ async def chat_ws(
         while True:
             user_message = await websocket.receive_text()
 
-            allowed = await check_interview_rate_limit(profile_id, interview_id)
-            if not allowed:
-                await websocket.send_text('INTERVIEW_COMPLETE')
-                await websocket.close()
-                return
-
             try:
-                context = await _retrieve_context(profile_id, user_message)
-                system_prompt = build_system_prompt(profile, context)
-
-                history.append({'role': 'user', 'content': user_message})
-
-                full_response = await _stream_gemini_to_client(
-                    websocket,
-                    system_prompt,
-                    history[:-1],
-                    user_message,
+                await asyncio.wait_for(
+                    _process_turn(
+                        websocket,
+                        profile,
+                        profile_id,
+                        interview_id,
+                        user_message,
+                        history,
+                    ),
+                    timeout=TURN_TIMEOUT_SEC,
                 )
-
-                history.append({'role': 'assistant', 'content': full_response})
+            except asyncio.TimeoutError:
+                logger.error(
+                    'Turn timed out after %ss for %s/%s',
+                    TURN_TIMEOUT_SEC,
+                    profile_id,
+                    interview_id,
+                )
+                try:
+                    await websocket.send_text(
+                        'Error: The server took too long on this message. '
+                        'Try again; if it persists, set SKIP_RAG=true on Railway or attach a volume for CHROMA_PERSIST_DIR.',
+                    )
+                except Exception:  # noqa: BLE001
+                    break
             except Exception as exc:  # noqa: BLE001
                 logger.exception('Chat turn failed for %s/%s', profile_id, interview_id)
-                err = f'Error: {exc}'
                 try:
-                    await websocket.send_text(err)
+                    await websocket.send_text(f'Error: {exc}')
                 except Exception:  # noqa: BLE001
                     break
             finally:

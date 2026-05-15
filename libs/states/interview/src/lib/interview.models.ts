@@ -46,5 +46,8 @@ export const INTERVIEW_COMPLETE_SIGNAL = 'INTERVIEW_COMPLETE';
 /** Sent by the WebSocket server after each assistant reply (not part of message text). */
 export const ASSISTANT_STREAM_DONE_SIGNAL = '__ASSISTANT_STREAM_DONE__';
 
+/** Server is working on a reply (keeps proxies from treating the socket as idle). */
+export const ASSISTANT_PROCESSING_SIGNAL = '__ASSISTANT_PROCESSING__';
+
 /** Plain-text error from FastAPI chat when `profiles/{id}` is missing for Admin SDK. */
 export const BACKEND_PROFILE_NOT_FOUND = 'Profile not found';
