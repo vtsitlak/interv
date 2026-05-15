@@ -1,6 +1,7 @@
 """Chunk, ingest, and retrieve profile context for RAG."""
 
 import logging
+import os
 from typing import Any
 
 from services.vector_store import (
@@ -71,6 +72,8 @@ def ingest_profile(profile_id: str, cv_text: str, personal_qa: list[dict[str, An
 
 def get_relevant_context(profile_id: str, query: str, n_results: int = 5) -> str:
     """Retrieve the most relevant chunks for a recruiter question."""
+    if os.getenv("SKIP_RAG", "").strip().lower() in ("1", "true", "yes"):
+        return ""
     if not is_vector_store_available():
         return ""
     results = query_documents(profile_id, query, n_results=n_results)

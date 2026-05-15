@@ -14,6 +14,7 @@ import {
 import { Auth } from '@angular/fire/auth';
 import { WS_URL } from '@interv/util';
 import {
+  ASSISTANT_PROCESSING_SIGNAL,
   ASSISTANT_STREAM_DONE_SIGNAL,
   BACKEND_PROFILE_NOT_FOUND,
   ChatMessage,
@@ -174,6 +175,9 @@ export class InterviewService {
       }
       if (event.data === ASSISTANT_STREAM_DONE_SIGNAL) {
         onAssistantTurnDone();
+        return;
+      }
+      if (event.data === ASSISTANT_PROCESSING_SIGNAL) {
         return;
       }
       if (event.data === BACKEND_PROFILE_NOT_FOUND) {

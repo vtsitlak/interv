@@ -7,8 +7,8 @@ import type { RecruiterInfo } from './interview.models';
 
 const CREATE_INTERVIEW_DEADLINE_MS = 30_000;
 const WS_OPEN_DEADLINE_MS = 20_000;
-/** Max wait for assistant reply after a recruiter message (prod RAG/Gemini can be slow). */
-const TURN_RESPONSE_TIMEOUT_MS = 120_000;
+/** Slightly longer than backend TURN_TIMEOUT_SEC so server errors arrive first. */
+const TURN_RESPONSE_TIMEOUT_MS = 110_000;
 
 @Injectable({ providedIn: 'root' })
 export class InterviewFacade {
@@ -43,7 +43,7 @@ export class InterviewFacade {
         if (!this.store.isStreaming()) return;
         this.store.finishStreaming();
         this.store.setError(
-          'No response from the assistant in time. Check GEMINI_API_KEY on the server, redeploy the API, and try again.',
+          'No response from the assistant in time. The API may still be running old code, or RAG/Gemini is stalling on the server. Redeploy the Railway backend, then try SKIP_RAG=true if it persists.',
         );
       });
     }, TURN_RESPONSE_TIMEOUT_MS);
