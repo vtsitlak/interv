@@ -107,6 +107,7 @@ backend/.coverage
 backend/htmlcov/
 backend/.chroma/
 backend/chroma/
+backend/chroma_db/
 backend/.cache/
 
 # Logs

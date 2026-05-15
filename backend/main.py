@@ -4,6 +4,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+from services.sqlite_patch import patch_sqlite
+
+patch_sqlite()
+
 from services.firebase_admin_init import init_firebase
 
 init_firebase()

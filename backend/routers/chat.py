@@ -1,12 +1,11 @@
 import asyncio
-
 from typing import Any, Optional
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from firebase_admin import firestore
-from google.cloud.firestore import Increment
 
 from services.gemini import stream_response
+from services.rag import get_relevant_context
 from services.rate_limit import check_interview_rate_limit
 
 router = APIRouter(prefix='/chat', tags=['chat'])
@@ -23,41 +22,34 @@ def get_profile(profile_id: str) -> Optional[dict[str, Any]]:
     return doc.to_dict() or {}
 
 
-def build_system_prompt(profile: dict) -> str:
+def build_system_prompt(profile: dict, context: str) -> str:
     name = profile.get('name', 'this person')
     title = profile.get('title', 'a professional')
     summary = profile.get('summary', '')
-    cv = profile.get('cvText', '')
-    qa_pairs = profile.get('personalQA', []) or []
 
-    qa_text = '\n'.join(
-        [
-            f"Q: {qa.get('question', '')}\nA: {qa.get('answer', '')}"
-            for qa in qa_pairs
-            if qa.get('answer')
-        ]
+    context_block = (
+        context.strip()
+        if context.strip()
+        else '(No matching passages were retrieved for this question; rely on the summary and stay within what you know about this person.)'
     )
 
     return f"""You are an AI digital twin of {name}, a {title}.
 
 Your job is to answer questions exactly as {name} would — in first person, naturally and conversationally.
 
-Here is their background:
+About {name}:
 {summary}
 
-Their CV:
-{cv}
-
-Their personal answers:
-{qa_text}
+Relevant context for this question (from their CV and written answers):
+{context_block}
 
 Rules:
 - Always speak in first person as {name}
 - Be natural, warm, and professional
-- Keep answers concise — 3 to 5 sentences max
-- Never make up information not in the profile
-- If asked something not in the profile, say you'd prefer to discuss it directly
-- After the recruiter has asked 8 questions, end with a friendly closing message"""
+- Keep answers concise — 3 to 5 sentences
+- Ground substantive claims in the retrieved context when it is relevant; do not invent employers, dates, or credentials not supported by the context or summary
+- If asked something not covered by the context or summary, say you would prefer to discuss it directly
+- Never break character"""
 
 
 @router.websocket('/{profile_id}/{interview_id}')
@@ -74,7 +66,6 @@ async def chat_ws(
         await websocket.close()
         return
 
-    system_prompt = build_system_prompt(profile)
     history: list[dict[str, str]] = []
 
     try:
@@ -86,6 +77,13 @@ async def chat_ws(
                 await websocket.send_text('INTERVIEW_COMPLETE')
                 await websocket.close()
                 return
+
+            context = await asyncio.to_thread(
+                get_relevant_context,
+                profile_id,
+                user_message,
+            )
+            system_prompt = build_system_prompt(profile, context)
 
             history.append({'role': 'user', 'content': user_message})
 
