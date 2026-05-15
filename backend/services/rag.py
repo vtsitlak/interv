@@ -1,8 +1,17 @@
 """Chunk, ingest, and retrieve profile context for RAG."""
 
+import logging
 from typing import Any
 
-from services.vector_store import delete_collection, query_documents, upsert_documents
+from services.vector_store import (
+    delete_collection,
+    is_vector_store_available,
+    query_documents,
+    upsert_documents,
+    vector_store_unavailable_reason,
+)
+
+logger = logging.getLogger(__name__)
 
 
 def chunk_text(text: str, chunk_size: int = 500, overlap: int = 50) -> list[str]:
@@ -23,6 +32,11 @@ def chunk_text(text: str, chunk_size: int = 500, overlap: int = 50) -> list[str]
 
 def ingest_profile(profile_id: str, cv_text: str, personal_qa: list[dict[str, Any]]) -> int:
     """Replace Chroma collection for this profile with CV + Q&A chunks."""
+    if not is_vector_store_available():
+        reason = vector_store_unavailable_reason() or "unknown"
+        logger.warning("Skipping RAG ingest for %s: %s", profile_id, reason)
+        return 0
+
     delete_collection(profile_id)
 
     documents: list[dict] = []
@@ -57,6 +71,8 @@ def ingest_profile(profile_id: str, cv_text: str, personal_qa: list[dict[str, An
 
 def get_relevant_context(profile_id: str, query: str, n_results: int = 5) -> str:
     """Retrieve the most relevant chunks for a recruiter question."""
+    if not is_vector_store_available():
+        return ""
     results = query_documents(profile_id, query, n_results=n_results)
     if not results:
         return ""

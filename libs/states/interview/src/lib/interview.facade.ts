@@ -5,6 +5,9 @@ import { InterviewService, type WsCloseMeta } from './interview.service';
 import { InterviewStore } from './interview.store';
 import type { RecruiterInfo } from './interview.models';
 
+const CREATE_INTERVIEW_DEADLINE_MS = 30_000;
+const WS_OPEN_DEADLINE_MS = 20_000;
+
 @Injectable({ providedIn: 'root' })
 export class InterviewFacade {
   private readonly store = inject(InterviewStore);
@@ -30,16 +33,6 @@ export class InterviewFacade {
     this.store.setConnecting(true);
     this.store.clearError();
 
-    let startupWatchdogId: ReturnType<typeof setTimeout> | undefined;
-    const clearStartupWatchdog = (): void => {
-      if (startupWatchdogId !== undefined) {
-        clearTimeout(startupWatchdogId);
-        startupWatchdogId = undefined;
-      }
-    };
-
-    const CREATE_INTERVIEW_DEADLINE_MS = 30_000;
-
     try {
       await this.service.assertCandidateProfileExists(profileId);
       const interviewId = await Promise.race([
@@ -57,30 +50,67 @@ export class InterviewFacade {
         ),
       ]);
 
-      // Spinner on "Start interview" only covers Firestore; stop it before WS (which can lag).
       this.ngZone.run(() => {
         this.store.setConnecting(false);
       });
 
-      // After Firestore: wait up to this long for WebSocket open (wsReady).
-      const wsAttemptUrl = `${this.wsUrlEnv.replace(/\/$/, '')}/chat/${profileId}/${interviewId}`;
-      startupWatchdogId = setTimeout(() => {
-        this.ngZone.run(() => {
-          if (this.store.wsReady()) return;
-          this.service.disconnect();
-          this.store.setError(
-            `No answer from assistant at ${wsAttemptUrl} after 20s. Run npm run start:backend and use wsUrl that matches where uvicorn listens (dev: ws://127.0.0.1:8000).`,
-          );
-        });
-      }, 20_000);
+      await this.connectWebSocket(profileId, interviewId, recruiterInfo);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      this.ngZone.run(() => {
+        this.store.setConnecting(false);
+        this.store.setWsReady(false);
+        this.store.setError(message);
+      });
+      throw e;
+    }
+  }
 
+  private connectWebSocket(
+    profileId: string,
+    interviewId: string,
+    recruiterInfo: RecruiterInfo,
+  ): Promise<void> {
+    const wsAttemptUrl = `${this.wsUrlEnv.replace(/\/$/, '')}/chat/${profileId}/${interviewId}`;
+
+    return new Promise((resolve, reject) => {
       let socketOpenedSuccessfully = false;
+      let settled = false;
 
-      // Keep store + websocket setup on the Angular zone so OnPush/sync updates run.
+      const fail = (message: string): void => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeoutId);
+        this.service.disconnect();
+        this.ngZone.run(() => {
+          this.store.setWsReady(false);
+          reject(new Error(message));
+        });
+      };
+
+      const succeed = (): void => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeoutId);
+        this.ngZone.run(() => {
+          this.store.setWsReady(true);
+          resolve();
+        });
+      };
+
+      const timeoutId = setTimeout(() => {
+        if (!socketOpenedSuccessfully) {
+          fail(
+            `Could not connect to ${wsAttemptUrl} after ${WS_OPEN_DEADLINE_MS / 1000}s. ` +
+              'Check that the API is running and wsUrl matches your backend (local: ws://127.0.0.1:8000, prod: wss://your-railway-host).',
+          );
+        }
+      }, WS_OPEN_DEADLINE_MS);
+
       this.ngZone.run(() => {
         this.store.setSession(profileId, interviewId, recruiterInfo);
-
         this.store.setWsReady(false);
+
         this.service.connect(
           profileId,
           interviewId,
@@ -104,44 +134,37 @@ export class InterviewFacade {
             }),
           (error) =>
             this.ngZone.run(() => {
-              clearStartupWatchdog();
+              if (!socketOpenedSuccessfully) {
+                fail(
+                  error === 'Connection error'
+                    ? `Connection error reaching ${wsAttemptUrl}. Is the backend running and reachable?`
+                    : error,
+                );
+                return;
+              }
               this.store.setError(error);
             }),
           () =>
             this.ngZone.run(() => {
               socketOpenedSuccessfully = true;
-              clearStartupWatchdog();
-              this.store.setWsReady(true);
+              succeed();
             }),
           () => this.ngZone.run(() => this.store.finishStreaming()),
           (meta: WsCloseMeta) =>
             this.ngZone.run(() => {
-              this.store.setWsReady(false);
-              clearStartupWatchdog();
-              const err = this.store.error();
-              if (!socketOpenedSuccessfully && err === null) {
-                const base = this.wsUrlEnv.replace(/\/$/, '');
-                const tried = `${base}/chat/${profileId}/${interviewId}`;
-                const codeHint =
-                  meta.code === 1006
-                    ? ' (no handshake — wrong host/port, or server not running)'
-                    : ` (close code ${meta.code}${meta.reason ? `: ${meta.reason}` : ''})`;
-                this.store.setError(
-                  `WebSocket failed: ${tried}${codeHint}. Dev: match wsUrl to uvicorn (--host 127.0.0.1 → use ws://127.0.0.1:8000, not localhost).`,
-                );
+              if (socketOpenedSuccessfully) {
+                this.store.setWsReady(false);
+                return;
               }
+              const codeHint =
+                meta.code === 1006
+                  ? ' (no handshake — API down, wrong wsUrl, or blocked by network)'
+                  : ` (close code ${meta.code}${meta.reason ? `: ${meta.reason}` : ''})`;
+              fail(`WebSocket failed: ${wsAttemptUrl}${codeHint}`);
             }),
         );
       });
-    } catch (e: unknown) {
-      clearStartupWatchdog();
-      const message = e instanceof Error ? e.message : String(e);
-      this.ngZone.run(() => {
-        this.store.setConnecting(false);
-        this.store.setError(message);
-      });
-      throw e;
-    }
+    });
   }
 
   async sendMessage(content: string): Promise<void> {

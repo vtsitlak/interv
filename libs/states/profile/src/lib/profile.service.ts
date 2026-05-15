@@ -69,13 +69,24 @@ export class ProfileService {
     cvText: string,
     personalQA: QAPair[],
   ): Promise<void> {
-    const response = await fetch(`${this.apiUrl}/ingest/${profileId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cvText, personalQA }),
-    });
+    const url = `${this.apiUrl}/ingest/${profileId}`;
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cvText, personalQA }),
+      });
+    } catch {
+      throw new Error(
+        `Cannot reach the API at ${this.apiUrl}. Start the backend (npm run start:backend or npm run start:all) and confirm apiUrl in src/environments/environment.ts.`,
+      );
+    }
     if (!response.ok) {
-      throw new Error(`Ingestion failed (${response.status})`);
+      const detail = (await response.text().catch(() => '')).slice(0, 300);
+      throw new Error(
+        `Ingestion failed (${response.status})${detail ? `: ${detail}` : ''}`,
+      );
     }
   }
 }

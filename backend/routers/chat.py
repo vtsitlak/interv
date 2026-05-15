@@ -16,10 +16,14 @@ ASSISTANT_STREAM_DONE_SIGNAL = '__ASSISTANT_STREAM_DONE__'
 
 def get_profile(profile_id: str) -> Optional[dict[str, Any]]:
     db = firestore.client()
-    doc = db.collection('profiles').document(profile_id).get()
-    if not doc.exists:
-        return None
-    return doc.to_dict() or {}
+
+    def _read() -> Optional[dict[str, Any]]:
+        doc = db.collection('profiles').document(profile_id).get()
+        if not doc.exists:
+            return None
+        return doc.to_dict() or {}
+
+    return _read()
 
 
 def build_system_prompt(profile: dict, context: str) -> str:
@@ -60,7 +64,7 @@ async def chat_ws(
 ) -> None:
     await websocket.accept()
 
-    profile = get_profile(profile_id)
+    profile = await asyncio.to_thread(get_profile, profile_id)
     if profile is None:
         await websocket.send_text('Profile not found')
         await websocket.close()
