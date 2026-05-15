@@ -46,12 +46,15 @@ async def stream_response(
         )
     )
 
-    stream = await client.aio.models.generate_content_stream(
-        model=_MODEL,
-        contents=contents,
-        config=types.GenerateContentConfig(system_instruction=system_prompt),
-    )
-    async for chunk in stream:
-        text = getattr(chunk, 'text', None) or ''
-        if text:
-            yield text
+    try:
+        stream = await client.aio.models.generate_content_stream(
+            model=_MODEL,
+            contents=contents,
+            config=types.GenerateContentConfig(system_instruction=system_prompt),
+        )
+        async for chunk in stream:
+            text = getattr(chunk, 'text', None) or ''
+            if text:
+                yield text
+    except Exception as exc:  # noqa: BLE001
+        yield f'Error generating response: {exc}'
