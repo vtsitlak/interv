@@ -11,11 +11,6 @@
   }
 
   @if (isSetupComplete()) {
-    @if (!facade.wsReady() && !facade.error()) {
-      <div class="alert alert-info rounded-none rounded-t-none mx-0 px-4 py-3 text-sm">
-        Connecting to the live assistant… buttons unlock when ready.
-      </div>
-    }
     <div class="navbar bg-base-100 shadow-sm px-4">
       <div class="flex-1">
         <span class="font-semibold">AI Interview</span>
