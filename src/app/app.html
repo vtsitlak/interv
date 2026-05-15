@@ -1,1 +1,10 @@
-<router-outlet></router-outlet>
+<div class="min-h-screen flex flex-col bg-base-200">
+  <lib-header
+    [title]="title"
+    [isAuthenticated]="authFacade.isAuthenticated()"
+    (logoutRequested)="onLogout()"
+  />
+  <div class="flex-1 flex flex-col min-h-0">
+    <router-outlet />
+  </div>
+</div>

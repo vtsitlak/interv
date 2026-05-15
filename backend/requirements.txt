@@ -6,3 +6,7 @@ python-dotenv>=1.0.0
 pydantic>=2.0.0
 firebase-admin>=6.5.0
 google-genai>=1.0.0
+chromadb>=0.5.0
+# Bundled SQLite 3.35+ for Chroma when stdlib sqlite is too old (common on Windows / Python 3.9).
+pysqlite3>=0.5.0
+PyPDF2>=3.0.0
