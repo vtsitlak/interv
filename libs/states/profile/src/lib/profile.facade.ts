@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import type { Profile, QAPair } from '@interv/models';
+import type { Profile, ProfileLink, QAPair } from '@interv/models';
 import { ProfileStore } from './profile.store';
 
 @Injectable({ providedIn: 'root' })
@@ -27,8 +27,9 @@ export class ProfileFacade {
     profileId: string,
     cvText: string,
     personalQA: QAPair[],
+    links: ProfileLink[] = [],
   ): Promise<void> {
-    return this.store.ingestToRAG(profileId, cvText, personalQA);
+    return this.store.ingestToRAG(profileId, cvText, personalQA, links);
   }
 
   reportInvalidForm(): void {

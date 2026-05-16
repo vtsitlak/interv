@@ -101,6 +101,7 @@ describe('ProfileComponent', () => {
       'u1',
       'Long cv',
       expect.any(Array),
+      [],
     );
   });
 

@@ -31,13 +31,11 @@ export const appRoutes: Routes = [
   },
   {
     path: 'p/:profileId/interview',
-    canActivate: [authGuard],
     loadComponent: () =>
       import('@interv/recruiter').then(m => m.InterviewComponent),
   },
   {
     path: 'p/:profileId/feedback',
-    canActivate: [authGuard],
     loadComponent: () =>
       import('@interv/recruiter').then(m => m.FeedbackComponent),
   },

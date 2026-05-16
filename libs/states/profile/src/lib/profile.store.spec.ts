@@ -36,7 +36,7 @@ describe('ProfileStore', () => {
       currentUserOrNull: vi.fn().mockResolvedValue({ uid: 'u1' }),
       getProfile: vi.fn().mockResolvedValue(sampleProfile),
       saveProfile: vi.fn().mockResolvedValue(sampleProfile),
-      ingest: vi.fn().mockResolvedValue(undefined),
+      ingest: vi.fn().mockResolvedValue({}),
     };
 
     TestBed.configureTestingModule({
@@ -89,9 +89,24 @@ describe('ProfileStore', () => {
   it('ingestToRAG() sets the success message on success', async () => {
     await store.ingestToRAG('p1', 'cv', []);
 
-    expect(profileService.ingest).toHaveBeenCalledWith('p1', 'cv', []);
+    expect(profileService.ingest).toHaveBeenCalledWith('p1', 'cv', [], []);
     expect(store.successMessage()).toBe(PROFILE_SAVED_MESSAGE);
     expect(store.isIngesting()).toBe(false);
+  });
+
+  it('ingestToRAG() appends link scrape info to the success message', async () => {
+    vi.mocked(profileService.ingest).mockResolvedValueOnce({
+      linksScraped: 2,
+      skippedReason:
+        'LinkedIn links cannot be scraped automatically — add your LinkedIn summary to your CV or Q&A instead',
+    });
+
+    await store.ingestToRAG('p1', 'cv', [], [
+      { label: 'GitHub', url: 'https://github.com/user' },
+    ]);
+
+    expect(store.successMessage()).toContain('Ingested content from 2 link(s)');
+    expect(store.successMessage()).toContain('LinkedIn');
   });
 
   it('ingestToRAG() clears the success message and sets error on failure', async () => {

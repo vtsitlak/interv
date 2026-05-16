@@ -1,8 +1,9 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
+from services.link_scraper import is_linkedin, scrape_all_links
 from services.rag import ingest_profile
 from services.vector_store import (
     is_vector_store_available,
@@ -17,9 +18,28 @@ class QAPair(BaseModel):
     answer: str
 
 
+class ProfileLink(BaseModel):
+    label: str = ""
+    url: str
+
+
 class IngestRequest(BaseModel):
     cvText: str
     personalQA: List[QAPair]
+    links: List[ProfileLink] = Field(default_factory=list)
+
+
+def _skipped_reason(link_dicts: list[dict], scraped_count: int) -> Optional[str]:
+    if not link_dicts:
+        return None
+    if scraped_count >= len(link_dicts):
+        return None
+    if any(is_linkedin(item.get("url", "")) for item in link_dicts):
+        return (
+            "LinkedIn links cannot be scraped automatically — "
+            "add your LinkedIn summary to your CV or a Q&A answer instead."
+        )
+    return "Some links could not be fetched; only reachable GitHub and website content was ingested."
 
 
 @router.post("/{profile_id}")
@@ -28,12 +48,28 @@ async def ingest_profile_route(profile_id: str, body: IngestRequest):
         qa_dicts = [
             {"question": qa.question, "answer": qa.answer} for qa in body.personalQA
         ]
-        count = ingest_profile(profile_id, body.cvText, qa_dicts)
+        link_dicts = [
+            {"label": link.label.strip(), "url": link.url.strip()}
+            for link in body.links
+            if link.url.strip()
+        ]
+
+        scraped = await scrape_all_links(link_dicts)
+        skipped = len(link_dicts) - len(scraped)
+
+        count = ingest_profile(profile_id, body.cvText, qa_dicts, scraped)
+
         payload: dict = {
             "status": "ok",
             "profileId": profile_id,
             "documentsIngested": count,
+            "linksScraped": len(scraped),
+            "linksSkipped": skipped,
         }
+        skipped_reason = _skipped_reason(link_dicts, len(scraped))
+        if skipped_reason:
+            payload["skippedReason"] = skipped_reason
+
         if count == 0 and not is_vector_store_available():
             payload["ragEnabled"] = False
             payload["warning"] = (
@@ -42,6 +78,7 @@ async def ingest_profile_route(profile_id: str, body: IngestRequest):
             )
         else:
             payload["ragEnabled"] = True
+
         return payload
     except Exception as e:  # noqa: BLE001
         raise HTTPException(status_code=500, detail=str(e)) from e

@@ -62,12 +62,12 @@ export class InterviewService {
 
     if (code === 'permission-denied') {
       return new Error(
-        `Firestore permission denied on ${pathHint}. Publish the rules in this repo (firestore.rules): run npm run deploy:firestore:rules, or paste them in Firebase Console → Firestore → Rules. Signed-in users must be allowed to create documents there.`,
+        `Firestore permission denied on ${pathHint}. Deploy firestore.rules (npm run deploy:firestore:rules). The candidate must have saved their profile; only published profiles accept interview sessions.`,
       );
     }
     if (code === 'unauthenticated') {
       return new Error(
-        `Not signed in to Firebase (${pathHint}). Use /login with Google, then open this interview link again.`,
+        `Firestore denied access on ${pathHint}. Deploy the latest firestore.rules (npm run deploy:firestore:rules) so published profiles allow public interviews.`,
       );
     }
     if (code) {
@@ -105,7 +105,7 @@ export class InterviewService {
             );
           }
           throw new Error(
-            `No profile at ${pathHint}. The candidate (${profileId}) must sign in and complete Save & train AI on /profile before anyone can interview them. If you are testing yourself, use the same Google account for both profile and interview.`,
+            `No profile at ${pathHint}. The candidate must sign in, complete their profile at /profile, and click Save & train AI before anyone can start an interview.`,
           );
         }
       });
@@ -116,6 +116,18 @@ export class InterviewService {
           e.message.startsWith('No profile document at'))
       ) {
         throw e;
+      }
+      const code =
+        e !== null &&
+        typeof e === 'object' &&
+        'code' in e &&
+        typeof (e as { code: unknown }).code === 'string'
+          ? (e as { code: string }).code
+          : null;
+      if (code === 'permission-denied') {
+        throw new Error(
+          `No published profile at ${pathHint}. The candidate must save their profile at /profile before interviews can start.`,
+        );
       }
       throw this.mapFirestoreWriteError(e, pathHint);
     }
