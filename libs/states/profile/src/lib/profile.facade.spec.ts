@@ -65,7 +65,7 @@ describe('ProfileFacade', () => {
   it('ingestToRAG() forwards arguments to the store', async () => {
     await facade.ingestToRAG('p1', 'cv', []);
 
-    expect(storeMock.ingestToRAG).toHaveBeenCalledWith('p1', 'cv', []);
+    expect(storeMock.ingestToRAG).toHaveBeenCalledWith('p1', 'cv', [], []);
   });
 
   it('reportInvalidForm() delegates to the store', () => {

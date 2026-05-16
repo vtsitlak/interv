@@ -170,7 +170,7 @@ export class ProfileComponent implements OnInit {
 
     const profile = this.facade.profile();
     if (profile) {
-      await this.facade.ingestToRAG(profile.id, cvText, personalQA);
+      await this.facade.ingestToRAG(profile.id, cvText, personalQA, links);
     }
   }
 }

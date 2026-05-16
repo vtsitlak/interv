@@ -9,7 +9,14 @@ import {
 } from '@angular/fire/firestore';
 import type { User } from 'firebase/auth';
 import { API_URL } from '@interv/util';
-import type { Profile, QAPair } from '@interv/models';
+import type { Profile, ProfileLink, QAPair } from '@interv/models';
+
+export interface IngestResult {
+  linksScraped?: number;
+  linksSkipped?: number;
+  skippedReason?: string | null;
+  warning?: string | null;
+}
 import { filter, firstValueFrom, map, race, take, timer } from 'rxjs';
 
 const CURRENT_USER_TIMEOUT_MS = 5000;
@@ -68,14 +75,22 @@ export class ProfileService {
     profileId: string,
     cvText: string,
     personalQA: QAPair[],
-  ): Promise<void> {
+    links: ProfileLink[] = [],
+  ): Promise<IngestResult> {
     const url = `${this.apiUrl}/ingest/${profileId}`;
+    const linkPayload = links
+      .filter((link) => link.url?.trim())
+      .map((link) => ({
+        label: link.label?.trim() ?? '',
+        url: link.url.trim(),
+      }));
+
     let response: Response;
     try {
       response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cvText, personalQA }),
+        body: JSON.stringify({ cvText, personalQA, links: linkPayload }),
       });
     } catch {
       throw new Error(
@@ -88,5 +103,14 @@ export class ProfileService {
         `Ingestion failed (${response.status})${detail ? `: ${detail}` : ''}`,
       );
     }
+
+    const result = (await response.json()) as IngestResult;
+    if (result.skippedReason) {
+      console.warn('Intervai:', result.skippedReason);
+    }
+    if (result.warning) {
+      console.warn('Intervai:', result.warning);
+    }
+    return result;
   }
 }

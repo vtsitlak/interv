@@ -3,27 +3,39 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function profileDoc(profileId) {
+      return get(/databases/$(database)/documents/profiles/$(profileId));
+    }
+
+    function profileIsPublished(profileId) {
+      return profileDoc(profileId).data.get('isPublished', false) == true;
+    }
+
     /**
      * Candidate profile document (typically profiles/{firebaseAuthUid}).
-     * Owners write their own doc; authenticated recruiters need read access for context.
+     * Owners read/write their own doc; anyone may read published profiles (share link).
      */
     match /profiles/{profileId} {
-      allow read: if request.auth != null;
+      allow read: if request.auth != null && request.auth.uid == profileId
+        || (resource != null && resource.data.get('isPublished', false) == true);
 
       allow create: if request.auth != null && request.auth.uid == profileId;
 
       allow update, delete: if request.auth != null && request.auth.uid == profileId;
 
       /**
-       * Recruiter interview sessions live under profiles/{candidateId}/interviews/{docId}.
-       * The recruiter is usually not candidateId — rules must NOT require uid == profileId here.
+       * Interview sessions under profiles/{candidateId}/interviews/{docId}.
+       * Recruiters often have no account — allow create/update when the profile is published.
        */
       match /interviews/{interviewId} {
-        allow read: if request.auth != null;
+        allow read: if request.auth != null
+          || profileIsPublished(profileId);
 
-        allow create: if request.auth != null;
+        allow create: if profileIsPublished(profileId)
+          && request.resource.data.profileId == profileId
+          && request.resource.data.status == 'in_progress';
 
-        allow update: if request.auth != null;
+        allow update: if profileIsPublished(profileId);
 
         allow delete: if request.auth != null && request.auth.uid == profileId;
       }

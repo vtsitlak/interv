@@ -6,7 +6,7 @@ import {
   withMethods,
   withState,
 } from '@ngrx/signals';
-import type { Profile, QAPair } from '@interv/models';
+import type { Profile, ProfileLink, QAPair } from '@interv/models';
 import {
   errMessage,
   INVALID_FORM_MESSAGE,
@@ -99,6 +99,7 @@ export const ProfileStore = signalStore(
         profileId: string,
         cvText: string,
         personalQA: QAPair[],
+        links: ProfileLink[] = [],
       ): Promise<void> {
         patchState(store, {
           isIngesting: true,
@@ -106,10 +107,22 @@ export const ProfileStore = signalStore(
           successMessage: null,
         });
         try {
-          await profileService.ingest(profileId, cvText, personalQA);
+          const result = await profileService.ingest(
+            profileId,
+            cvText,
+            personalQA,
+            links,
+          );
+          let successMessage = PROFILE_SAVED_MESSAGE;
+          if (result.linksScraped && result.linksScraped > 0) {
+            successMessage += ` Ingested content from ${result.linksScraped} link(s).`;
+          }
+          if (result.skippedReason) {
+            successMessage += ` ${result.skippedReason}`;
+          }
           patchState(store, {
             isIngesting: false,
-            successMessage: PROFILE_SAVED_MESSAGE,
+            successMessage,
             error: null,
           });
         } catch (e: unknown) {

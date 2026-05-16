@@ -31,8 +31,13 @@ def chunk_text(text: str, chunk_size: int = 500, overlap: int = 50) -> list[str]
     return chunks
 
 
-def ingest_profile(profile_id: str, cv_text: str, personal_qa: list[dict[str, Any]]) -> int:
-    """Replace Chroma collection for this profile with CV + Q&A chunks."""
+def ingest_profile(
+    profile_id: str,
+    cv_text: str,
+    personal_qa: list[dict[str, Any]],
+    scraped_links: list[dict[str, Any]] | None = None,
+) -> int:
+    """Replace Chroma collection for this profile with CV, Q&A, and link chunks."""
     if not is_vector_store_available():
         reason = vector_store_unavailable_reason() or "unknown"
         logger.warning("Skipping RAG ingest for %s: %s", profile_id, reason)
@@ -40,6 +45,7 @@ def ingest_profile(profile_id: str, cv_text: str, personal_qa: list[dict[str, An
 
     delete_collection(profile_id)
 
+    link_items = scraped_links or []
     documents: list[dict] = []
     cv_chunks = chunk_text(cv_text)
     for i, chunk in enumerate(cv_chunks):
@@ -64,6 +70,24 @@ def ingest_profile(profile_id: str, cv_text: str, personal_qa: list[dict[str, An
                 "metadata": {"type": "qa", "profile_id": str(profile_id)},
             }
         )
+
+    for i, link in enumerate(link_items):
+        label = str(link.get("label") or link.get("url") or "link")
+        url = str(link.get("url") or "")
+        link_text = str(link.get("text") or "")
+        for j, chunk in enumerate(chunk_text(link_text)):
+            documents.append(
+                {
+                    "id": f"{profile_id}_link_{i}_{j}",
+                    "text": f"From {label} ({url}):\n{chunk}",
+                    "metadata": {
+                        "type": "link",
+                        "label": label,
+                        "url": url,
+                        "profile_id": str(profile_id),
+                    },
+                }
+            )
 
     if documents:
         upsert_documents(profile_id, documents)
