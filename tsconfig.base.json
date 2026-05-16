@@ -22,7 +22,8 @@
       "@interv/recruiter": ["./libs/recruiter/src/index.ts"],
       "@interv/state-auth": ["./libs/states/auth/src/index.ts"],
       "@interv/state-profile": ["./libs/states/profile/src/index.ts"],
-      "@interv/state-interview": ["./libs/states/interview/src/index.ts"]
+      "@interv/state-interview": ["./libs/states/interview/src/index.ts"],
+      "@interv/state-dashboard": ["./libs/states/dashboard/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
