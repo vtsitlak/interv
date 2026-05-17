@@ -16,28 +16,28 @@ export const appRoutes: Routes = [
     path: 'dashboard',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('@interv/candidate').then(m => m.DashboardComponent),
+      import('@interv/candidate-dashboard').then(m => m.DashboardComponent),
   },
   {
     path: 'profile',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('@interv/candidate').then(m => m.ProfileComponent),
+      import('@interv/candidate-profile/train').then(m => m.ProfileTrainComponent),
   },
   {
-    path: 'p/:profileId',
+    path: 'candidate/:profileId',
     loadComponent: () =>
-      import('@interv/recruiter').then(m => m.CandidateProfileComponent),
+      import('@interv/candidate-profile').then(m => m.ProfileComponent),
   },
   {
-    path: 'p/:profileId/interview',
+    path: 'candidate/:profileId/interview',
     loadComponent: () =>
-      import('@interv/recruiter').then(m => m.InterviewComponent),
+      import('@interv/recruiter-interview').then(m => m.InterviewComponent),
   },
   {
-    path: 'p/:profileId/feedback',
+    path: 'candidate/:profileId/feedback',
     loadComponent: () =>
-      import('@interv/recruiter').then(m => m.FeedbackComponent),
+      import('@interv/recruiter-feedback').then(m => m.FeedbackComponent),
   },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: '**', redirectTo: 'login' },

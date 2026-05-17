@@ -14,7 +14,7 @@ init_firebase()
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import chat, ingest, sessions
+from routers import chat, ingest, interviews, profiles, sessions
 
 _DEFAULT_ORIGINS = [
     "http://localhost:4200",
@@ -38,6 +38,8 @@ app.add_middleware(
 
 app.include_router(chat.router)
 app.include_router(ingest.router)
+app.include_router(interviews.router)
+app.include_router(profiles.router)
 app.include_router(sessions.router)
 
 @app.get("/health")

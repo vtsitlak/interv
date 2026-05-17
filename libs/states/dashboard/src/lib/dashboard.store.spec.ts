@@ -12,6 +12,7 @@ const sampleInterview: InterviewSummary = {
   status: 'complete',
   feedbackScore: 8,
   feedbackText: 'Great fit',
+  aiSummary: 'Recruiter learned about Angular experience.',
   messageCount: 4,
   createdAt: new Date('2025-01-01'),
   completedAt: new Date('2025-01-02'),

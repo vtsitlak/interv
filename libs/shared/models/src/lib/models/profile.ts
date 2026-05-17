@@ -1,8 +1,9 @@
 import { Timestamp } from 'firebase/firestore';
+import type { WorkPreference } from './work-preferences';
 
 export interface ProfileLink {
-  label: string;
-  url: string;
+  link: string;
+  description: string;
 }
 
 export interface QAPair {
@@ -18,8 +19,11 @@ export interface Profile {
   photo: string;
   summary: string;
   cvText: string;
+  linkedIn?: string;
+  workPreferences?: WorkPreference[];
   links: ProfileLink[];
   personalQA: QAPair[];
+  skills?: string[];
   isPublished: boolean;
   shareUrl: string;
   createdAt: Timestamp;

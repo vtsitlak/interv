@@ -21,6 +21,33 @@ def _to_gemini_role(role: str) -> str:
     return 'model' if role == 'assistant' else 'user'
 
 
+async def generate_text(
+    prompt: str,
+    *,
+    system_instruction: str = '',
+    max_output_tokens: int = 1024,
+) -> str:
+    """Single non-streaming Gemini completion."""
+    client = _client()
+    if client is None:
+        return ''
+
+    config_kwargs: dict = {'max_output_tokens': max_output_tokens}
+    if system_instruction.strip():
+        config_kwargs['system_instruction'] = system_instruction.strip()
+
+    try:
+        response = await client.aio.models.generate_content(
+            model=_MODEL,
+            contents=prompt,
+            config=types.GenerateContentConfig(**config_kwargs),
+        )
+        text = getattr(response, 'text', None) or ''
+        return text.strip()
+    except Exception:  # noqa: BLE001
+        return ''
+
+
 async def stream_response(
     system_prompt: str,
     history: list[dict[str, str]],

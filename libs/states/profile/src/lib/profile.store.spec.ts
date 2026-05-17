@@ -21,7 +21,7 @@ const sampleProfile = {
   links: [],
   personalQA: [],
   isPublished: true,
-  shareUrl: '/p/u1',
+  shareUrl: '/candidate/u1',
 } as unknown as Profile;
 
 describe('ProfileStore', () => {
@@ -56,7 +56,7 @@ describe('ProfileStore', () => {
     expect(store.profile()).toBe(sampleProfile);
     expect(store.isLoading()).toBe(false);
     expect(store.isComplete()).toBe(true);
-    expect(store.shareUrl()).toBe('/p/u1');
+    expect(store.shareUrl()).toBe('/candidate/u1');
   });
 
   it('loadProfile() reports an error when no user is signed in', async () => {
@@ -102,7 +102,10 @@ describe('ProfileStore', () => {
     });
 
     await store.ingestToRAG('p1', 'cv', [], [
-      { label: 'GitHub', url: 'https://github.com/user' },
+      {
+        description: 'My GitHub profile',
+        link: 'https://github.com/user',
+      },
     ]);
 
     expect(store.successMessage()).toContain('Ingested content from 2 link(s)');

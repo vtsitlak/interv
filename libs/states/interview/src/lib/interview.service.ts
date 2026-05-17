@@ -12,7 +12,8 @@ import {
   updateDoc,
 } from '@angular/fire/firestore';
 import { Auth } from '@angular/fire/auth';
-import { WS_URL } from '@interv/util';
+import { API_URL, WS_URL } from '@interv/util';
+import type { Profile } from '@interv/models';
 import {
   ASSISTANT_PROCESSING_SIGNAL,
   ASSISTANT_STREAM_DONE_SIGNAL,
@@ -21,6 +22,12 @@ import {
   INTERVIEW_COMPLETE_SIGNAL,
   RecruiterInfo,
 } from './interview.models';
+
+import {
+  buildGenericFallbackQuestions,
+  buildSuggestedQuestionsFromProfile,
+  mergeSuggestedQuestions,
+} from './suggested-questions';
 
 /** Passed when the browser closes the WebSocket (failure codes help debug dev vs prod). */
 export interface WsCloseMeta {
@@ -35,6 +42,7 @@ export class InterviewService {
   private readonly firestore = inject(Firestore);
   private readonly auth = inject(Auth);
   private readonly wsUrl = inject(WS_URL);
+  private readonly apiUrl = inject(API_URL);
   private socket: WebSocket | null = null;
 
   /** Firestore calls invoked from clicks / websocket must run inside an injection context. */
@@ -251,6 +259,136 @@ export class InterviewService {
             timestamp: Timestamp.fromDate(message.timestamp),
           }),
         });
+      });
+    } catch (e: unknown) {
+      throw this.mapFirestoreWriteError(e, pathHint);
+    }
+  }
+
+  async submitFeedback(
+    profileId: string,
+    interviewId: string,
+    score: number,
+    text: string,
+  ): Promise<void> {
+    const pathHint = `profiles/${profileId}/interviews/${interviewId}`;
+    const fs = this.firestore;
+    try {
+      await this.runFirestore(async () => {
+        const ref = doc(fs, 'profiles', profileId, 'interviews', interviewId);
+        await updateDoc(ref, {
+          feedback: {
+            score,
+            text,
+            submittedAt: serverTimestamp(),
+          },
+        });
+      });
+    } catch (e: unknown) {
+      throw this.mapFirestoreWriteError(e, pathHint);
+    }
+  }
+
+  async getPublicProfile(profileId: string): Promise<Profile | null> {
+    const snap = await getDoc(doc(this.firestore, 'profiles', profileId));
+    return snap.exists() ? (snap.data() as Profile) : null;
+  }
+
+  async getInterviewMessages(
+    profileId: string,
+    interviewId: string,
+  ): Promise<ChatMessage[]> {
+    const pathHint = `profiles/${profileId}/interviews/${interviewId}`;
+    const fs = this.firestore;
+    try {
+      return await this.runFirestore(async () => {
+        const ref = doc(fs, 'profiles', profileId, 'interviews', interviewId);
+        const snap = await getDoc(ref);
+        if (!snap.exists()) {
+          return [];
+        }
+        const data = snap.data() as {
+          messages?: {
+            role?: string;
+            content?: string;
+            timestamp?: Timestamp;
+          }[];
+        };
+        return (data.messages ?? []).map((message) => ({
+          role: message.role === 'assistant' ? 'assistant' : 'user',
+          content: message.content ?? '',
+          timestamp: message.timestamp?.toDate() ?? new Date(),
+        }));
+      });
+    } catch (e: unknown) {
+      throw this.mapFirestoreWriteError(e, pathHint);
+    }
+  }
+
+  async getSuggestedQuestions(profileId: string): Promise<string[]> {
+    const profile = await this.getPublicProfile(profileId);
+    const context = profile ?? {
+      name: 'the candidate',
+      title: '',
+    };
+
+    const fromApi = await this.fetchSuggestedQuestionsFromApi(profileId);
+    const fromProfile = profile
+      ? buildSuggestedQuestionsFromProfile(profile)
+      : [];
+
+    const merged = mergeSuggestedQuestions(
+      [fromApi, fromProfile],
+      context,
+      5,
+    );
+
+    if (merged.length > 0) {
+      return merged;
+    }
+
+    return buildGenericFallbackQuestions(context, 5);
+  }
+
+  private async fetchSuggestedQuestionsFromApi(
+    profileId: string,
+  ): Promise<string[]> {
+    const url = `${this.apiUrl}/profiles/${profileId}/suggested-questions`;
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        return [];
+      }
+      const data = (await response.json()) as { questions?: string[] };
+      return (data.questions ?? []).map((q) => q.trim()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+
+  async requestInterviewSummary(
+    profileId: string,
+    interviewId: string,
+  ): Promise<void> {
+    const url = `${this.apiUrl}/interviews/${profileId}/${interviewId}/summarize`;
+    try {
+      await fetch(url, { method: 'POST' });
+    } catch {
+      /* non-blocking */
+    }
+  }
+
+  async extendMessageLimit(
+    profileId: string,
+    interviewId: string,
+    maxMessages: number,
+  ): Promise<void> {
+    const pathHint = `profiles/${profileId}/interviews/${interviewId}`;
+    const fs = this.firestore;
+    try {
+      await this.runFirestore(async () => {
+        const ref = doc(fs, 'profiles', profileId, 'interviews', interviewId);
+        await updateDoc(ref, { maxMessages });
       });
     } catch (e: unknown) {
       throw this.mapFirestoreWriteError(e, pathHint);

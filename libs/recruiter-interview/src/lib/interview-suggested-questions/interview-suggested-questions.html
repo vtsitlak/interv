@@ -1,0 +1,25 @@
+@if (visible()) {
+  <div class="max-w-2xl mx-auto mb-3">
+    <p class="text-xs text-base-content/50 mb-2">Suggested questions</p>
+    @if (isLoading()) {
+      <div class="flex items-center gap-2 text-xs text-base-content/50 py-1">
+        <span class="loading loading-spinner loading-xs"></span>
+        Preparing suggestions…
+      </div>
+    } @else {
+      <div class="flex flex-wrap gap-2">
+        @for (q of questions(); track q) {
+          <button
+            type="button"
+            class="btn btn-sm btn-outline text-left h-auto min-h-8 py-1 whitespace-normal"
+            [class.btn-disabled]="isUsed(q)"
+            [disabled]="!canSendMessage() || isUsed(q)"
+            (click)="onSelect(q)"
+          >
+            {{ q }}
+          </button>
+        }
+      </div>
+    }
+  </div>
+}

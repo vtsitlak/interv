@@ -72,18 +72,20 @@ def ingest_profile(
         )
 
     for i, link in enumerate(link_items):
-        label = str(link.get("label") or link.get("url") or "link")
-        url = str(link.get("url") or "")
+        description = str(
+            link.get("description") or link.get("label") or link.get("link") or "link"
+        )
+        href = str(link.get("link") or link.get("url") or "")
         link_text = str(link.get("text") or "")
         for j, chunk in enumerate(chunk_text(link_text)):
             documents.append(
                 {
                     "id": f"{profile_id}_link_{i}_{j}",
-                    "text": f"From {label} ({url}):\n{chunk}",
+                    "text": f"From {description} ({href}):\n{chunk}",
                     "metadata": {
                         "type": "link",
-                        "label": label,
-                        "url": url,
+                        "description": description,
+                        "link": href,
                         "profile_id": str(profile_id),
                     },
                 }

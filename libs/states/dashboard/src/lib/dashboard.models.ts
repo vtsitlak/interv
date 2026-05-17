@@ -6,6 +6,7 @@ export interface InterviewSummary {
   status: 'in_progress' | 'complete';
   feedbackScore: number | null;
   feedbackText: string | null;
+  aiSummary: string | null;
   messageCount: number;
   createdAt: Date;
   completedAt: Date | null;

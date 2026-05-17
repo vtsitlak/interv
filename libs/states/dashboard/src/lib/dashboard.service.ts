@@ -19,6 +19,7 @@ interface InterviewDoc {
   recruiterCompany?: string;
   status?: InterviewSummary['status'];
   feedback?: Feedback | null;
+  aiSummary?: string | null;
   messages?: { role: string; content: string; timestamp?: Timestamp }[];
   createdAt?: Timestamp;
   completedAt?: Timestamp | null;
@@ -59,7 +60,11 @@ export class DashboardService {
         status: data.status ?? 'in_progress',
         feedbackScore: feedback?.score ?? null,
         feedbackText: feedback?.text ?? null,
-        messageCount: data.messages?.length ?? 0,
+        aiSummary: data.aiSummary ?? null,
+        messageCount:
+          data.messages?.filter((m) => m.role === 'user').length ??
+          data.messages?.length ??
+          0,
         createdAt: data.createdAt?.toDate() ?? new Date(),
         completedAt: data.completedAt?.toDate() ?? null,
       };

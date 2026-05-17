@@ -28,7 +28,7 @@ export const ProfileStore = signalStore(
     }),
     shareUrl: computed(() => {
       const p = profile();
-      return p ? `/p/${p.id}` : null;
+      return p ? `/candidate/${p.id}` : null;
     }),
   })),
   withMethods((store) => {
