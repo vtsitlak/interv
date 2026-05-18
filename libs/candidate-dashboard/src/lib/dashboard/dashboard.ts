@@ -43,6 +43,11 @@ export class DashboardComponent implements OnInit {
     void this.router.navigate(['/candidate/train-profile']);
   }
 
+  onHideFromRecruitersChange(event: Event): void {
+    const hidden = (event.target as HTMLInputElement).checked;
+    void this.profile.setProfileDiscoverability(!hidden);
+  }
+
   async copyPublicProfileLink(): Promise<void> {
     const sharePath = this.profile.shareUrl();
     const uid = this.auth.user()?.uid;

@@ -1,9 +1,9 @@
-<div class="min-h-screen flex items-center justify-center bg-base-200">
+<div class="min-h-screen flex items-center justify-center bg-base-200 px-4">
   <div class="card w-full max-w-sm bg-base-100 shadow-xl">
     <div class="card-body">
-      <h2 class="card-title text-2xl font-bold mb-4">
-        Create your Intervai profile
-      </h2>
+      <a routerLink="/" class="link link-hover text-sm mb-2">← Back to home</a>
+      <h2 class="card-title text-2xl font-bold mb-1">{{ copy().registerTitle }}</h2>
+      <p class="text-sm text-base-content/60 mb-4">{{ copy().registerSubtitle }}</p>
 
       @if (facade.error()) {
         <div class="alert alert-error text-sm">{{ facade.error() }}</div>
@@ -18,20 +18,8 @@
             [formField]="registerForm.name"
             autocomplete="name"
             class="input input-bordered w-full"
-            [class.input-error]="
-              registerForm.name().touched() && registerForm.name().invalid()
-            "
-            placeholder="Vasileios Tsitlakidis"
+            placeholder="Jane Smith"
           />
-          <div class="min-h-5">
-            @if (
-              registerForm.name().touched() && registerForm.name().invalid()
-            ) {
-              @for (err of registerForm.name().errors(); track err.kind) {
-                <p class="text-error text-xs mt-1">{{ err.message }}</p>
-              }
-            }
-          </div>
         </fieldset>
 
         <fieldset class="fieldset mt-2">
@@ -42,20 +30,8 @@
             [formField]="registerForm.email"
             autocomplete="email"
             class="input input-bordered w-full"
-            [class.input-error]="
-              registerForm.email().touched() && registerForm.email().invalid()
-            "
             placeholder="you@example.com"
           />
-          <div class="min-h-5">
-            @if (
-              registerForm.email().touched() && registerForm.email().invalid()
-            ) {
-              @for (err of registerForm.email().errors(); track err.kind) {
-                <p class="text-error text-xs mt-1">{{ err.message }}</p>
-              }
-            }
-          </div>
         </fieldset>
 
         <fieldset class="fieldset mt-2">
@@ -66,33 +42,20 @@
             [formField]="registerForm.password"
             autocomplete="new-password"
             class="input input-bordered w-full"
-            [class.input-error]="
-              registerForm.password().touched() &&
-              registerForm.password().invalid()
-            "
             placeholder="••••••••"
           />
-          <div class="min-h-5">
-            @if (
-              registerForm.password().touched() &&
-              registerForm.password().invalid()
-            ) {
-              @for (err of registerForm.password().errors(); track err.kind) {
-                <p class="text-error text-xs mt-1">{{ err.message }}</p>
-              }
-            }
-          </div>
         </fieldset>
 
         <button
           type="submit"
-          class="btn btn-primary w-full mt-6"
+          class="btn w-full mt-6"
+          [class]="copy().btnClass"
           [disabled]="facade.loading() || registerForm().invalid()"
         >
           @if (facade.loading()) {
             <span class="loading loading-spinner loading-sm"></span>
           } @else {
-            Create account
+            {{ copy().createAccountLabel }}
           }
         </button>
       </form>
@@ -102,7 +65,7 @@
       <button
         type="button"
         class="btn btn-outline w-full"
-        (click)="facade.loginWithGoogle()"
+        (click)="onGoogleSignUp()"
         [disabled]="facade.loading()"
       >
         <svg
@@ -117,7 +80,9 @@
 
       <p class="text-center text-sm mt-4">
         Already have an account?
-        <a routerLink="/login" class="link link-primary">Sign in</a>
+        <a [routerLink]="copy().loginPath" [class]="'link ' + copy().linkClass"
+          >Sign in</a
+        >
       </p>
     </div>
   </div>

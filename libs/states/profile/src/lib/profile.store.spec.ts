@@ -27,7 +27,11 @@ const sampleProfile = {
 describe('ProfileStore', () => {
   let profileService: Pick<
     ProfileService,
-    'currentUserOrNull' | 'getProfile' | 'saveProfile' | 'ingest'
+    | 'currentUserOrNull'
+    | 'getProfile'
+    | 'saveProfile'
+    | 'setProfileVisibility'
+    | 'ingest'
   >;
   let store: InstanceType<typeof ProfileStore>;
 
@@ -36,6 +40,10 @@ describe('ProfileStore', () => {
       currentUserOrNull: vi.fn().mockResolvedValue({ uid: 'u1' }),
       getProfile: vi.fn().mockResolvedValue(sampleProfile),
       saveProfile: vi.fn().mockResolvedValue(sampleProfile),
+      setProfileVisibility: vi.fn().mockResolvedValue({
+        ...sampleProfile,
+        isPublished: false,
+      }),
       ingest: vi.fn().mockResolvedValue({}),
     };
 
@@ -128,5 +136,17 @@ describe('ProfileStore', () => {
 
     expect(store.error()).toBe(INVALID_FORM_MESSAGE);
     expect(store.successMessage()).toBeNull();
+  });
+
+  it('setProfileDiscoverability() updates visibility via the service', async () => {
+    await store.loadProfile();
+    await store.setProfileDiscoverability(false);
+
+    expect(profileService.setProfileVisibility).toHaveBeenCalledWith(
+      'u1',
+      false,
+    );
+    expect(store.isDiscoverableByRecruiters()).toBe(false);
+    expect(store.successMessage()).toContain('hidden');
   });
 });

@@ -7,7 +7,7 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthFacade } from '@interv/state-auth';
 import {
   InterviewFacade,
@@ -33,9 +33,12 @@ export class InterviewComponent implements OnInit, OnDestroy {
   private readonly authFacade = inject(AuthFacade);
   private readonly recruiterFacade = inject(RecruiterFacade);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   readonly profileId = signal('');
+  /** Hide recruiter setup form (practice or authenticated recruiter). */
   readonly skipSetup = signal(false);
+  readonly isPracticeMode = signal(false);
   readonly isSetupComplete = signal(false);
 
   readonly chatText = signal('');
@@ -52,8 +55,12 @@ export class InterviewComponent implements OnInit, OnDestroy {
       this.profileId.set(routeProfileId);
     }
 
-    const testMode = this.route.snapshot.data['testMode'] === true;
-    this.skipSetup.set(testMode);
+    const testMode = this.routeDataFlag('testMode');
+    const skipRecruiterSetup =
+      this.routeDataFlag('skipRecruiterSetup') || this.authFacade.isRecruiter();
+
+    this.isPracticeMode.set(testMode);
+    this.skipSetup.set(testMode || skipRecruiterSetup);
 
     if (testMode) {
       const uid = this.authFacade.user()?.uid;
@@ -61,7 +68,24 @@ export class InterviewComponent implements OnInit, OnDestroy {
         this.profileId.set(uid);
       }
       void this.startPracticeInterview();
+      return;
     }
+
+    if (skipRecruiterSetup) {
+      void this.startAuthenticatedRecruiterInterview();
+    }
+  }
+
+  /** Walk the activated route tree (lazy routes nest `data` on parents). */
+  private routeDataFlag(key: string): boolean {
+    let route: ActivatedRoute | null = this.route;
+    while (route) {
+      if (route.snapshot.data[key] === true) {
+        return true;
+      }
+      route = route.firstChild;
+    }
+    return false;
   }
 
   ngOnDestroy(): void {
@@ -114,7 +138,7 @@ export class InterviewComponent implements OnInit, OnDestroy {
 
   onConfirmEnd(): void {
     void this.facade.confirmEndInterview({
-      skipFeedback: this.skipSetup(),
+      skipFeedback: this.isPracticeMode(),
     });
   }
 
@@ -137,6 +161,7 @@ export class InterviewComponent implements OnInit, OnDestroy {
     await this.recruiterFacade.loadProfile();
     const info = this.recruiterFacade.recruiterInfo();
     if (!info) {
+      await this.router.navigate(['/recruiter/profile']);
       return;
     }
 

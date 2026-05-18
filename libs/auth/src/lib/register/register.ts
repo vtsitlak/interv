@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import {
   email,
   form,
@@ -6,8 +13,12 @@ import {
   minLength,
   required,
 } from '@angular/forms/signals';
-import { RouterLink } from '@angular/router';
-import { AuthFacade } from '@interv/state-auth';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import {
+  AUTH_AUDIENCE_COPY,
+  AuthFacade,
+  type AuthAudience,
+} from '@interv/state-auth';
 import { SI_GOOGLE_PATH } from '@interv/ui';
 
 interface RegisterFormModel {
@@ -26,9 +37,22 @@ interface RegisterFormModel {
 })
 export class RegisterComponent {
   readonly facade = inject(AuthFacade);
+  private readonly route = inject(ActivatedRoute);
 
-  /** Simple Icons Google glyph (`currentColor` fill in template). */
+  readonly audience = input<AuthAudience>('candidate');
+
   readonly googleBrandPath = SI_GOOGLE_PATH;
+
+  readonly copy = computed(
+    () => AUTH_AUDIENCE_COPY[this.resolvedAudience()],
+  );
+
+  readonly resolvedAudience = computed<AuthAudience>(() => {
+    const fromRoute = this.route.snapshot.data['authAudience'] as
+      | AuthAudience
+      | undefined;
+    return fromRoute ?? this.audience();
+  });
 
   readonly registerModel = signal<RegisterFormModel>({
     name: '',
@@ -47,8 +71,14 @@ export class RegisterComponent {
   });
 
   onRegister(): void {
-    if (this.registerForm().invalid()) return;
+    if (this.registerForm().invalid()) {
+      return;
+    }
     const { name, email: emailValue, password } = this.registerModel();
-    void this.facade.register(name, emailValue, password);
+    void this.facade.register(name, emailValue, password, this.resolvedAudience());
+  }
+
+  onGoogleSignUp(): void {
+    void this.facade.loginWithGoogle(this.resolvedAudience(), 'register');
   }
 }

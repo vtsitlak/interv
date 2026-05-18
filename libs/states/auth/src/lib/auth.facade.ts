@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { RecruiterFacade } from '@interv/state-recruiter';
+import type { AuthAudience } from './auth-audience';
 import { AuthStore } from './auth.store';
 import type { ProfileUser } from './auth.models';
 
@@ -25,66 +26,46 @@ export class AuthFacade {
     }
   }
 
-  async login(email: string, password: string): Promise<void> {
-    await this.store.login(email, password);
-    if (this.store.user()) {
-      await this.navigateAfterAuth();
-    }
-  }
-
-  async loginAsRecruiter(email: string, password: string): Promise<void> {
+  async login(
+    email: string,
+    password: string,
+    audience: AuthAudience = 'candidate',
+  ): Promise<void> {
     await this.store.login(email, password);
     if (!this.store.user()) {
       return;
     }
-    if (!this.store.isRecruiter()) {
-      await this.store.logout();
-      this.store.setError(
-        'This account is not a recruiter. Sign in with a recruiter account or register as a recruiter.',
-      );
-      return;
-    }
-    await this.navigateAfterAuth();
-  }
-
-  async register(name: string, email: string, password: string): Promise<void> {
-    await this.store.register(name, email, password);
-    if (this.store.user()) {
-      await this.router.navigate(['/candidate/dashboard']);
+    const ok = await this.store.validateAudience(audience);
+    if (ok) {
+      await this.navigateAfterAuth();
     }
   }
 
-  async registerRecruiter(
+  async register(
     name: string,
     email: string,
     password: string,
+    audience: AuthAudience = 'candidate',
   ): Promise<void> {
-    await this.store.registerRecruiter(name, email, password);
-    if (this.store.user()) {
-      await this.router.navigate(['/recruiter/profile']);
-    }
-  }
-
-  async loginWithGoogle(): Promise<void> {
-    await this.store.loginWithGoogle();
-    if (this.store.user()) {
-      await this.navigateAfterAuth();
-    }
-  }
-
-  async loginWithGoogleAsRecruiter(): Promise<void> {
-    await this.store.loginWithGoogle();
+    await this.store.register(name, email, password, audience);
     if (!this.store.user()) {
       return;
     }
-    if (!this.store.isRecruiter()) {
-      await this.store.logout();
-      this.store.setError(
-        'This account is not a recruiter. Sign in with a recruiter account or register as a recruiter.',
-      );
+    if (audience === 'recruiter') {
+      await this.router.navigate(['/recruiter/profile']);
       return;
     }
-    await this.navigateAfterAuth();
+    await this.router.navigate(['/candidate/dashboard']);
+  }
+
+  async loginWithGoogle(
+    audience: AuthAudience = 'candidate',
+    mode: 'login' | 'register' = 'login',
+  ): Promise<void> {
+    await this.store.loginWithGoogle(audience, mode);
+    if (this.store.user()) {
+      await this.navigateAfterAuth();
+    }
   }
 
   async logout(): Promise<void> {

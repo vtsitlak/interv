@@ -55,25 +55,21 @@ function errMessage(e: unknown): string {
 export const RecruiterStore = signalStore(
   { providedIn: 'root' },
   withState<RecruiterState>(initialState),
-  withComputed(({ recruiterProfile, interviews }) => ({
-    isProfileComplete: computed(() =>
-      isRecruiterProfileComplete(recruiterProfile()),
-    ),
-    totalInterviews: computed(() => interviews().length),
-    completedInterviews: computed(
-      () => interviews().filter((i) => i.status === 'complete').length,
-    ),
-    averageScore: computed(() => {
-      const scored = interviews()
-        .map((i) => i.feedbackScore)
-        .filter((s): s is number => s !== null);
-      if (!scored.length) {
-        return null;
-      }
-      const sum = scored.reduce((a, b) => a + b, 0);
-      return Math.round((sum / scored.length) * 10) / 10;
-    }),
-  })),
+  withComputed((store) => {
+    const service = inject(RecruiterService);
+    return {
+      isProfileComplete: computed(() =>
+        isRecruiterProfileComplete(store.recruiterProfile()),
+      ),
+      interviewsByCandidateId: computed(() =>
+        service.indexInterviewsByCandidate(store.interviews()),
+      ),
+      totalInterviews: computed(() => store.interviews().length),
+      completedInterviews: computed(
+        () => store.interviews().filter((i) => i.status === 'complete').length,
+      ),
+    };
+  }),
   withMethods((store) => {
     const service = inject(RecruiterService);
 
@@ -117,12 +113,48 @@ export const RecruiterStore = signalStore(
       async searchCandidates(): Promise<void> {
         patchState(store, { searchLoading: true, error: null });
         try {
-          const results = await service.searchPublishedCandidates(
-            store.searchQuery(),
+          const [candidates, interviews] = await Promise.all([
+            service.searchPublishedCandidates(store.searchQuery()),
+            service.getInterviews(),
+          ]);
+          const searchResults = service.enrichCandidatesWithInterviews(
+            candidates,
+            interviews,
           );
-          patchState(store, { searchResults: results, searchLoading: false });
+          patchState(store, {
+            interviews,
+            searchResults,
+            searchLoading: false,
+          });
         } catch (e: unknown) {
           patchState(store, { searchLoading: false, error: errMessage(e) });
+        }
+      },
+
+      async refreshInterviewsAfterFeedback(
+        interviewId: string,
+      ): Promise<void> {
+        try {
+          const interviews = await service.getInterviews();
+          const selected = store.selectedInterview();
+          const updatedSelected =
+            selected?.id === interviewId
+              ? (interviews.find((i) => i.id === interviewId) ?? selected)
+              : selected;
+          patchState(store, {
+            interviews,
+            selectedInterview: updatedSelected,
+          });
+          const searchResults = service.enrichCandidatesWithInterviews(
+            store.searchResults().map((c) => ({
+              ...c,
+              latestInterview: null,
+            })),
+            interviews,
+          );
+          patchState(store, { searchResults });
+        } catch (e: unknown) {
+          patchState(store, { error: errMessage(e) });
         }
       },
 

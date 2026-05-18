@@ -78,6 +78,7 @@ export class ProfileTrainComponent implements OnInit {
   readonly isLoadingPersonalQA = signal(false);
   readonly isUploadingPhoto = signal(false);
   readonly photoUploadError = signal<string | null>(null);
+  readonly photoLoadFailed = signal(false);
   readonly profileId = signal<string | null>(null);
 
   readonly profileForm = form(this.profileModel, (path) => {
@@ -120,6 +121,7 @@ export class ProfileTrainComponent implements OnInit {
         ? [...(p.personalQA ?? [])]
         : [];
 
+      this.photoLoadFailed.set(false);
       this.profileModel.set({
         name: p.name,
         title: p.title,
@@ -174,16 +176,26 @@ export class ProfileTrainComponent implements OnInit {
     return this.profileModel().workPreferences.includes(id);
   }
 
-  hasPhotoPreview(): boolean {
+  hasProfilePhoto(): boolean {
+    return !!this.profileModel().photo.trim() && !this.photoLoadFailed();
+  }
+
+  hasStoredPhoto(): boolean {
     return !!this.profileModel().photo.trim();
   }
 
-  photoPreview(): string {
-    return this.profileModel().photo.trim();
+  profileInitial(): string {
+    const initial = this.profileModel().name.trim().charAt(0);
+    return initial ? initial.toUpperCase() : '?';
+  }
+
+  onPhotoError(): void {
+    this.photoLoadFailed.set(true);
   }
 
   removePhoto(): void {
     this.photoUploadError.set(null);
+    this.photoLoadFailed.set(false);
     this.profileModel.update((m) => ({ ...m, photo: '' }));
   }
 
@@ -205,6 +217,7 @@ export class ProfileTrainComponent implements OnInit {
     this.isUploadingPhoto.set(true);
     try {
       const url = await this.profileService.uploadProfilePhoto(user.uid, file);
+      this.photoLoadFailed.set(false);
       this.profileModel.update((m) => ({ ...m, photo: url }));
     } catch (e: unknown) {
       this.photoUploadError.set(

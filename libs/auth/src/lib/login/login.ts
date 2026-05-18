@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import {
   email,
   form,
@@ -6,8 +13,12 @@ import {
   minLength,
   required,
 } from '@angular/forms/signals';
-import { RouterLink } from '@angular/router';
-import { AuthFacade } from '@interv/state-auth';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import {
+  AUTH_AUDIENCE_COPY,
+  AuthFacade,
+  type AuthAudience,
+} from '@interv/state-auth';
 import { SI_GOOGLE_PATH } from '@interv/ui';
 
 interface LoginFormModel {
@@ -25,9 +36,23 @@ interface LoginFormModel {
 })
 export class LoginComponent {
   readonly facade = inject(AuthFacade);
+  private readonly route = inject(ActivatedRoute);
 
-  /** Simple Icons Google glyph (`currentColor` fill in template). */
+  /** Candidate or recruiter auth UI and behavior. */
+  readonly audience = input<AuthAudience>('candidate');
+
   readonly googleBrandPath = SI_GOOGLE_PATH;
+
+  readonly copy = computed(
+    () => AUTH_AUDIENCE_COPY[this.resolvedAudience()],
+  );
+
+  readonly resolvedAudience = computed<AuthAudience>(() => {
+    const fromRoute = this.route.snapshot.data['authAudience'] as
+      | AuthAudience
+      | undefined;
+    return fromRoute ?? this.audience();
+  });
 
   readonly loginModel = signal<LoginFormModel>({
     email: '',
@@ -44,8 +69,14 @@ export class LoginComponent {
   });
 
   onLogin(): void {
-    if (this.loginForm().invalid()) return;
+    if (this.loginForm().invalid()) {
+      return;
+    }
     const { email: emailValue, password } = this.loginModel();
-    void this.facade.login(emailValue, password);
+    void this.facade.login(emailValue, password, this.resolvedAudience());
+  }
+
+  onGoogleSignIn(): void {
+    void this.facade.loginWithGoogle(this.resolvedAudience(), 'login');
   }
 }

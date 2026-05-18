@@ -3,6 +3,7 @@ import type { Profile } from '@interv/models';
 export interface ProfileState {
   profile: Profile | null;
   isSaving: boolean;
+  isUpdatingVisibility: boolean;
   isIngesting: boolean;
   isLoading: boolean;
   error: string | null;
@@ -12,6 +13,7 @@ export interface ProfileState {
 export const profileInitialState: ProfileState = {
   profile: null,
   isSaving: false,
+  isUpdatingVisibility: false,
   isIngesting: false,
   isLoading: false,
   error: null,

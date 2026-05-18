@@ -6,11 +6,12 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { RecruiterFacade, type RecruiterInterviewSummary } from '@interv/state-recruiter';
+import { InterviewFeedbackPanelComponent } from '@interv/recruiter-feedback';
 
 @Component({
   selector: 'lib-recruiter-dashboard',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, InterviewFeedbackPanelComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './recruiter-dashboard.html',
 })
@@ -35,5 +36,9 @@ export class RecruiterDashboardComponent implements OnInit {
       day: 'numeric',
       year: 'numeric',
     });
+  }
+
+  onFeedbackSaved(interviewId: string): void {
+    void this.recruiter.refreshInterviewsAfterFeedback(interviewId);
   }
 }

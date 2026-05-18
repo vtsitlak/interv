@@ -18,6 +18,7 @@ import {
   InterviewService,
   type InterviewReview,
 } from '@interv/state-interview';
+import { RecruiterFacade } from '@interv/state-recruiter';
 
 @Component({
   selector: 'lib-profile',
@@ -31,6 +32,7 @@ export class ProfileComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly interviewService = inject(InterviewService);
   private readonly profileService = inject(ProfileService);
+  readonly recruiterFacade = inject(RecruiterFacade);
 
   readonly profileId = signal('');
   readonly isOwnerView = signal(false);
@@ -113,6 +115,10 @@ export class ProfileComponent implements OnInit {
       this.route.snapshot.queryParamMap.get('interviewId') ?? '';
 
     try {
+      if (this.recruiterView()) {
+        await this.recruiterFacade.loadInterviews();
+      }
+
       const p = await this.interviewService.getPublicProfile(profileId);
       if (!p) {
         this.error.set(

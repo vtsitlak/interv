@@ -26,6 +26,7 @@ export const ProfileStore = signalStore(
       const p = profile();
       return !!(p?.name && p?.title && p?.summary && p?.cvText);
     }),
+    isDiscoverableByRecruiters: computed(() => profile()?.isPublished !== false),
     shareUrl: computed(() => {
       const p = profile();
       return p ? `/candidate/${p.id}` : null;
@@ -129,6 +130,42 @@ export const ProfileStore = signalStore(
           patchState(store, {
             error: errMessage(e),
             isIngesting: false,
+            successMessage: null,
+          });
+        }
+      },
+
+      async setProfileDiscoverability(isPublished: boolean): Promise<void> {
+        const user = await profileService.currentUserOrNull();
+        if (!user) {
+          patchState(store, {
+            error: NOT_SIGNED_IN_SAVE_MESSAGE,
+            successMessage: null,
+          });
+          return;
+        }
+
+        patchState(store, {
+          isUpdatingVisibility: true,
+          error: null,
+          successMessage: null,
+        });
+        try {
+          const profile = await profileService.setProfileVisibility(
+            user.uid,
+            isPublished,
+          );
+          patchState(store, {
+            profile,
+            isUpdatingVisibility: false,
+            successMessage: isPublished
+              ? 'Your profile is visible to recruiters in search.'
+              : 'Your profile is hidden from recruiter search.',
+          });
+        } catch (e: unknown) {
+          patchState(store, {
+            error: errMessage(e),
+            isUpdatingVisibility: false,
             successMessage: null,
           });
         }

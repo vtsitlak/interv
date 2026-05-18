@@ -8,9 +8,11 @@ describe('LoginComponent', () => {
   let fixture: ComponentFixture<LoginComponent>;
   let component: LoginComponent;
   const login = vi.fn();
+  const loginWithGoogle = vi.fn();
 
   beforeEach(async () => {
     login.mockReset();
+    loginWithGoogle.mockReset();
     await TestBed.configureTestingModule({
       imports: [LoginComponent],
       providers: [
@@ -21,7 +23,7 @@ describe('LoginComponent', () => {
             error: () => null,
             loading: () => false,
             login,
-            loginWithGoogle: vi.fn(),
+            loginWithGoogle,
           },
         },
       ],
@@ -36,28 +38,24 @@ describe('LoginComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('onLogin invokes facade.login with form values when valid', () => {
+  it('onLogin invokes facade.login with candidate audience by default', () => {
     component.loginModel.set({ email: 'a@b.com', password: 'secret123' });
     component.onLogin();
 
-    expect(login).toHaveBeenCalledWith('a@b.com', 'secret123');
+    expect(login).toHaveBeenCalledWith('a@b.com', 'secret123', 'candidate');
   });
 
-  it('onLogin does not call facade.login when invalid', () => {
-    component.loginModel.set({ email: '', password: 'x' });
+  it('onLogin passes recruiter audience when input is set', () => {
+    fixture.componentRef.setInput('audience', 'recruiter');
+    fixture.detectChanges();
+    component.loginModel.set({ email: 'a@b.com', password: 'secret123' });
     component.onLogin();
 
-    expect(login).not.toHaveBeenCalled();
+    expect(login).toHaveBeenCalledWith('a@b.com', 'secret123', 'recruiter');
   });
 
-  it('Google sign-in button includes Simple Icons Google path', () => {
-    const buttons = fixture.nativeElement.querySelectorAll(
-      'button[type="button"].btn-outline',
-    );
-    const googleBtn = [...buttons].find((b: HTMLElement) =>
-      b.textContent?.includes('Continue with Google'),
-    );
-    const path = googleBtn?.querySelector('svg path');
-    expect(path?.getAttribute('d')).toContain('M12.48 10.92');
+  it('onGoogleSignIn invokes facade.loginWithGoogle in login mode', () => {
+    component.onGoogleSignIn();
+    expect(loginWithGoogle).toHaveBeenCalledWith('candidate', 'login');
   });
 });

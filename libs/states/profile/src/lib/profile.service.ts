@@ -125,11 +125,32 @@ export class ProfileService {
       id: uid,
       userId: uid,
       shareUrl: `/candidate/${uid}`,
-      isPublished: true,
+      isPublished:
+        data.isPublished !== undefined
+          ? data.isPublished
+          : (existing?.isPublished ?? true),
       updatedAt: serverTimestamp(),
       createdAt: existing?.createdAt ?? serverTimestamp(),
     };
     await setDoc(ref, payload, { merge: true });
+    const refreshed = await getDoc(ref);
+    return refreshed.data() as Profile;
+  }
+
+  async setProfileVisibility(uid: string, isPublished: boolean): Promise<Profile> {
+    const existing = await this.getProfile(uid);
+    if (!existing) {
+      throw new Error(
+        'Complete and save your profile first, then you can change visibility.',
+      );
+    }
+
+    const ref = doc(this.firestore, `profiles/${uid}`);
+    await setDoc(
+      ref,
+      { isPublished, updatedAt: serverTimestamp() },
+      { merge: true },
+    );
     const refreshed = await getDoc(ref);
     return refreshed.data() as Profile;
   }

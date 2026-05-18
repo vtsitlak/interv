@@ -46,16 +46,54 @@
                   Test interview →
                 </a>
               } @else if (recruiterView()) {
-                <a
-                  [routerLink]="[
-                    '/recruiter/candidates',
-                    profileId(),
-                    'interview',
-                  ]"
-                  class="btn btn-secondary mt-6"
-                >
-                  Start interview →
-                </a>
+                @if (recruiterFacade.interviewForCandidate(profileId()); as prior) {
+                  <div class="flex flex-wrap gap-3 mt-6 items-center">
+                    <span
+                      class="badge badge-secondary"
+                      [class.badge-success]="prior.status === 'complete'"
+                    >
+                      @if (prior.feedbackScore !== null) {
+                        Interviewed · {{ prior.feedbackScore }}/10
+                      } @else if (prior.status === 'complete') {
+                        Interviewed
+                      } @else {
+                        Interview in progress
+                      }
+                    </span>
+                    <a
+                      [routerLink]="[
+                        '/recruiter/candidates',
+                        profileId(),
+                        'feedback',
+                      ]"
+                      [queryParams]="{ interviewId: prior.id }"
+                      class="btn btn-outline"
+                    >
+                      View interview
+                    </a>
+                    <a
+                      [routerLink]="[
+                        '/recruiter/candidates',
+                        profileId(),
+                        'interview',
+                      ]"
+                      class="btn btn-secondary"
+                    >
+                      Restart interview →
+                    </a>
+                  </div>
+                } @else {
+                  <a
+                    [routerLink]="[
+                      '/recruiter/candidates',
+                      profileId(),
+                      'interview',
+                    ]"
+                    class="btn btn-secondary mt-6"
+                  >
+                    Start interview →
+                  </a>
+                }
               } @else if (reviewableInterview(); as interview) {
                 <div class="flex flex-wrap gap-3 mt-6">
                   <a

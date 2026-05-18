@@ -2,7 +2,7 @@
   @if (skipSetup() && !isSetupComplete()) {
     <div class="flex-1 flex flex-col items-center justify-center px-4 gap-4">
       <span class="loading loading-spinner loading-lg"></span>
-      <p class="text-base-content/60 text-sm">Starting practice interview…</p>
+      <p class="text-base-content/60 text-sm">Starting interview…</p>
       @if (facade.error()) {
         <div class="alert alert-error max-w-md">{{ facade.error() }}</div>
       }

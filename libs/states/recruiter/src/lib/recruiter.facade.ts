@@ -31,7 +31,13 @@ export class RecruiterFacade {
   );
   readonly totalInterviews = this.store.totalInterviews;
   readonly completedInterviews = this.store.completedInterviews;
-  readonly averageScore = this.store.averageScore;
+  readonly interviewsByCandidateId = this.store.interviewsByCandidateId;
+
+  interviewForCandidate(
+    candidateProfileId: string,
+  ): RecruiterInterviewSummary | null {
+    return this.store.interviewsByCandidateId()[candidateProfileId] ?? null;
+  }
 
   loadProfile(): Promise<void> {
     return this.store.loadProfile();
@@ -63,6 +69,10 @@ export class RecruiterFacade {
 
   clearProfileError(): void {
     this.store.clearProfileError();
+  }
+
+  refreshInterviewsAfterFeedback(interviewId: string): Promise<void> {
+    return this.store.refreshInterviewsAfterFeedback(interviewId);
   }
 
   reset(): void {

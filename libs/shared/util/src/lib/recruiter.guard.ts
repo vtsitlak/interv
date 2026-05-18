@@ -24,7 +24,7 @@ export const recruiterGuard: CanActivateFn = () => {
             email: user.email,
             displayName: user.displayName,
           });
-          const role = await accountService.getRole(user.uid);
+          const role = await accountService.getRoleOrDefault(user.uid);
           if (role !== 'recruiter') {
             return router.createUrlTree(['/candidate/dashboard']);
           }
@@ -54,7 +54,7 @@ export const candidateGuard: CanActivateFn = () => {
             email: user.email,
             displayName: user.displayName,
           });
-          const role = await accountService.getRole(user.uid);
+          const role = await accountService.getRoleOrDefault(user.uid);
           if (role === 'recruiter') {
             return router.createUrlTree(['/recruiter/dashboard']);
           }

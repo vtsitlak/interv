@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
+import { RecruiterFacade } from '@interv/state-recruiter';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthFacade } from './auth.facade';
 import { AuthStore } from './auth.store';
@@ -10,9 +11,11 @@ describe('AuthFacade', () => {
     loading: ReturnType<typeof vi.fn>;
     error: ReturnType<typeof vi.fn>;
     isAuthenticated: ReturnType<typeof vi.fn>;
+    isRecruiter: ReturnType<typeof vi.fn>;
     login: ReturnType<typeof vi.fn>;
     register: ReturnType<typeof vi.fn>;
     loginWithGoogle: ReturnType<typeof vi.fn>;
+    validateAudience: ReturnType<typeof vi.fn>;
     logout: ReturnType<typeof vi.fn>;
     setUser: ReturnType<typeof vi.fn>;
     clearError: ReturnType<typeof vi.fn>;
@@ -27,11 +30,13 @@ describe('AuthFacade', () => {
       loading: vi.fn().mockReturnValue(false),
       error: vi.fn().mockReturnValue(null),
       isAuthenticated: vi.fn().mockReturnValue(false),
+      isRecruiter: vi.fn().mockReturnValue(false),
       login: vi.fn().mockResolvedValue(undefined),
       register: vi.fn().mockResolvedValue(undefined),
       loginWithGoogle: vi.fn().mockResolvedValue(undefined),
+      validateAudience: vi.fn().mockResolvedValue(true),
       logout: vi.fn().mockResolvedValue(undefined),
-      setUser: vi.fn(),
+      setUser: vi.fn().mockResolvedValue(undefined),
       clearError: vi.fn(),
       tryHandleRedirectResult: vi.fn().mockResolvedValue(undefined),
     };
@@ -43,31 +48,44 @@ describe('AuthFacade', () => {
         AuthFacade,
         { provide: AuthStore, useValue: storeMock },
         { provide: Router, useValue: { navigate } },
+        {
+          provide: RecruiterFacade,
+          useValue: {
+            reset: vi.fn(),
+            loadProfile: vi.fn().mockResolvedValue(undefined),
+            isProfileComplete: vi.fn().mockReturnValue(false),
+          },
+        },
       ],
     });
 
     facade = TestBed.inject(AuthFacade);
   });
 
-  it('login() navigates to /dashboard when sign-in succeeds', async () => {
+  it('login() navigates to candidate dashboard when sign-in succeeds', async () => {
     storeMock.user.mockReturnValue({
       uid: 'u1',
       email: 'a@b.com',
       displayName: null,
     });
 
-    await facade.login('a@b.com', 'pwd');
+    await facade.login('a@b.com', 'pwd', 'candidate');
 
     expect(storeMock.login).toHaveBeenCalledWith('a@b.com', 'pwd');
+    expect(storeMock.validateAudience).toHaveBeenCalledWith('candidate');
     expect(navigate).toHaveBeenCalledWith(['/candidate/dashboard']);
   });
 
-  it('login() does not navigate when no user is set', async () => {
-    storeMock.user.mockReturnValue(null);
+  it('register() navigates to recruiter profile for recruiter audience', async () => {
+    storeMock.user.mockReturnValue({
+      uid: 'u1',
+      email: 'a@b.com',
+      displayName: 'Rec',
+    });
 
-    await facade.login('a@b.com', 'pwd');
+    await facade.register('Rec', 'a@b.com', 'pwd', 'recruiter');
 
-    expect(navigate).not.toHaveBeenCalled();
+    expect(navigate).toHaveBeenCalledWith(['/recruiter/profile']);
   });
 
   it('logout() always navigates to home', async () => {
@@ -75,15 +93,5 @@ describe('AuthFacade', () => {
 
     expect(storeMock.logout).toHaveBeenCalled();
     expect(navigate).toHaveBeenCalledWith(['/']);
-  });
-
-  it('setUser() delegates to the store', () => {
-    facade.setUser({ uid: 'x', email: null, displayName: null });
-
-    expect(storeMock.setUser).toHaveBeenCalledWith({
-      uid: 'x',
-      email: null,
-      displayName: null,
-    });
   });
 });

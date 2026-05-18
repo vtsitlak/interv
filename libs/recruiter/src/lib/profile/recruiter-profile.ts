@@ -45,10 +45,6 @@ export class RecruiterProfileComponent implements OnInit {
 
   private async loadProfile(): Promise<void> {
     await this.recruiter.loadProfile();
-    if (this.recruiter.isProfileComplete()) {
-      await this.router.navigate(['/recruiter/dashboard']);
-      return;
-    }
     const profile = this.recruiter.profile();
     if (profile) {
       this.recruiterModel.set({

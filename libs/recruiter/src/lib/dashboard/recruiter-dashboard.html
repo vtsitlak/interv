@@ -16,7 +16,7 @@
       <div class="alert alert-error mb-6">{{ recruiter.error() }}</div>
     }
 
-    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+    <div class="grid grid-cols-2 gap-4 mb-6">
       <div class="stat bg-base-100 shadow rounded-2xl">
         <div class="stat-title text-xs">Total interviews</div>
         <div class="stat-value text-2xl">{{ recruiter.totalInterviews() }}</div>
@@ -24,16 +24,6 @@
       <div class="stat bg-base-100 shadow rounded-2xl">
         <div class="stat-title text-xs">Completed</div>
         <div class="stat-value text-2xl">{{ recruiter.completedInterviews() }}</div>
-      </div>
-      <div class="stat bg-base-100 shadow rounded-2xl col-span-2 sm:col-span-1">
-        <div class="stat-title text-xs">Average score</div>
-        <div class="stat-value text-2xl">
-          @if (recruiter.averageScore() !== null) {
-            {{ recruiter.averageScore() }}/10
-          } @else {
-            —
-          }
-        </div>
       </div>
     </div>
 
@@ -131,6 +121,16 @@
               }
             </div>
           }
+
+          <div class="divider my-4"></div>
+          <lib-interview-feedback-panel
+            [embedded]="true"
+            [profileId]="selected.candidateProfileId"
+            [interviewId]="selected.id"
+            title="Score & feedback"
+            description="Update your rating and notes for this interview."
+            (feedbackSaved)="onFeedbackSaved(selected.id)"
+          />
         </div>
       </div>
     }

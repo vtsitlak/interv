@@ -1,7 +1,9 @@
-<div class="min-h-screen flex items-center justify-center bg-base-200">
+<div class="min-h-screen flex items-center justify-center bg-base-200 px-4">
   <div class="card w-full max-w-sm bg-base-100 shadow-xl">
     <div class="card-body">
-      <h2 class="card-title text-2xl font-bold mb-4">Welcome to Intervai</h2>
+      <a routerLink="/" class="link link-hover text-sm mb-2">← Back to home</a>
+      <h2 class="card-title text-2xl font-bold mb-1">{{ copy().loginTitle }}</h2>
+      <p class="text-sm text-base-content/60 mb-4">{{ copy().loginSubtitle }}</p>
 
       @if (facade.error()) {
         <div class="alert alert-error text-sm">{{ facade.error() }}</div>
@@ -16,18 +18,8 @@
             [formField]="loginForm.email"
             autocomplete="email"
             class="input input-bordered w-full"
-            [class.input-error]="
-              loginForm.email().touched() && loginForm.email().invalid()
-            "
             placeholder="you@example.com"
           />
-          <div class="min-h-5">
-            @if (loginForm.email().touched() && loginForm.email().invalid()) {
-              @for (err of loginForm.email().errors(); track err.kind) {
-                <p class="text-error text-xs mt-1">{{ err.message }}</p>
-              }
-            }
-          </div>
         </fieldset>
 
         <fieldset class="fieldset mt-2">
@@ -38,31 +30,20 @@
             [formField]="loginForm.password"
             autocomplete="current-password"
             class="input input-bordered w-full"
-            [class.input-error]="
-              loginForm.password().touched() && loginForm.password().invalid()
-            "
             placeholder="••••••••"
           />
-          <div class="min-h-5">
-            @if (
-              loginForm.password().touched() && loginForm.password().invalid()
-            ) {
-              @for (err of loginForm.password().errors(); track err.kind) {
-                <p class="text-error text-xs mt-1">{{ err.message }}</p>
-              }
-            }
-          </div>
         </fieldset>
 
         <button
           type="submit"
-          class="btn btn-primary w-full mt-6"
+          class="btn w-full mt-6"
+          [class]="copy().btnClass"
           [disabled]="facade.loading() || loginForm().invalid()"
         >
           @if (facade.loading()) {
             <span class="loading loading-spinner loading-sm"></span>
           } @else {
-            Sign in
+            {{ copy().signInLabel }}
           }
         </button>
       </form>
@@ -72,7 +53,7 @@
       <button
         type="button"
         class="btn btn-outline w-full"
-        (click)="facade.loginWithGoogle()"
+        (click)="onGoogleSignIn()"
         [disabled]="facade.loading()"
       >
         <svg
@@ -86,8 +67,10 @@
       </button>
 
       <p class="text-center text-sm mt-4">
-        Don't have an account?
-        <a routerLink="/register" class="link link-primary">Sign up</a>
+        {{ copy().alternatePrompt }}
+        <a [routerLink]="copy().registerPath" [class]="'link ' + copy().linkClass">{{
+          copy().alternateLink
+        }}</a>
       </p>
     </div>
   </div>
