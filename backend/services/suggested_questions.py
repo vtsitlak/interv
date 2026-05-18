@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from services.gemini import generate_text
+from services.gemini import generate_chat_text
 
 _META_PREFIX = re.compile(r'^ask\s+(about|how)\b', re.IGNORECASE)
 
@@ -125,7 +125,9 @@ Their own Q&A from profile:
 
 Write 5 specific questions tailored to this candidate."""
 
-    raw = await generate_text(prompt, system_instruction=system, max_output_tokens=400)
+    raw = await generate_chat_text(
+        prompt, system_instruction=system, max_output_tokens=400
+    )
     if raw:
         lines = [
             ln.strip().lstrip('0123456789.-) ')

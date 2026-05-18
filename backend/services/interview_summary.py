@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from services.gemini import generate_text
+from services.gemini import generate_chat_text
 
 
 def _format_transcript(messages: list[dict[str, Any]], candidate_name: str) -> str:
@@ -45,7 +45,9 @@ Transcript:
 
 Summary:"""
 
-    summary = await generate_text(prompt, system_instruction=system, max_output_tokens=400)
+    summary = await generate_chat_text(
+        prompt, system_instruction=system, max_output_tokens=400
+    )
     if summary:
         return summary
 
