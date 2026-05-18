@@ -275,37 +275,21 @@ export class InterviewService {
     score: number,
     text: string,
   ): Promise<void> {
-    const url = `${this.apiUrl}/interviews/${profileId}/${interviewId}/feedback`;
-    const clampedScore = Math.min(10, Math.max(1, Math.round(score)));
-    const trimmed = text.trim();
-    if (!trimmed) {
-      throw new Error('Feedback text is required');
-    }
-
+    const pathHint = `profiles/${profileId}/interviews/${interviewId}`;
+    const fs = this.firestore;
     try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ score: clampedScore, text: trimmed }),
+      await this.runFirestore(async () => {
+        const ref = doc(fs, 'profiles', profileId, 'interviews', interviewId);
+        await updateDoc(ref, {
+          feedback: {
+            score,
+            text,
+            submittedAt: serverTimestamp(),
+          },
+        });
       });
-
-      if (!response.ok) {
-        let detail = `Failed to submit feedback (${response.status})`;
-        try {
-          const data = (await response.json()) as { detail?: string };
-          if (data.detail) {
-            detail = data.detail;
-          }
-        } catch {
-          /* ignore parse errors */
-        }
-        throw new Error(detail);
-      }
     } catch (e: unknown) {
-      if (e instanceof Error) {
-        throw e;
-      }
-      throw new Error(String(e));
+      throw this.mapFirestoreWriteError(e, pathHint);
     }
   }
 
