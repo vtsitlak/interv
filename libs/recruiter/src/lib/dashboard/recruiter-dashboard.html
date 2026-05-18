@@ -1,0 +1,138 @@
+<div class="min-h-screen bg-base-200 py-10 px-4">
+  <div class="max-w-4xl mx-auto">
+    <div class="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-bold">Recruiter dashboard</h1>
+        <p class="text-base-content/60 mt-1">
+          Interviews you have conducted with candidate AI twins
+        </p>
+      </div>
+      <a routerLink="/recruiter/candidates" class="btn btn-secondary btn-sm">
+        Find candidates
+      </a>
+    </div>
+
+    @if (recruiter.error()) {
+      <div class="alert alert-error mb-6">{{ recruiter.error() }}</div>
+    }
+
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+      <div class="stat bg-base-100 shadow rounded-2xl">
+        <div class="stat-title text-xs">Total interviews</div>
+        <div class="stat-value text-2xl">{{ recruiter.totalInterviews() }}</div>
+      </div>
+      <div class="stat bg-base-100 shadow rounded-2xl">
+        <div class="stat-title text-xs">Completed</div>
+        <div class="stat-value text-2xl">{{ recruiter.completedInterviews() }}</div>
+      </div>
+      <div class="stat bg-base-100 shadow rounded-2xl col-span-2 sm:col-span-1">
+        <div class="stat-title text-xs">Average score</div>
+        <div class="stat-value text-2xl">
+          @if (recruiter.averageScore() !== null) {
+            {{ recruiter.averageScore() }}/10
+          } @else {
+            —
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="card bg-base-100 shadow">
+      <div class="card-body">
+        <h2 class="card-title mb-4">Your interviews</h2>
+
+        @if (recruiter.interviewsLoading()) {
+          <div class="flex justify-center py-12">
+            <span class="loading loading-spinner loading-md"></span>
+          </div>
+        } @else if (recruiter.interviews().length === 0) {
+          <div class="text-center py-12 text-base-content/40">
+            <p class="font-medium">No interviews yet</p>
+            <p class="text-sm mt-1">
+              Search for candidates and start your first interview.
+            </p>
+            <a routerLink="/recruiter/candidates" class="btn btn-secondary btn-sm mt-4">
+              Browse candidates
+            </a>
+          </div>
+        } @else {
+          <div class="space-y-3">
+            @for (interview of recruiter.interviews(); track interview.id) {
+              <button
+                type="button"
+                class="w-full text-left rounded-xl border border-base-300 p-4 hover:bg-base-200/60 transition-colors"
+                (click)="selectInterview(interview)"
+              >
+                <div class="flex justify-between gap-2 items-start">
+                  <div>
+                    <p class="font-semibold">{{ interview.candidateName }}</p>
+                    <p class="text-sm text-base-content/60">
+                      {{ interview.candidateTitle }}
+                    </p>
+                  </div>
+                  <span
+                    class="badge"
+                    [class.badge-success]="interview.status === 'complete'"
+                    [class.badge-warning]="interview.status === 'in_progress'"
+                  >
+                    {{ interview.status === 'complete' ? 'Complete' : 'In progress' }}
+                  </span>
+                </div>
+                <p class="text-xs text-base-content/50 mt-2">
+                  {{ formatDate(interview.createdAt) }}
+                  @if (interview.feedbackScore !== null) {
+                    · Score {{ interview.feedbackScore }}/10
+                  }
+                </p>
+              </button>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    @if (recruiter.selectedInterview(); as selected) {
+      <div class="card bg-base-100 shadow mt-6">
+        <div class="card-body">
+          <div class="flex justify-between items-start gap-4">
+            <div>
+              <h3 class="text-lg font-bold">{{ selected.candidateName }}</h3>
+              <p class="text-sm text-base-content/60">{{ selected.candidateTitle }}</p>
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm" (click)="closeDetail()">
+              Close
+            </button>
+          </div>
+
+          @if (selected.aiSummary) {
+            <div class="mt-4">
+              <h4 class="font-medium text-sm mb-1">AI summary</h4>
+              <p class="text-sm text-base-content/80">{{ selected.aiSummary }}</p>
+            </div>
+          }
+
+          @if (recruiter.transcriptLoading()) {
+            <div class="flex justify-center py-8">
+              <span class="loading loading-spinner loading-md"></span>
+            </div>
+          } @else if (recruiter.transcript().length) {
+            <div class="mt-4 space-y-3 max-h-80 overflow-y-auto">
+              @for (msg of recruiter.transcript(); track $index) {
+                <div
+                  class="rounded-lg p-3 text-sm"
+                  [class.bg-primary/10]="msg.role === 'user'"
+                  [class.bg-base-200]="msg.role === 'assistant'"
+                >
+                  <p class="font-medium text-xs mb-1">
+                    {{ msg.role === 'user' ? 'You' : 'AI twin' }}
+                  </p>
+                  <p class="whitespace-pre-wrap">{{ msg.content }}</p>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</div>

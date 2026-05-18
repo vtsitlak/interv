@@ -1,0 +1,63 @@
+<div class="min-h-screen bg-base-200 py-10 px-4">
+  <div class="max-w-lg mx-auto">
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h1 class="card-title text-2xl font-bold">Your recruiter profile</h1>
+        <p class="text-sm text-base-content/70">
+          This information is used when you run interviews so candidates know who
+          you are. You only need to complete this once.
+        </p>
+
+        @if (recruiter.profileError()) {
+          <div class="alert alert-error text-sm mt-4">{{ recruiter.profileError() }}</div>
+        }
+
+        <fieldset class="fieldset mt-4">
+          <label class="fieldset-label" for="recruiter-profile-name">Your name *</label>
+          <input
+            id="recruiter-profile-name"
+            type="text"
+            class="input input-bordered w-full"
+            [formField]="recruiterForm.name"
+            placeholder="Jane Smith"
+          />
+        </fieldset>
+
+        <fieldset class="fieldset mt-3">
+          <label class="fieldset-label" for="recruiter-profile-role">Your role *</label>
+          <input
+            id="recruiter-profile-role"
+            type="text"
+            class="input input-bordered w-full"
+            [formField]="recruiterForm.role"
+            placeholder="Technical Recruiter"
+          />
+        </fieldset>
+
+        <fieldset class="fieldset mt-3">
+          <label class="fieldset-label" for="recruiter-profile-company">Company *</label>
+          <input
+            id="recruiter-profile-company"
+            type="text"
+            class="input input-bordered w-full"
+            [formField]="recruiterForm.company"
+            placeholder="Acme Corp"
+          />
+        </fieldset>
+
+        <button
+          type="button"
+          class="btn btn-secondary w-full mt-6"
+          [disabled]="recruiter.profileSaving() || recruiterForm().invalid()"
+          (click)="onSave()"
+        >
+          @if (recruiter.profileSaving()) {
+            <span class="loading loading-spinner loading-sm"></span>
+          } @else {
+            Save and continue
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

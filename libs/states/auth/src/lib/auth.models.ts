@@ -17,14 +17,18 @@ export interface NewUser {
   password: string;
 }
 
+import type { UserRole } from './account.service';
+
 export interface AuthState {
   user: ProfileUser | null;
+  role: UserRole | null;
   loading: boolean;
   error: string | null;
 }
 
 export const authInitialState: AuthState = {
   user: null,
+  role: null,
   loading: false,
   error: null,
 };

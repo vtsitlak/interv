@@ -11,6 +11,14 @@ service cloud.firestore {
       return profileDoc(profileId).data.get('isPublished', false) == true;
     }
 
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /recruiters/{recruiterId} {
+      allow read, write: if request.auth != null && request.auth.uid == recruiterId;
+    }
+
     /**
      * Candidate profile document (typically profiles/{firebaseAuthUid}).
      * Owners read/write their own doc; anyone may read published profiles (share link).
@@ -25,17 +33,23 @@ service cloud.firestore {
 
       /**
        * Interview sessions under profiles/{candidateId}/interviews/{docId}.
-       * Recruiters often have no account — allow create/update when the profile is published.
+       * Published profiles allow create/update for anonymous or signed-in recruiters.
        */
       match /interviews/{interviewId} {
         allow read: if request.auth != null && request.auth.uid == profileId
-          || profileIsPublished(profileId);
+          || profileIsPublished(profileId)
+          || (request.auth != null
+            && resource != null
+            && resource.data.get('recruiterUid', '') == request.auth.uid);
 
         allow create: if profileIsPublished(profileId)
           && request.resource.data.profileId == profileId
           && request.resource.data.status == 'in_progress';
 
-        allow update: if profileIsPublished(profileId);
+        allow update: if profileIsPublished(profileId)
+          || (request.auth != null
+            && resource != null
+            && resource.data.get('recruiterUid', '') == request.auth.uid);
 
         allow delete: if request.auth != null && request.auth.uid == profileId;
       }

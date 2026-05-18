@@ -45,6 +45,17 @@
                 <a routerLink="/candidate/test-interview" class="btn btn-primary mt-6">
                   Test interview →
                 </a>
+              } @else if (recruiterView()) {
+                <a
+                  [routerLink]="[
+                    '/recruiter/candidates',
+                    profileId(),
+                    'interview',
+                  ]"
+                  class="btn btn-secondary mt-6"
+                >
+                  Start interview →
+                </a>
               } @else if (reviewableInterview(); as interview) {
                 <div class="flex flex-wrap gap-3 mt-6">
                   <a

@@ -70,11 +70,11 @@ describe('AuthFacade', () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
-  it('logout() always navigates to /login', async () => {
+  it('logout() always navigates to home', async () => {
     await facade.logout();
 
     expect(storeMock.logout).toHaveBeenCalled();
-    expect(navigate).toHaveBeenCalledWith(['/login']);
+    expect(navigate).toHaveBeenCalledWith(['/']);
   });
 
   it('setUser() delegates to the store', () => {

@@ -9,6 +9,7 @@ import {
 import {
   ChatMessage,
   INITIAL_INTERVIEW_STATE,
+  type InterviewNavigationContext,
   type InterviewState,
   type RecruiterInfo,
 } from './interview.models';
@@ -34,8 +35,14 @@ export const InterviewStore = signalStore(
       profileId: string,
       interviewId: string,
       recruiterInfo: RecruiterInfo,
+      navigation?: InterviewNavigationContext | null,
     ): void {
-      patchState(store, { profileId, interviewId, recruiterInfo });
+      patchState(store, {
+        profileId,
+        interviewId,
+        recruiterInfo,
+        navigation: navigation ?? null,
+      });
     },
 
     setConnecting(isConnecting: boolean): void {
