@@ -7,13 +7,23 @@ export type UserRole = 'candidate' | 'recruiter';
 export class AccountService {
   private readonly firestore = inject(Firestore);
 
-  async getRole(uid: string): Promise<UserRole> {
+  async hasRole(uid: string): Promise<boolean> {
+    const snap = await getDoc(doc(this.firestore, 'users', uid));
+    return snap.exists();
+  }
+
+  async getRole(uid: string): Promise<UserRole | null> {
     const snap = await getDoc(doc(this.firestore, 'users', uid));
     if (!snap.exists()) {
-      return 'candidate';
+      return null;
     }
     const role = snap.data()['role'];
     return role === 'recruiter' ? 'recruiter' : 'candidate';
+  }
+
+  /** Legacy users without a role document are treated as candidates. */
+  async getRoleOrDefault(uid: string): Promise<UserRole> {
+    return (await this.getRole(uid)) ?? 'candidate';
   }
 
   async setRole(uid: string, role: UserRole): Promise<void> {

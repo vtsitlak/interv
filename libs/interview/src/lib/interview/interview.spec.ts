@@ -3,6 +3,7 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthFacade } from '@interv/state-auth';
 import { InterviewFacade, InterviewService } from '@interv/state-interview';
+import { RecruiterFacade } from '@interv/state-recruiter';
 import { InterviewComponent } from './interview';
 
 describe('InterviewComponent', () => {
@@ -24,7 +25,21 @@ describe('InterviewComponent', () => {
         },
         {
           provide: AuthFacade,
-          useValue: { user: () => ({ uid: 'p1' }) },
+          useValue: {
+            user: () => ({ uid: 'p1' }),
+            isRecruiter: () => false,
+          },
+        },
+        {
+          provide: RecruiterFacade,
+          useValue: {
+            loadProfile: vi.fn().mockResolvedValue(undefined),
+            recruiterInfo: () => ({
+              name: 'Jane',
+              role: 'Recruiter',
+              company: 'Acme',
+            }),
+          },
         },
         {
           provide: InterviewService,
@@ -79,9 +94,9 @@ describe('InterviewComponent', () => {
     expect(component.isSetupComplete()).toBe(true);
   });
 
-  it('onConfirmEnd skips feedback in test mode', () => {
+  it('onConfirmEnd skips feedback in practice mode', () => {
     const facade = TestBed.inject(InterviewFacade);
-    component.skipSetup.set(true);
+    component.isPracticeMode.set(true);
     component.onConfirmEnd();
     expect(facade.confirmEndInterview).toHaveBeenCalledWith({
       skipFeedback: true,

@@ -53,6 +53,36 @@
             </button>
           </div>
         </div>
+
+        @if (profile.profile() && profile.isComplete()) {
+          <div class="mt-4 pt-4 border-t border-base-300">
+            <label class="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                class="checkbox checkbox-secondary mt-1"
+                [checked]="!profile.isDiscoverableByRecruiters()"
+                [disabled]="profile.isUpdatingVisibility()"
+                (change)="onHideFromRecruitersChange($event)"
+              />
+              <span class="min-w-0">
+                <span class="font-medium">Hide my profile from recruiters</span>
+                <p class="text-sm text-base-content/60 mt-1 leading-relaxed">
+                  When enabled, your profile won't appear in recruiter search and
+                  recruiters won't be able to view your profile. Turn this off
+                  anytime to become discoverable again.
+                </p>
+              </span>
+            </label>
+            @if (profile.isUpdatingVisibility()) {
+              <p class="text-xs text-base-content/50 mt-2 flex items-center gap-2">
+                <span class="loading loading-spinner loading-xs"></span>
+                Saving…
+              </p>
+            } @else if (profile.successMessage()) {
+              <p class="text-sm text-success mt-2">{{ profile.successMessage() }}</p>
+            }
+          </div>
+        }
       </div>
     </div>
 

@@ -26,9 +26,15 @@ describe('HomeComponent', () => {
     expect(html).toContain('routerlink="/register"');
   });
 
-  it('links recruiters to coming-soon routes', () => {
+  it('links recruiters to auth routes', () => {
     const html: string = fixture.nativeElement.innerHTML;
     expect(html).toContain('routerlink="/recruiter/login"');
     expect(html).toContain('routerlink="/recruiter/register"');
+  });
+
+  it('shows beta notice in the footer', () => {
+    const html: string = fixture.nativeElement.innerHTML;
+    expect(html).toContain('Beta');
+    expect(html).toContain('early preview');
   });
 });

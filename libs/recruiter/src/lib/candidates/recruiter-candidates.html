@@ -59,21 +59,38 @@
             >
               <div class="card-body py-4">
                 <div class="flex gap-4 items-start">
-                  @if (candidate.photo.trim()) {
+                  @if (hasProfilePhoto(candidate)) {
                     <img
-                      [src]="candidate.photo"
+                      [src]="candidate.photo.trim()"
                       [alt]="candidate.name"
-                      class="w-14 h-14 rounded-xl object-cover shrink-0"
+                      class="w-14 h-14 rounded-2xl object-cover shrink-0"
+                      (error)="onPhotoError(candidate.id)"
                     />
                   } @else {
                     <div
-                      class="w-14 h-14 rounded-xl bg-secondary/10 flex items-center justify-center text-lg font-bold text-secondary shrink-0"
+                      class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-lg font-bold text-primary shrink-0"
                     >
-                      {{ candidate.name.charAt(0) || '?' }}
+                      {{ profileInitial(candidate.name) }}
                     </div>
                   }
                   <div class="min-w-0 flex-1">
-                    <p class="font-semibold text-lg">{{ candidate.name }}</p>
+                    <div class="flex flex-wrap items-center gap-2">
+                      <p class="font-semibold text-lg">{{ candidate.name }}</p>
+                      @if (candidate.latestInterview; as interview) {
+                        <span
+                          class="badge badge-sm badge-secondary"
+                          [class.badge-success]="interview.status === 'complete'"
+                        >
+                          @if (interview.feedbackScore !== null) {
+                            Interviewed · {{ interview.feedbackScore }}/10
+                          } @else if (interview.status === 'complete') {
+                            Interviewed
+                          } @else {
+                            In progress
+                          }
+                        </span>
+                      }
+                    </div>
                     <p class="text-sm text-base-content/70">{{ candidate.title }}</p>
                     @if (candidate.skills.length) {
                       <p class="text-xs text-base-content/50 mt-2 truncate">

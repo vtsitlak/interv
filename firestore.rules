@@ -17,12 +17,12 @@ service cloud.firestore {
 
     match /recruiters/{recruiterId} {
       allow read, write: if request.auth != null && request.auth.uid == recruiterId;
+
+      match /interviews/{interviewId} {
+        allow read, write: if request.auth != null && request.auth.uid == recruiterId;
+      }
     }
 
-    /**
-     * Candidate profile document (typically profiles/{firebaseAuthUid}).
-     * Owners read/write their own doc; anyone may read published profiles (share link).
-     */
     match /profiles/{profileId} {
       allow read: if request.auth != null && request.auth.uid == profileId
         || (resource != null && resource.data.get('isPublished', false) == true);
@@ -31,10 +31,6 @@ service cloud.firestore {
 
       allow update, delete: if request.auth != null && request.auth.uid == profileId;
 
-      /**
-       * Interview sessions under profiles/{candidateId}/interviews/{docId}.
-       * Published profiles allow create/update for anonymous or signed-in recruiters.
-       */
       match /interviews/{interviewId} {
         allow read: if request.auth != null && request.auth.uid == profileId
           || profileIsPublished(profileId)
@@ -44,7 +40,12 @@ service cloud.firestore {
 
         allow create: if profileIsPublished(profileId)
           && request.resource.data.profileId == profileId
-          && request.resource.data.status == 'in_progress';
+          && request.resource.data.status == 'in_progress'
+          && (
+            !('recruiterUid' in request.resource.data)
+            || request.resource.data.recruiterUid == null
+            || request.resource.data.recruiterUid == request.auth.uid
+          );
 
         allow update: if profileIsPublished(profileId)
           || (request.auth != null
@@ -53,6 +54,15 @@ service cloud.firestore {
 
         allow delete: if request.auth != null && request.auth.uid == profileId;
       }
+    }
+
+    /**
+     * Collection-group queries on `interviews` (recruiter dashboard fallback).
+     */
+    match /{path=**}/interviews/{interviewId} {
+      allow read: if request.auth != null
+        && resource != null
+        && resource.data.get('recruiterUid', '') == request.auth.uid;
     }
   }
 }

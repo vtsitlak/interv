@@ -21,6 +21,8 @@ export class ProfileFacade {
   readonly error = this.store.error;
   readonly successMessage = this.store.successMessage;
   readonly isComplete = this.store.isComplete;
+  readonly isDiscoverableByRecruiters = this.store.isDiscoverableByRecruiters;
+  readonly isUpdatingVisibility = this.store.isUpdatingVisibility;
   readonly shareUrl = this.store.shareUrl;
 
   loadProfile(): Promise<void> {
@@ -29,6 +31,10 @@ export class ProfileFacade {
 
   saveProfile(data: Partial<Profile>): Promise<void> {
     return this.store.saveProfile(data);
+  }
+
+  setProfileDiscoverability(isPublished: boolean): Promise<void> {
+    return this.store.setProfileDiscoverability(isPublished);
   }
 
   ingestToRAG(

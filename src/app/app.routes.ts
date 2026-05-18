@@ -18,12 +18,14 @@ export const appRoutes: Routes = [
       {
         path: 'login',
         loadComponent: () =>
-          import('@interv/recruiter').then(m => m.RecruiterLoginComponent),
+          import('@interv/feature-auth').then(m => m.LoginComponent),
+        data: { authAudience: 'recruiter' },
       },
       {
         path: 'register',
         loadComponent: () =>
-          import('@interv/recruiter').then(m => m.RecruiterRegisterComponent),
+          import('@interv/feature-auth').then(m => m.RegisterComponent),
+        data: { authAudience: 'recruiter' },
       },
       {
         path: 'profile',
@@ -62,6 +64,7 @@ export const appRoutes: Routes = [
         canActivate: [authGuard, recruiterGuard, recruiterProfileCompleteGuard],
         loadComponent: () =>
           import('@interv/recruiter-feedback').then(m => m.FeedbackComponent),
+        data: { recruiterFeedback: true },
       },
     ],
   },

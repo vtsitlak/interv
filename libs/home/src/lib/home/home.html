@@ -12,8 +12,8 @@
         </h1>
         <p class="py-6 text-lg text-base-content/70 max-w-2xl mx-auto">
           Interv helps candidates build an AI representation of their experience
-          and lets recruiters run structured AI interviews—anytime,
-          without scheduling friction.
+          and lets recruiters discover profiles, run structured interviews, and
+          leave scores and feedback—without scheduling back-and-forth.
         </p>
       </div>
     </div>
@@ -25,14 +25,15 @@
         <div class="card-body">
           <h2 class="card-title text-2xl">For candidates</h2>
           <p class="text-base-content/70">
-            Upload your résumé, train your AI profile, and share a link recruiters
-            can use to interview your digital twin. Practice with a self-test
-            interview before you go live.
+            Train your AI twin from your CV, links, and personal Q&amp;A, then share
+            a public profile or keep it hidden from recruiter search until you are
+            ready.
           </p>
           <ul class="list-disc list-inside text-sm text-base-content/80 space-y-1 mt-2">
-            <li>Train from PDF or LinkedIn-style inputs</li>
-            <li>Preview and refine your public profile</li>
-            <li>Run practice interviews on your own schedule</li>
+            <li>Train and edit your profile anytime</li>
+            <li>Practice with a test interview on your dashboard</li>
+            <li>Control recruiter discoverability from your dashboard</li>
+            <li>See interview feedback and scores in one place</li>
           </ul>
           <div class="card-actions flex-col sm:flex-row gap-2 mt-6">
             <a routerLink="/login" class="btn btn-primary w-full sm:w-auto">
@@ -52,13 +53,15 @@
         <div class="card-body">
           <h2 class="card-title text-2xl">For recruiters</h2>
           <p class="text-base-content/70">
-            Open a candidate’s public profile, run an interview with their AI
-            twin, and leave structured feedback—without coordinating calendars.
+            Sign in, set up your recruiter profile, search published candidates,
+            and run interviews with their AI twin. Review transcripts, score each
+            session, and update feedback from your dashboard.
           </p>
           <ul class="list-disc list-inside text-sm text-base-content/80 space-y-1 mt-2">
-            <li>Async interviews on candidate-provided context</li>
-            <li>Consistent questions across your pipeline</li>
-            <li>Feedback captured in one place</li>
+            <li>Search candidates by name, role, or skills</li>
+            <li>Start or restart interviews from a candidate profile</li>
+            <li>Score and feedback saved per interview</li>
+            <li>Dashboard with interview history and transcripts</li>
           </ul>
           <div class="card-actions flex-col sm:flex-row gap-2 mt-6">
             <a
@@ -71,13 +74,9 @@
               routerLink="/recruiter/register"
               class="btn btn-outline btn-secondary w-full sm:w-auto"
             >
-              Recruiter registration
+              Create recruiter account
             </a>
           </div>
-          <p class="text-xs text-base-content/50 mt-2">
-            Recruiter accounts are rolling out soon—you can still interview via
-            shared candidate links today.
-          </p>
         </div>
       </article>
     </section>
@@ -88,36 +87,45 @@
         <div class="card bg-base-100 shadow-md">
           <div class="card-body items-center text-center">
             <span class="badge badge-primary badge-lg">1</span>
-            <h3 class="font-semibold mt-2">Build your twin</h3>
+            <h3 class="font-semibold mt-2">Train the twin</h3>
             <p class="text-sm text-base-content/70">
-              Candidates ingest their background so the AI speaks with their facts
-              and tone.
+              Candidates add CV text, links, and Q&amp;A so the AI answers with
+              their experience and tone.
             </p>
           </div>
         </div>
         <div class="card bg-base-100 shadow-md">
           <div class="card-body items-center text-center">
-            <span class="badge badge-primary badge-lg">2</span>
-            <h3 class="font-semibold mt-2">Share your link</h3>
+            <span class="badge badge-secondary badge-lg">2</span>
+            <h3 class="font-semibold mt-2">Run the interview</h3>
             <p class="text-sm text-base-content/70">
-              Recruiters open a public profile and start an interview session.
+              Recruiters find candidates in search or open a shared link, then
+              chat with the AI twin in a guided session.
             </p>
           </div>
         </div>
         <div class="card bg-base-100 shadow-md">
           <div class="card-body items-center text-center">
             <span class="badge badge-primary badge-lg">3</span>
-            <h3 class="font-semibold mt-2">Review &amp; improve</h3>
+            <h3 class="font-semibold mt-2">Score &amp; iterate</h3>
             <p class="text-sm text-base-content/70">
-              Feedback and summaries help both sides iterate faster.
+              Recruiters leave a score and notes; candidates see feedback on
+              their dashboard and can improve their profile.
             </p>
           </div>
         </div>
       </div>
     </section>
 
-    <footer class="text-center text-sm text-base-content/50 pt-8 border-t border-base-300">
+    <footer
+      class="flex flex-col items-center gap-3 text-center text-sm text-base-content/50 pt-8 border-t border-base-300"
+    >
+      <span class="badge badge-outline badge-sm font-medium">Beta</span>
       <p>Interv — async AI interviews for modern hiring.</p>
+      <p class="text-xs max-w-md text-base-content/40">
+        You are using an early preview. Features, copy, and flows may change as we
+        improve the product.
+      </p>
     </footer>
   </div>
 </div>

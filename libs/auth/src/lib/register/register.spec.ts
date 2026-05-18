@@ -44,7 +44,12 @@ describe('RegisterComponent', () => {
     });
     component.onRegister();
 
-    expect(register).toHaveBeenCalledWith('Ada', 'ada@example.com', 'secret123');
+    expect(register).toHaveBeenCalledWith(
+      'Ada',
+      'ada@example.com',
+      'secret123',
+      'candidate',
+    );
   });
 
   it('onRegister does not call facade.register when invalid', () => {

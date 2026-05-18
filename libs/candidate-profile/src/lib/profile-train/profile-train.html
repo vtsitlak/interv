@@ -81,18 +81,19 @@
             <fieldset class="fieldset mt-2">
               <label class="fieldset-label" for="profile-photo">Photo</label>
               <div class="flex flex-col sm:flex-row gap-4 items-start mt-2">
-                @if (hasPhotoPreview()) {
+                @if (hasProfilePhoto()) {
                   <img
-                    [src]="photoPreview()"
+                    [src]="profileModel().photo.trim()"
                     alt="Profile photo preview"
-                    class="w-24 h-24 rounded-2xl object-cover border border-base-300 shrink-0"
+                    class="w-24 h-24 rounded-2xl object-cover shrink-0"
+                    (error)="onPhotoError()"
                   />
                 } @else {
                   <div
-                    class="w-24 h-24 rounded-2xl bg-base-200 border border-dashed border-base-300 flex items-center justify-center text-base-content/40 text-xs text-center px-2 shrink-0"
+                    class="w-24 h-24 rounded-2xl bg-primary/10 flex items-center justify-center text-3xl font-bold text-primary shrink-0"
                     aria-hidden="true"
                   >
-                    No photo
+                    {{ profileInitial() }}
                   </div>
                 }
                 <div class="flex flex-col gap-2 min-w-0 flex-1">
@@ -113,7 +114,7 @@
                       Uploading...
                     </span>
                   }
-                  @if (hasPhotoPreview() && !isUploadingPhoto()) {
+                  @if (hasStoredPhoto() && !isUploadingPhoto()) {
                     <button
                       type="button"
                       class="btn btn-ghost btn-sm w-fit"

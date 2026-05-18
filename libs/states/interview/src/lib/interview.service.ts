@@ -12,6 +12,7 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  setDoc,
   updateDoc,
 } from '@angular/fire/firestore';
 import { Auth } from '@angular/fire/auth';
@@ -164,12 +165,13 @@ export class InterviewService {
         }
 
         const ref = collection(fs, 'profiles', profileId, 'interviews');
+        const recruiterUid = options?.recruiterUid ?? null;
         const docRef = await addDoc(ref, {
           profileId,
           recruiterName: recruiterInfo.name,
           recruiterRole: recruiterInfo.role,
           recruiterCompany: recruiterInfo.company,
-          recruiterUid: options?.recruiterUid ?? null,
+          recruiterUid,
           candidateName,
           candidateTitle,
           messages: [],
@@ -180,6 +182,28 @@ export class InterviewService {
           createdAt: serverTimestamp(),
           completedAt: null,
         });
+
+        if (recruiterUid) {
+          await setDoc(
+            doc(fs, 'recruiters', recruiterUid, 'interviews', docRef.id),
+            {
+              profileId,
+              candidateProfileId: profileId,
+              candidateName,
+              candidateTitle,
+              recruiterName: recruiterInfo.name,
+              recruiterRole: recruiterInfo.role,
+              recruiterCompany: recruiterInfo.company,
+              status: 'in_progress',
+              feedback: null,
+              aiSummary: null,
+              messageCount: 0,
+              createdAt: serverTimestamp(),
+              completedAt: null,
+            },
+          );
+        }
+
         return docRef.id;
       });
     } catch (e: unknown) {
@@ -300,6 +324,18 @@ export class InterviewService {
             submittedAt: serverTimestamp(),
           },
         });
+
+        const snap = await getDoc(ref);
+        const recruiterUid = snap.data()?.['recruiterUid'] as string | null | undefined;
+        if (recruiterUid) {
+          await setDoc(
+            doc(fs, 'recruiters', recruiterUid, 'interviews', interviewId),
+            {
+              feedback: { score, text, submittedAt: serverTimestamp() },
+            },
+            { merge: true },
+          );
+        }
       });
     } catch (e: unknown) {
       throw this.mapFirestoreWriteError(e, pathHint);
@@ -500,10 +536,25 @@ export class InterviewService {
     try {
       await this.runFirestore(async () => {
         const ref = doc(fs, 'profiles', profileId, 'interviews', interviewId);
+        const snap = await getDoc(ref);
+        const data = snap.data() as { recruiterUid?: string | null } | undefined;
+        const recruiterUid = data?.recruiterUid ?? null;
+
         await updateDoc(ref, {
           status: 'complete',
           completedAt: serverTimestamp(),
         });
+
+        if (recruiterUid) {
+          await setDoc(
+            doc(fs, 'recruiters', recruiterUid, 'interviews', interviewId),
+            {
+              status: 'complete',
+              completedAt: serverTimestamp(),
+            },
+            { merge: true },
+          );
+        }
       });
     } catch (e: unknown) {
       throw this.mapFirestoreWriteError(e, pathHint);

@@ -2,7 +2,6 @@ import { inject, Injectable } from '@angular/core';
 import { Auth } from '@angular/fire/auth';
 import {
   collection,
-  collectionGroup,
   doc,
   Firestore,
   getDoc,
@@ -40,6 +39,7 @@ interface InterviewDoc {
   status?: RecruiterInterviewSummary['status'];
   feedback?: { score?: number; text?: string } | null;
   aiSummary?: string | null;
+  messageCount?: number;
   messages?: { role: string; content: string; timestamp?: Timestamp }[];
   createdAt?: Timestamp;
   completedAt?: Timestamp | null;
@@ -98,17 +98,33 @@ export class RecruiterService {
       updatedAt: new Date(),
     };
 
-    await setDoc(
-      doc(this.firestore, 'recruiters', id),
-      {
-        name: profile.name,
-        role: profile.role,
-        company: profile.company,
-        profileComplete: true,
-        updatedAt: serverTimestamp(),
-      },
-      { merge: true },
-    );
+    try {
+      await setDoc(
+        doc(this.firestore, 'recruiters', id),
+        {
+          name: profile.name,
+          role: profile.role,
+          company: profile.company,
+          profileComplete: true,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true },
+      );
+    } catch (e: unknown) {
+      const code =
+        e !== null &&
+        typeof e === 'object' &&
+        'code' in e &&
+        typeof (e as { code: unknown }).code === 'string'
+          ? (e as { code: string }).code
+          : null;
+      if (code === 'permission-denied') {
+        throw new Error(
+          'Could not save recruiter profile. Deploy the latest Firestore rules (npm run deploy:firestore:rules) and try again.',
+        );
+      }
+      throw e;
+    }
 
     return profile;
   }
@@ -149,6 +165,7 @@ export class RecruiterService {
           photo: data.photo ?? '',
           summary: data.summary ?? '',
           skills: data.skills ?? [],
+          latestInterview: null,
         } satisfies CandidateSearchResult;
       })
       .filter((candidate) => {
@@ -169,6 +186,34 @@ export class RecruiterService {
     return results.sort((a, b) => a.name.localeCompare(b.name));
   }
 
+  indexInterviewsByCandidate(
+    interviews: RecruiterInterviewSummary[],
+  ): Record<string, RecruiterInterviewSummary> {
+    const map: Record<string, RecruiterInterviewSummary> = {};
+    for (const interview of interviews) {
+      const key = interview.candidateProfileId;
+      if (!key) {
+        continue;
+      }
+      const existing = map[key];
+      if (!existing || interview.createdAt > existing.createdAt) {
+        map[key] = interview;
+      }
+    }
+    return map;
+  }
+
+  enrichCandidatesWithInterviews(
+    candidates: CandidateSearchResult[],
+    interviews: RecruiterInterviewSummary[],
+  ): CandidateSearchResult[] {
+    const byCandidate = this.indexInterviewsByCandidate(interviews);
+    return candidates.map((candidate) => ({
+      ...candidate,
+      latestInterview: byCandidate[candidate.id] ?? null,
+    }));
+  }
+
   async getInterviews(): Promise<RecruiterInterviewSummary[]> {
     const recruiterUid = this.recruiterId();
     if (!recruiterUid) {
@@ -176,19 +221,18 @@ export class RecruiterService {
     }
 
     const q = query(
-      collectionGroup(this.firestore, 'interviews'),
-      where('recruiterUid', '==', recruiterUid),
+      collection(this.firestore, 'recruiters', recruiterUid, 'interviews'),
       orderBy('createdAt', 'desc'),
     );
     const snap = await getDocs(q);
 
     return snap.docs.map((docSnap) => {
-      const data = docSnap.data() as InterviewDoc;
+      const data = docSnap.data() as InterviewDoc & {
+        candidateProfileId?: string;
+      };
       const feedback = data.feedback ?? null;
       const profileId =
-        data.profileId ??
-        docSnap.ref.parent.parent?.id ??
-        '';
+        data.candidateProfileId ?? data.profileId ?? '';
 
       return {
         id: docSnap.id,
@@ -196,17 +240,27 @@ export class RecruiterService {
         candidateName: data.candidateName ?? 'Candidate',
         candidateTitle: data.candidateTitle ?? '',
         status: data.status ?? 'in_progress',
-        feedbackScore: feedback?.score ?? null,
-        feedbackText: feedback?.text ?? null,
+        feedbackScore: this.parseFeedbackScore(feedback),
+        feedbackText: feedback?.text?.trim() ? feedback.text.trim() : null,
         aiSummary: data.aiSummary ?? null,
-        messageCount:
-          data.messages?.filter((m) => m.role === 'user').length ??
-          data.messages?.length ??
-          0,
+        messageCount: data.messageCount ?? 0,
         createdAt: data.createdAt?.toDate() ?? new Date(),
         completedAt: data.completedAt?.toDate() ?? null,
       };
     });
+  }
+
+  private parseFeedbackScore(
+    feedback: { score?: unknown } | null | undefined,
+  ): number | null {
+    if (!feedback || feedback.score === undefined || feedback.score === null) {
+      return null;
+    }
+    const score = Number(feedback.score);
+    if (!Number.isFinite(score)) {
+      return null;
+    }
+    return Math.min(10, Math.max(1, Math.round(score)));
   }
 
   async getInterviewMessages(

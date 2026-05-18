@@ -195,6 +195,24 @@ describe('ProfileTrainComponent', () => {
     expect(component.profileModel().photo).toBe('https://cdn.example/photo.jpg');
   });
 
+  it('shows placeholder initial when photo URL is empty', () => {
+    component.profileModel.update((m) => ({ ...m, photo: '', name: 'Ada' }));
+    expect(component.hasProfilePhoto()).toBe(false);
+    expect(component.profileInitial()).toBe('A');
+  });
+
+  it('onPhotoError falls back to placeholder instead of broken image', () => {
+    component.profileModel.update((m) => ({
+      ...m,
+      photo: 'https://example.com/missing.jpg',
+      name: 'Bob',
+    }));
+    expect(component.hasProfilePhoto()).toBe(true);
+    component.onPhotoError();
+    expect(component.hasProfilePhoto()).toBe(false);
+    expect(component.hasStoredPhoto()).toBe(true);
+  });
+
   it('removeQA removes the QA at the given index', () => {
     component.profileModel.set({
       ...component.profileModel(),

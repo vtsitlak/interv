@@ -13,6 +13,8 @@ export interface CandidateSearchResult {
   photo: string;
   summary: string;
   skills: string[];
+  /** Most recent interview this recruiter conducted with the candidate. */
+  latestInterview: RecruiterInterviewSummary | null;
 }
 
 export interface RecruiterInterviewSummary {
@@ -42,7 +44,6 @@ export function isRecruiterProfileComplete(
     return false;
   }
   return (
-    profile.profileComplete &&
     profile.name.trim().length > 0 &&
     profile.role.trim().length > 0 &&
     profile.company.trim().length > 0
