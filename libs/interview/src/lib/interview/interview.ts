@@ -15,6 +15,7 @@ import {
   PRACTICE_RECRUITER_INFO,
   type RecruiterInfo,
 } from '@interv/state-interview';
+import { RecruiterFacade } from '@interv/state-recruiter';
 import { InterviewSetupComponent } from '../interview-setup/interview-setup';
 import { InterviewSuggestedQuestionsComponent } from '../interview-suggested-questions/interview-suggested-questions';
 
@@ -30,6 +31,7 @@ export class InterviewComponent implements OnInit, OnDestroy {
   readonly facade = inject(InterviewFacade);
   private readonly interviewService = inject(InterviewService);
   private readonly authFacade = inject(AuthFacade);
+  private readonly recruiterFacade = inject(RecruiterFacade);
   private readonly route = inject(ActivatedRoute);
 
   readonly profileId = signal('');
@@ -125,6 +127,41 @@ export class InterviewComponent implements OnInit, OnDestroy {
     }
     this.chatText.set(question);
     void this.sendMessage();
+  }
+
+  private async startAuthenticatedRecruiterInterview(): Promise<void> {
+    if (!this.profileId()) {
+      return;
+    }
+
+    await this.recruiterFacade.loadProfile();
+    const info = this.recruiterFacade.recruiterInfo();
+    if (!info) {
+      return;
+    }
+
+    const profileId = this.profileId();
+    const recruiterUid = this.authFacade.user()?.uid;
+    this.usedSuggestions.set(new Set());
+    this.suggestedQuestions.set([]);
+
+    try {
+      await this.facade.startInterview(profileId, info, {
+        recruiterUid,
+        navigation: {
+          feedbackPath: [
+            '/recruiter/candidates',
+            profileId,
+            'feedback',
+          ],
+          skipFeedbackRedirect: ['/recruiter/dashboard'],
+        },
+      });
+      this.isSetupComplete.set(true);
+      await this.loadSuggestedQuestionsWithRetry();
+    } catch {
+      // Error text is shown via facade.error() in template
+    }
   }
 
   private async startPracticeInterview(): Promise<void> {

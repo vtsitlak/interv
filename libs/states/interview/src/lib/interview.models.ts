@@ -29,10 +29,17 @@ export function isPracticeRecruiterInfo(
   );
 }
 
+export interface InterviewNavigationContext {
+  /** Route segments after origin, e.g. ['/recruiter/candidates', id, 'feedback'] */
+  feedbackPath: string[];
+  skipFeedbackRedirect?: string[];
+}
+
 export interface InterviewState {
   interviewId: string | null;
   profileId: string | null;
   recruiterInfo: RecruiterInfo | null;
+  navigation: InterviewNavigationContext | null;
   messages: ChatMessage[];
   messageCount: number;
   maxMessages: number;
@@ -52,6 +59,7 @@ export const INITIAL_INTERVIEW_STATE: InterviewState = {
   interviewId: null,
   profileId: null,
   recruiterInfo: null,
+  navigation: null,
   messages: [],
   messageCount: 0,
   maxMessages: INTERVIEW_MESSAGE_EXTENSION,

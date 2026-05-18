@@ -34,6 +34,7 @@ export class ProfileComponent implements OnInit {
 
   readonly profileId = signal('');
   readonly isOwnerView = signal(false);
+  readonly recruiterView = signal(false);
   readonly profile = signal<ProfileModel | null>(null);
   readonly reviewableInterview = signal<InterviewReview | null>(null);
   readonly isLoading = signal(true);
@@ -42,6 +43,7 @@ export class ProfileComponent implements OnInit {
 
   ngOnInit(): void {
     this.isOwnerView.set(this.route.snapshot.data['ownerMode'] === true);
+    this.recruiterView.set(this.route.snapshot.data['recruiterView'] === true);
     const routeProfileId = this.route.snapshot.paramMap.get('profileId') ?? '';
     if (routeProfileId) {
       this.profileId.set(routeProfileId);

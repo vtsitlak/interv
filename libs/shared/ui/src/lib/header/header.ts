@@ -20,11 +20,18 @@ export class HeaderComponent {
 
   readonly isAuthenticated = input(false);
 
+  readonly isRecruiter = input(false);
+
   readonly logoutRequested = output<void>();
 
-  readonly homeLink = computed(() =>
-    this.isAuthenticated() ? '/candidate/dashboard' : '/login',
-  );
+  readonly homeLink = computed(() => {
+    if (!this.isAuthenticated()) {
+      return '/';
+    }
+    return this.isRecruiter()
+      ? '/recruiter/dashboard'
+      : '/candidate/dashboard';
+  });
 
   onLogoutClick(): void {
     this.logoutRequested.emit();

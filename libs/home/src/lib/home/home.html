@@ -1,0 +1,123 @@
+<div class="min-h-screen bg-base-200">
+  <section
+    class="hero min-h-[42vh] bg-gradient-to-br from-primary/10 via-base-100 to-base-200"
+  >
+    <div class="hero-content text-center py-16 px-4 max-w-4xl">
+      <div>
+        <p class="text-sm font-medium uppercase tracking-widest text-primary mb-3">
+          AI-powered interviews
+        </p>
+        <h1 class="text-4xl sm:text-5xl font-bold tracking-tight text-base-content">
+          Your profile. Your AI twin. Better interviews.
+        </h1>
+        <p class="py-6 text-lg text-base-content/70 max-w-2xl mx-auto">
+          Interv helps candidates build an AI representation of their experience
+          and lets recruiters run structured AI interviews—anytime,
+          without scheduling friction.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <div class="max-w-6xl mx-auto px-4 pb-20 space-y-16">
+    <section class="grid md:grid-cols-2 gap-8 -mt-8">
+      <article class="card bg-base-100 shadow-xl border border-base-300">
+        <div class="card-body">
+          <h2 class="card-title text-2xl">For candidates</h2>
+          <p class="text-base-content/70">
+            Upload your résumé, train your AI profile, and share a link recruiters
+            can use to interview your digital twin. Practice with a self-test
+            interview before you go live.
+          </p>
+          <ul class="list-disc list-inside text-sm text-base-content/80 space-y-1 mt-2">
+            <li>Train from PDF or LinkedIn-style inputs</li>
+            <li>Preview and refine your public profile</li>
+            <li>Run practice interviews on your own schedule</li>
+          </ul>
+          <div class="card-actions flex-col sm:flex-row gap-2 mt-6">
+            <a routerLink="/login" class="btn btn-primary w-full sm:w-auto">
+              Candidate sign in
+            </a>
+            <a
+              routerLink="/register"
+              class="btn btn-outline btn-primary w-full sm:w-auto"
+            >
+              Create candidate account
+            </a>
+          </div>
+        </div>
+      </article>
+
+      <article class="card bg-base-100 shadow-xl border border-base-300">
+        <div class="card-body">
+          <h2 class="card-title text-2xl">For recruiters</h2>
+          <p class="text-base-content/70">
+            Open a candidate’s public profile, run an interview with their AI
+            twin, and leave structured feedback—without coordinating calendars.
+          </p>
+          <ul class="list-disc list-inside text-sm text-base-content/80 space-y-1 mt-2">
+            <li>Async interviews on candidate-provided context</li>
+            <li>Consistent questions across your pipeline</li>
+            <li>Feedback captured in one place</li>
+          </ul>
+          <div class="card-actions flex-col sm:flex-row gap-2 mt-6">
+            <a
+              routerLink="/recruiter/login"
+              class="btn btn-secondary w-full sm:w-auto"
+            >
+              Recruiter sign in
+            </a>
+            <a
+              routerLink="/recruiter/register"
+              class="btn btn-outline btn-secondary w-full sm:w-auto"
+            >
+              Recruiter registration
+            </a>
+          </div>
+          <p class="text-xs text-base-content/50 mt-2">
+            Recruiter accounts are rolling out soon—you can still interview via
+            shared candidate links today.
+          </p>
+        </div>
+      </article>
+    </section>
+
+    <section>
+      <h2 class="text-2xl font-bold text-center mb-8">How it works</h2>
+      <div class="grid sm:grid-cols-3 gap-6">
+        <div class="card bg-base-100 shadow-md">
+          <div class="card-body items-center text-center">
+            <span class="badge badge-primary badge-lg">1</span>
+            <h3 class="font-semibold mt-2">Build your twin</h3>
+            <p class="text-sm text-base-content/70">
+              Candidates ingest their background so the AI speaks with their facts
+              and tone.
+            </p>
+          </div>
+        </div>
+        <div class="card bg-base-100 shadow-md">
+          <div class="card-body items-center text-center">
+            <span class="badge badge-primary badge-lg">2</span>
+            <h3 class="font-semibold mt-2">Share your link</h3>
+            <p class="text-sm text-base-content/70">
+              Recruiters open a public profile and start an interview session.
+            </p>
+          </div>
+        </div>
+        <div class="card bg-base-100 shadow-md">
+          <div class="card-body items-center text-center">
+            <span class="badge badge-primary badge-lg">3</span>
+            <h3 class="font-semibold mt-2">Review &amp; improve</h3>
+            <p class="text-sm text-base-content/70">
+              Feedback and summaries help both sides iterate faster.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="text-center text-sm text-base-content/50 pt-8 border-t border-base-300">
+      <p>Interv — async AI interviews for modern hiring.</p>
+    </footer>
+  </div>
+</div>

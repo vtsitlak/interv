@@ -5,6 +5,7 @@ import { InterviewService, type WsCloseMeta } from './interview.service';
 import { InterviewStore } from './interview.store';
 import {
   INTERVIEW_MESSAGE_EXTENSION,
+  type InterviewNavigationContext,
   type RecruiterInfo,
 } from './interview.models';
 
@@ -98,6 +99,10 @@ export class InterviewFacade {
   async startInterview(
     profileId: string,
     recruiterInfo: RecruiterInfo,
+    options?: {
+      recruiterUid?: string;
+      navigation?: InterviewNavigationContext;
+    },
   ): Promise<void> {
     this.clearTurnTimeout();
     this.store.setConnecting(true);
@@ -106,7 +111,9 @@ export class InterviewFacade {
     try {
       await this.service.assertCandidateProfileExists(profileId);
       const interviewId = await Promise.race([
-        this.service.createInterview(profileId, recruiterInfo),
+        this.service.createInterview(profileId, recruiterInfo, {
+          recruiterUid: options?.recruiterUid,
+        }),
         new Promise<string>((_, reject) =>
           setTimeout(
             () =>
@@ -140,6 +147,7 @@ export class InterviewFacade {
     profileId: string,
     interviewId: string,
     recruiterInfo: RecruiterInfo,
+    navigation?: InterviewNavigationContext | null,
   ): Promise<void> {
     const wsAttemptUrl = `${this.wsUrlEnv.replace(/\/$/, '')}/chat/${profileId}/${interviewId}`;
 
@@ -178,7 +186,12 @@ export class InterviewFacade {
       }, WS_OPEN_DEADLINE_MS);
 
       this.ngZone.run(() => {
-        this.store.setSession(profileId, interviewId, recruiterInfo);
+        this.store.setSession(
+          profileId,
+          interviewId,
+          recruiterInfo,
+          navigation,
+        );
         this.store.setWsReady(false);
 
         this.service.connect(
@@ -330,8 +343,15 @@ export class InterviewFacade {
     try {
       await this.service.completeInterview(profileId, interviewId);
       void this.service.requestInterviewSummary(profileId, interviewId);
+      const navigation = this.store.navigation();
       if (options?.skipFeedback) {
-        await this.router.navigate(['/candidate/my-profile']);
+        await this.router.navigate(
+          navigation?.skipFeedbackRedirect ?? ['/candidate/my-profile'],
+        );
+      } else if (navigation?.feedbackPath?.length) {
+        await this.router.navigate(navigation.feedbackPath, {
+          queryParams: { interviewId },
+        });
       } else {
         await this.router.navigate(['/candidate', profileId, 'feedback'], {
           queryParams: { interviewId },

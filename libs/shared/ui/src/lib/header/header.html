@@ -10,35 +10,60 @@
     </div>
     <div class="navbar-end flex-wrap gap-1 sm:gap-2">
       @if (isAuthenticated()) {
-        <a
-          routerLink="/candidate/dashboard"
-          routerLinkActive="btn-active"
-          [routerLinkActiveOptions]="{ exact: true }"
-          class="btn btn-ghost btn-sm"
-        >
-          Dashboard
-        </a>
-        <a
-          routerLink="/candidate/train-profile"
-          routerLinkActive="btn-active"
-          class="btn btn-ghost btn-sm"
-        >
-          Train profile
-        </a>
-        <a
-          routerLink="/candidate/my-profile"
-          routerLinkActive="btn-active"
-          class="btn btn-ghost btn-sm"
-        >
-          My profile
-        </a>
-        <a
-          routerLink="/candidate/test-interview"
-          routerLinkActive="btn-active"
-          class="btn btn-ghost btn-sm"
-        >
-          Test interview
-        </a>
+        @if (isRecruiter()) {
+          <a
+            routerLink="/recruiter/dashboard"
+            routerLinkActive="btn-active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            class="btn btn-ghost btn-sm"
+          >
+            Dashboard
+          </a>
+          <a
+            routerLink="/recruiter/candidates"
+            routerLinkActive="btn-active"
+            class="btn btn-ghost btn-sm"
+          >
+            Candidates
+          </a>
+          <a
+            routerLink="/recruiter/profile"
+            routerLinkActive="btn-active"
+            class="btn btn-ghost btn-sm"
+          >
+            My profile
+          </a>
+        } @else {
+          <a
+            routerLink="/candidate/dashboard"
+            routerLinkActive="btn-active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            class="btn btn-ghost btn-sm"
+          >
+            Dashboard
+          </a>
+          <a
+            routerLink="/candidate/train-profile"
+            routerLinkActive="btn-active"
+            class="btn btn-ghost btn-sm"
+          >
+            Train profile
+          </a>
+          <a
+            routerLink="/candidate/my-profile"
+            routerLinkActive="btn-active"
+            class="btn btn-ghost btn-sm"
+          >
+            My profile
+          </a>
+          <a
+            routerLink="/candidate/test-interview"
+            routerLinkActive="btn-active"
+            class="btn btn-ghost btn-sm"
+          >
+            Test interview
+          </a>
+        }
         <button
           type="button"
           class="btn btn-outline btn-sm"
@@ -46,22 +71,6 @@
         >
           Logout
         </button>
-      } @else {
-        <a
-          routerLink="/login"
-          routerLinkActive="btn-active"
-          [routerLinkActiveOptions]="{ exact: true }"
-          class="btn btn-ghost btn-sm"
-        >
-          Login
-        </a>
-        <a
-          routerLink="/register"
-          routerLinkActive="btn-active"
-          class="btn btn-ghost btn-sm"
-        >
-          Register
-        </a>
       }
     </div>
   </div>

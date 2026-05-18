@@ -1,0 +1,20 @@
+{
+  "name": "state-recruiter",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/states/recruiter/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["scope:state", "type:state"],
+  "targets": {
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": ["{options.reportsDirectory}"],
+      "options": {
+        "reportsDirectory": "coverage/libs/states/recruiter"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

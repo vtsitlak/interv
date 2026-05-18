@@ -148,17 +148,30 @@ export class InterviewService {
   async createInterview(
     profileId: string,
     recruiterInfo: RecruiterInfo,
+    options?: { recruiterUid?: string },
   ): Promise<string> {
     const pathHint = `profiles/${profileId}/interviews`;
     const fs = this.firestore;
     try {
       return await this.runFirestore(async () => {
+        let candidateName = '';
+        let candidateTitle = '';
+        const profileSnap = await getDoc(doc(fs, 'profiles', profileId));
+        if (profileSnap.exists()) {
+          const profileData = profileSnap.data() as Profile;
+          candidateName = profileData.name ?? '';
+          candidateTitle = profileData.title ?? '';
+        }
+
         const ref = collection(fs, 'profiles', profileId, 'interviews');
         const docRef = await addDoc(ref, {
           profileId,
           recruiterName: recruiterInfo.name,
           recruiterRole: recruiterInfo.role,
           recruiterCompany: recruiterInfo.company,
+          recruiterUid: options?.recruiterUid ?? null,
+          candidateName,
+          candidateTitle,
           messages: [],
           status: 'in_progress',
           feedback: null,
