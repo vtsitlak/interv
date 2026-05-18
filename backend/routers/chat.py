@@ -9,6 +9,7 @@ from firebase_admin import firestore
 from services.gemini import stream_response
 from services.rag import get_relevant_context
 from services.rate_limit import check_interview_rate_limit
+from services.request_validation import validate_chat_message
 
 router = APIRouter(prefix='/chat', tags=['chat'])
 logger = logging.getLogger(__name__)
@@ -123,6 +124,12 @@ async def _process_turn(
 ) -> None:
     started = time.monotonic()
 
+    try:
+        user_message = validate_chat_message(user_message)
+    except ValueError:
+        await websocket.send_text('Error: Message cannot be empty.')
+        return
+
     await websocket.send_text(ASSISTANT_PROCESSING_SIGNAL)
     logger.info('Turn started %s/%s', profile_id, interview_id)
 
@@ -205,10 +212,12 @@ async def chat_ws(
                     )
                 except Exception:  # noqa: BLE001
                     break
-            except Exception as exc:  # noqa: BLE001
+            except Exception:  # noqa: BLE001
                 logger.exception('Chat turn failed for %s/%s', profile_id, interview_id)
                 try:
-                    await websocket.send_text(f'Error: {exc}')
+                    await websocket.send_text(
+                        'Error: Something went wrong. Please try again.'
+                    )
                 except Exception:  # noqa: BLE001
                     break
             finally:

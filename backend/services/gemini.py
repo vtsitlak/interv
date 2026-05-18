@@ -1,7 +1,10 @@
+import logging
 import os
 from typing import Optional
 
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 from google import genai
 from google.genai import types
 
@@ -60,7 +63,8 @@ async def _generate_content(
         )
         text = getattr(response, 'text', None) or ''
         return text.strip()
-    except Exception:  # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001
+        logger.warning('Gemini generate failed for model %s: %s', model, exc)
         return ''
 
 
@@ -131,4 +135,5 @@ async def stream_response(
             if text:
                 yield text
     except Exception as exc:  # noqa: BLE001
-        yield f'Error generating response: {exc}'
+        logger.warning('Gemini stream failed for model %s: %s', _CHAT_MODEL, exc)
+        yield 'Error generating response. Please try again.'
