@@ -14,7 +14,7 @@ init_firebase()
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import chat, ingest, sessions
+from routers import chat, ingest, interviews, profiles, sessions
 
 _DEFAULT_ORIGINS = [
     "http://localhost:4200",
@@ -38,6 +38,8 @@ app.add_middleware(
 
 app.include_router(chat.router)
 app.include_router(ingest.router)
+app.include_router(interviews.router)
+app.include_router(profiles.router)
 app.include_router(sessions.router)
 
 @app.get("/health")
@@ -49,9 +51,13 @@ def health():
         vector_store_unavailable_reason,
     )
 
+    from services.gemini import chat_model, profile_model
+
     return {
         "status": "ok",
         "geminiConfigured": bool(os.getenv("GEMINI_API_KEY")),
+        "geminiChatModel": chat_model(),
+        "geminiProfileModel": profile_model(),
         "chromaPersistDir": os.getenv("CHROMA_PERSIST_DIR", "./chroma_db"),
         "chromaAvailable": is_vector_store_available(),
         "chromaError": vector_store_unavailable_reason(),

@@ -61,7 +61,7 @@ export class ProfileService {
       ...data,
       id: uid,
       userId: uid,
-      shareUrl: `/p/${uid}`,
+      shareUrl: `/candidate/${uid}`,
       isPublished: true,
       updatedAt: serverTimestamp(),
       createdAt: existing?.createdAt ?? serverTimestamp(),
@@ -79,10 +79,10 @@ export class ProfileService {
   ): Promise<IngestResult> {
     const url = `${this.apiUrl}/ingest/${profileId}`;
     const linkPayload = links
-      .filter((link) => link.url?.trim())
+      .filter((link) => link.link?.trim())
       .map((link) => ({
-        label: link.label?.trim() ?? '',
-        url: link.url.trim(),
+        description: link.description?.trim() ?? '',
+        link: link.link.trim(),
       }));
 
     let response: Response;
@@ -112,5 +112,31 @@ export class ProfileService {
       console.warn('Intervai:', result.warning);
     }
     return result;
+  }
+
+  async fetchPersonalQAQuestionsFromApi(
+    profileId: string,
+    title: string,
+    summary: string,
+  ): Promise<string[]> {
+    const params = new URLSearchParams();
+    if (title.trim()) {
+      params.set('title', title.trim());
+    }
+    if (summary.trim()) {
+      params.set('summary', summary.trim());
+    }
+    const query = params.toString();
+    const url = `${this.apiUrl}/profiles/${profileId}/personal-qa-questions${query ? `?${query}` : ''}`;
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        return [];
+      }
+      const data = (await response.json()) as { questions?: string[] };
+      return (data.questions ?? []).map((q) => q.trim()).filter(Boolean);
+    } catch {
+      return [];
+    }
   }
 }

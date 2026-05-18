@@ -18,11 +18,25 @@
       "@interv/models": ["./libs/shared/models/src/index.ts"],
       "@interv/util": ["./libs/shared/util/src/index.ts"],
       "@interv/feature-auth": ["./libs/auth/src/index.ts"],
-      "@interv/candidate": ["./libs/candidate/src/index.ts"],
-      "@interv/recruiter": ["./libs/recruiter/src/index.ts"],
+      "@interv/candidate-profile": [
+        "./libs/candidate-profile/src/lib/profile/profile.ts"
+      ],
+      "@interv/candidate-profile/train": [
+        "./libs/candidate-profile/src/lib/profile-train/profile-train.ts"
+      ],
+      "@interv/candidate-dashboard": [
+        "./libs/candidate-dashboard/src/lib/dashboard/dashboard.ts"
+      ],
+      "@interv/recruiter-interview": [
+        "./libs/recruiter-interview/src/index.ts"
+      ],
+      "@interv/recruiter-feedback": [
+        "./libs/recruiter-feedback/src/lib/feedback/feedback.ts"
+      ],
       "@interv/state-auth": ["./libs/states/auth/src/index.ts"],
       "@interv/state-profile": ["./libs/states/profile/src/index.ts"],
-      "@interv/state-interview": ["./libs/states/interview/src/index.ts"]
+      "@interv/state-interview": ["./libs/states/interview/src/index.ts"],
+      "@interv/state-dashboard": ["./libs/states/dashboard/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

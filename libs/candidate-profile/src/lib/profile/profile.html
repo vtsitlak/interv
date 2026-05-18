@@ -1,0 +1,126 @@
+<div class="min-h-screen bg-base-200 py-10 px-4">
+  <div class="max-w-3xl mx-auto">
+    @if (isLoading()) {
+      <div class="flex justify-center py-20">
+        <span class="loading loading-spinner loading-lg"></span>
+      </div>
+    } @else if (error()) {
+      <div class="alert alert-error">{{ error() }}</div>
+    } @else if (profile(); as p) {
+      <div class="card bg-base-100 shadow-xl mb-6">
+        <div class="card-body">
+          <div class="flex flex-col sm:flex-row gap-6 items-start">
+            @if (hasProfilePhoto(p.photo)) {
+              <img
+                [src]="p.photo.trim()"
+                [alt]="p.name"
+                class="w-24 h-24 rounded-2xl object-cover shrink-0"
+                (error)="onPhotoError()"
+              />
+            } @else {
+              <div
+                class="w-24 h-24 rounded-2xl bg-primary/10 flex items-center justify-center text-3xl font-bold text-primary shrink-0"
+              >
+                {{ profileInitial(p.name) }}
+              </div>
+            }
+            <div class="flex-1 min-w-0">
+              <h1 class="text-3xl font-bold">{{ p.name }}</h1>
+              <p class="text-lg text-base-content/70 mt-1">{{ p.title }}</p>
+              @if (workPreferences().length) {
+                <div class="flex flex-wrap gap-2 mt-3">
+                  @for (pref of workPreferences(); track pref) {
+                    <span class="badge badge-outline badge-lg">{{
+                      workPreferenceLabel(pref)
+                    }}</span>
+                  }
+                </div>
+              }
+              @if (p.summary.trim()) {
+                <p class="text-base-content/80 mt-4 leading-relaxed">
+                  {{ p.summary }}
+                </p>
+              }
+              <a
+                [routerLink]="['/candidate', profileId, 'interview']"
+                class="btn btn-primary mt-6"
+              >
+                Start AI interview →
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow mb-6">
+        <div class="card-body">
+          <h2 class="card-title text-lg">Profile overview</h2>
+          <p
+            class="text-sm text-base-content/80 leading-relaxed whitespace-pre-line"
+          >
+            {{ profileOverview() }}
+          </p>
+        </div>
+      </div>
+
+      @if (skills().length > 0) {
+        <div class="card bg-base-100 shadow mb-6">
+          <div class="card-body">
+            <h2 class="card-title text-lg">Skills</h2>
+            <p class="text-sm text-base-content/60 mb-3">
+              Extracted from their CV
+            </p>
+            <div class="flex flex-wrap gap-2">
+              @for (skill of skills(); track skill) {
+                <span class="badge badge-outline badge-lg">{{ skill }}</span>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (linkedInUrl(); as linkedIn) {
+        <div class="card bg-base-100 shadow mb-6">
+          <div class="card-body">
+            <h2 class="card-title text-lg">LinkedIn</h2>
+            <a
+              [href]="linkedIn"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="link link-primary mt-2 inline-block"
+            >
+              View LinkedIn profile →
+            </a>
+          </div>
+        </div>
+      }
+
+      @if (p.links.length) {
+        <div class="card bg-base-100 shadow">
+          <div class="card-body">
+            <h2 class="card-title text-lg">Links</h2>
+            <ul class="space-y-3 mt-2">
+              @for (link of p.links; track link.link) {
+                <li>
+                  @if (link.description.trim()) {
+                    <p class="text-sm text-base-content/70">
+                      {{ link.description }}
+                    </p>
+                  }
+                  <a
+                    [href]="link.link"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="link link-primary"
+                  >
+                    {{ link.link }}
+                  </a>
+                </li>
+              }
+            </ul>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</div>

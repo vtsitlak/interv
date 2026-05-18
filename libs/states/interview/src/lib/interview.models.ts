@@ -24,8 +24,12 @@ export interface InterviewState {
   isConnecting: boolean;
   /** WebSocket accepted and ready for send/receive */
   wsReady: boolean;
+  showEndConfirmation: boolean;
   error: string | null;
 }
+
+/** Extra recruiter questions allowed when continuing after the default limit. */
+export const INTERVIEW_MESSAGE_EXTENSION = 8;
 
 export const INITIAL_INTERVIEW_STATE: InterviewState = {
   interviewId: null,
@@ -33,11 +37,12 @@ export const INITIAL_INTERVIEW_STATE: InterviewState = {
   recruiterInfo: null,
   messages: [],
   messageCount: 0,
-  maxMessages: 8,
+  maxMessages: INTERVIEW_MESSAGE_EXTENSION,
   isStreaming: false,
   isComplete: false,
   isConnecting: false,
   wsReady: false,
+  showEndConfirmation: false,
   error: null,
 };
 

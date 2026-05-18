@@ -28,7 +28,7 @@ service cloud.firestore {
        * Recruiters often have no account — allow create/update when the profile is published.
        */
       match /interviews/{interviewId} {
-        allow read: if request.auth != null
+        allow read: if request.auth != null && request.auth.uid == profileId
           || profileIsPublished(profileId);
 
         allow create: if profileIsPublished(profileId)

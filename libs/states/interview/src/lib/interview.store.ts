@@ -109,6 +109,22 @@ export const InterviewStore = signalStore(
       patchState(store, { error: null });
     },
 
+    showConfirmation(): void {
+      patchState(store, { showEndConfirmation: true });
+    },
+
+    hideConfirmation(): void {
+      patchState(store, { showEndConfirmation: false });
+    },
+
+    resumeInterview(): void {
+      patchState(store, { isComplete: false });
+    },
+
+    setMaxMessages(maxMessages: number): void {
+      patchState(store, { maxMessages });
+    },
+
     reset(): void {
       patchState(store, { ...INITIAL_INTERVIEW_STATE });
     },

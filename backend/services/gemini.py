@@ -7,7 +7,23 @@ from google.genai import types
 
 load_dotenv()
 
-_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.0-flash')
+# Chat (streaming interview twin) — default flash for low latency.
+_CHAT_MODEL = (
+    os.getenv('GEMINI_CHAT_MODEL')
+    or os.getenv('GEMINI_MODEL')
+    or 'gemini-3-flash-preview'
+)
+
+# Profile extract / train (skills, Q&A prompts, etc.) — default pro for quality.
+_PROFILE_MODEL = os.getenv('GEMINI_PROFILE_MODEL') or 'gemini-3.1-pro-preview'
+
+
+def chat_model() -> str:
+    return _CHAT_MODEL
+
+
+def profile_model() -> str:
+    return _PROFILE_MODEL
 
 
 def _client() -> Optional[genai.Client]:
@@ -19,6 +35,64 @@ def _client() -> Optional[genai.Client]:
 
 def _to_gemini_role(role: str) -> str:
     return 'model' if role == 'assistant' else 'user'
+
+
+async def _generate_content(
+    model: str,
+    prompt: str,
+    *,
+    system_instruction: str = '',
+    max_output_tokens: int = 1024,
+) -> str:
+    client = _client()
+    if client is None:
+        return ''
+
+    config_kwargs: dict = {'max_output_tokens': max_output_tokens}
+    if system_instruction.strip():
+        config_kwargs['system_instruction'] = system_instruction.strip()
+
+    try:
+        response = await client.aio.models.generate_content(
+            model=model,
+            contents=prompt,
+            config=types.GenerateContentConfig(**config_kwargs),
+        )
+        text = getattr(response, 'text', None) or ''
+        return text.strip()
+    except Exception:  # noqa: BLE001
+        return ''
+
+
+async def generate_text(
+    prompt: str,
+    *,
+    system_instruction: str = '',
+    max_output_tokens: int = 1024,
+    model: str | None = None,
+) -> str:
+    """Non-streaming completion (defaults to the profile / training model)."""
+    return await _generate_content(
+        model or _PROFILE_MODEL,
+        prompt,
+        system_instruction=system_instruction,
+        max_output_tokens=max_output_tokens,
+    )
+
+
+async def generate_chat_text(
+    prompt: str,
+    *,
+    system_instruction: str = '',
+    max_output_tokens: int = 1024,
+) -> str:
+    """Non-streaming completion using the chat model (e.g. interview summaries)."""
+    return await _generate_content(
+        _CHAT_MODEL,
+        prompt,
+        system_instruction=system_instruction,
+        max_output_tokens=max_output_tokens,
+    )
 
 
 async def stream_response(
@@ -48,7 +122,7 @@ async def stream_response(
 
     try:
         stream = await client.aio.models.generate_content_stream(
-            model=_MODEL,
+            model=_CHAT_MODEL,
             contents=contents,
             config=types.GenerateContentConfig(system_instruction=system_prompt),
         )

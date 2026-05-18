@@ -1,10 +1,18 @@
 import { inject, Injectable } from '@angular/core';
 import type { Profile, ProfileLink, QAPair } from '@interv/models';
+import {
+  buildFullPersonalQAQuestions,
+  buildPersonalQAQuestionsFromProfile,
+  canGenerateRoleSpecificPersonalQA,
+  toQAPairs,
+} from './personal-qa-questions';
+import { ProfileService } from './profile.service';
 import { ProfileStore } from './profile.store';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileFacade {
   private readonly store = inject(ProfileStore);
+  private readonly profileService = inject(ProfileService);
 
   readonly profile = this.store.profile;
   readonly isLoading = this.store.isLoading;
@@ -38,5 +46,28 @@ export class ProfileFacade {
 
   clearMessages(): void {
     this.store.clearMessages();
+  }
+
+  /** Generate personal Q&A prompts from job title and summary (API + client fallback). */
+  async buildPersonalQA(
+    profileId: string | null,
+    title: string,
+    summary: string,
+  ): Promise<QAPair[]> {
+    const context = { title, summary };
+    const fromClient = buildPersonalQAQuestionsFromProfile(context);
+
+    const fromApi =
+      profileId != null && canGenerateRoleSpecificPersonalQA(title, summary)
+        ? await this.profileService.fetchPersonalQAQuestionsFromApi(
+            profileId,
+            title,
+            summary,
+          )
+        : [];
+
+    return toQAPairs(
+      buildFullPersonalQAQuestions([fromClient, fromApi], context),
+    );
   }
 }

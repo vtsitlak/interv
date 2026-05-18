@@ -3,7 +3,10 @@ import { Router } from '@angular/router';
 import { WS_URL } from '@interv/util';
 import { InterviewService, type WsCloseMeta } from './interview.service';
 import { InterviewStore } from './interview.store';
-import type { RecruiterInfo } from './interview.models';
+import {
+  INTERVIEW_MESSAGE_EXTENSION,
+  type RecruiterInfo,
+} from './interview.models';
 
 const CREATE_INTERVIEW_DEADLINE_MS = 30_000;
 const WS_OPEN_DEADLINE_MS = 20_000;
@@ -27,6 +30,7 @@ export class InterviewFacade {
   readonly canSendMessage = this.store.canSendMessage;
   readonly messageCount = this.store.messageCount;
   readonly maxMessages = this.store.maxMessages;
+  readonly showEndConfirmation = this.store.showEndConfirmation;
   readonly error = this.store.error;
 
   private clearTurnTimeout(): void {
@@ -52,6 +56,32 @@ export class InterviewFacade {
   private handleAssistantTurnDone(): void {
     this.clearTurnTimeout();
     this.store.finishStreaming();
+    void this.persistLastAssistantMessage();
+    if (this.store.messageCount() >= this.store.maxMessages()) {
+      this.store.setComplete();
+      this.store.showConfirmation();
+    }
+  }
+
+  private async persistLastAssistantMessage(): Promise<void> {
+    const profileId = this.store.profileId();
+    const interviewId = this.store.interviewId();
+    if (!profileId || !interviewId) {
+      return;
+    }
+
+    const messages = this.store.messages();
+    const last = messages[messages.length - 1];
+    if (!last || last.role !== 'assistant' || !last.content.trim()) {
+      return;
+    }
+
+    try {
+      await this.service.saveMessage(profileId, interviewId, last);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.store.setError(`Could not save assistant reply: ${msg}`);
+    }
   }
 
   private handleStreamError(error: string, socketWasOpen: boolean): void {
@@ -163,15 +193,12 @@ export class InterviewFacade {
               }
               this.store.appendToLastMessage(chunk);
             }),
-          async () =>
-            this.ngZone.run(async () => {
+          () =>
+            this.ngZone.run(() => {
               this.clearTurnTimeout();
               this.store.finishStreaming();
               this.store.setComplete();
-              await this.service.completeInterview(profileId, interviewId);
-              await this.router.navigate(['/p', profileId, 'feedback'], {
-                queryParams: { interviewId },
-              });
+              this.store.showConfirmation();
             }),
           (error) =>
             this.ngZone.run(() => {
@@ -248,6 +275,68 @@ export class InterviewFacade {
     }
 
     this.armTurnTimeout();
+  }
+
+  requestEndInterview(): void {
+    this.store.showConfirmation();
+  }
+
+  cancelEndInterview(): void {
+    this.store.hideConfirmation();
+    if (this.store.isComplete()) {
+      this.store.resumeInterview();
+      void this.extendMessageLimit();
+    }
+  }
+
+  private async extendMessageLimit(): Promise<void> {
+    const profileId = this.store.profileId();
+    const interviewId = this.store.interviewId();
+    if (!profileId || !interviewId) {
+      return;
+    }
+
+    const newMax =
+      this.store.maxMessages() + INTERVIEW_MESSAGE_EXTENSION;
+    try {
+      await this.service.extendMessageLimit(
+        profileId,
+        interviewId,
+        newMax,
+      );
+      this.store.setMaxMessages(newMax);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      this.store.setError(message);
+    }
+  }
+
+  async confirmEndInterview(): Promise<void> {
+    const profileId = this.store.profileId();
+    const interviewId = this.store.interviewId();
+    if (!profileId || !interviewId) {
+      this.store.setError(
+        'Interview session is missing. Go back and start the interview again.',
+      );
+      return;
+    }
+
+    this.store.hideConfirmation();
+    this.store.setComplete();
+    this.clearTurnTimeout();
+    this.service.disconnect();
+    this.store.setWsReady(false);
+
+    try {
+      await this.service.completeInterview(profileId, interviewId);
+      void this.service.requestInterviewSummary(profileId, interviewId);
+      await this.router.navigate(['/candidate', profileId, 'feedback'], {
+        queryParams: { interviewId },
+      });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      this.store.setError(message);
+    }
   }
 
   disconnect(): void {

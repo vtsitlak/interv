@@ -97,9 +97,9 @@ async def scrape_generic_url(url: str) -> str:
         return ""
 
 
-async def scrape_link(label: str, url: str) -> dict[str, str] | None:
+async def scrape_link(description: str, url: str) -> dict[str, str] | None:
     """
-    Scrape a single link and return label, url, and text.
+    Scrape a single link and return description, link, and text.
     Returns None if scraping fails or is not supported (e.g. LinkedIn).
     """
     url = (url or "").strip()
@@ -118,17 +118,22 @@ async def scrape_link(label: str, url: str) -> dict[str, str] | None:
     if not text.strip():
         return None
 
-    return {"label": (label or url).strip(), "url": url, "text": text}
+    return {
+        "description": (description or url).strip(),
+        "link": url,
+        "text": text,
+    }
 
 
 async def scrape_all_links(links: list[dict[str, Any]]) -> list[dict[str, str]]:
     """Scrape all links and return successfully scraped ones."""
     results: list[dict[str, str]] = []
     for link in links:
-        url = (link.get("url") or "").strip()
+        url = (link.get("link") or link.get("url") or "").strip()
         if not url:
             continue
-        result = await scrape_link(link.get("label", ""), url)
+        description = (link.get("description") or link.get("label") or "").strip()
+        result = await scrape_link(description, url)
         if result:
             results.append(result)
     return results
