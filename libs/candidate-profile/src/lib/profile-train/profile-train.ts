@@ -13,7 +13,7 @@ import {
   FormField,
   required,
 } from '@angular/forms/signals';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import type { ProfileLink, QAPair, WorkPreference } from '@interv/models';
 import { normalizeWorkPreferences, WORK_PREFERENCE_GROUPS } from '@interv/models';
 import {
@@ -66,6 +66,7 @@ function normalizeLinks(
 })
 export class ProfileTrainComponent implements OnInit {
   private readonly doc = inject(DOCUMENT);
+  private readonly router = inject(Router);
 
   readonly facade = inject(ProfileFacade);
 
@@ -247,6 +248,9 @@ export class ProfileTrainComponent implements OnInit {
     if (profile) {
       this.profileId.set(profile.id);
       await this.facade.ingestToRAG(profile.id, cvText, personalQA, links);
+      if (this.facade.successMessage()) {
+        await this.router.navigate(['/my-profile']);
+      }
     }
   }
 }

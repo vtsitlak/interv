@@ -25,14 +25,35 @@ export const appRoutes: Routes = [
       import('@interv/candidate-profile/train').then(m => m.ProfileTrainComponent),
   },
   {
+    path: 'my-profile',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('@interv/candidate-profile').then(m => m.ProfileComponent),
+    data: { ownerMode: true },
+  },
+  {
+    path: 'test-interview',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('@interv/interview').then(m => m.InterviewComponent),
+    data: { testMode: true },
+  },
+  {
     path: 'candidate/:profileId',
     loadComponent: () =>
       import('@interv/candidate-profile').then(m => m.ProfileComponent),
   },
   {
+    path: 'candidate/:profileId/interview/:interviewId/summary',
+    loadComponent: () =>
+      import('@interv/interview').then(
+        (m) => m.InterviewSummaryComponent,
+      ),
+  },
+  {
     path: 'candidate/:profileId/interview',
     loadComponent: () =>
-      import('@interv/recruiter-interview').then(m => m.InterviewComponent),
+      import('@interv/interview').then(m => m.InterviewComponent),
   },
   {
     path: 'candidate/:profileId/feedback',

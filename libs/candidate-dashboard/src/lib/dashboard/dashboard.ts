@@ -91,7 +91,13 @@ export class DashboardComponent implements OnInit {
     return 'badge-error';
   }
 
-  roleLabel(role: 'user' | 'assistant'): string {
+  roleLabel(
+    role: 'user' | 'assistant',
+    isPracticeSession: boolean,
+  ): string {
+    if (isPracticeSession) {
+      return role === 'user' ? 'You' : 'AI twin';
+    }
     return role === 'user' ? 'Recruiter' : 'AI twin';
   }
 }

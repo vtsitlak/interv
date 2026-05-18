@@ -11,7 +11,7 @@ import {
   InterviewService,
   type ChatMessage,
 } from '@interv/state-interview';
-import { InterviewTranscriptComponent } from '@interv/recruiter-interview';
+import { InterviewTranscriptComponent } from '@interv/interview';
 
 interface FeedbackFormModel {
   score: number;
@@ -85,7 +85,9 @@ export class FeedbackComponent implements OnInit {
   }
 
   goHome(): void {
-    void this.router.navigate(['/candidate', this.profileId]);
+    void this.router.navigate(['/candidate', this.profileId], {
+      queryParams: { interviewId: this.interviewId },
+    });
   }
 
   async openTranscript(): Promise<void> {

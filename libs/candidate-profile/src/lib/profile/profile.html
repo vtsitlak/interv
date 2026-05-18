@@ -41,12 +41,39 @@
                   {{ p.summary }}
                 </p>
               }
-              <a
-                [routerLink]="['/candidate', profileId, 'interview']"
-                class="btn btn-primary mt-6"
-              >
-                Start AI interview →
-              </a>
+              @if (isOwnerView()) {
+                <a routerLink="/test-interview" class="btn btn-primary mt-6">
+                  Test interview →
+                </a>
+              } @else if (reviewableInterview(); as interview) {
+                <div class="flex flex-wrap gap-3 mt-6">
+                  <a
+                    [routerLink]="[
+                      '/candidate',
+                      profileId(),
+                      'interview',
+                      interview.id,
+                      'summary',
+                    ]"
+                    class="btn btn-outline"
+                  >
+                    View interview
+                  </a>
+                  <a
+                    [routerLink]="['/candidate', profileId(), 'interview']"
+                    class="btn btn-primary"
+                  >
+                    Restart interview →
+                  </a>
+                </div>
+              } @else {
+                <a
+                  [routerLink]="['/candidate', profileId(), 'interview']"
+                  class="btn btn-primary mt-6"
+                >
+                  Start AI interview →
+                </a>
+              }
             </div>
           </div>
         </div>

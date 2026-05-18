@@ -10,6 +10,7 @@ const interview: InterviewSummary = {
   recruiterName: 'Alex',
   recruiterRole: 'HR',
   recruiterCompany: 'Acme',
+  isPracticeSession: false,
   status: 'in_progress',
   feedbackScore: null,
   feedbackText: null,

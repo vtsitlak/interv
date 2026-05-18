@@ -1,0 +1,145 @@
+<div class="min-h-screen bg-base-200 py-10 px-4">
+  <div class="max-w-3xl mx-auto">
+    <a
+      [routerLink]="['/candidate', profileId]"
+      [queryParams]="{ interviewId }"
+      class="btn btn-ghost btn-sm mb-6"
+    >
+      ← Back to profile
+    </a>
+
+    @if (isLoading()) {
+      <div class="flex justify-center py-20">
+        <span class="loading loading-spinner loading-lg"></span>
+      </div>
+    } @else if (error()) {
+      <div class="alert alert-error">{{ error() }}</div>
+    } @else if (interview(); as interview) {
+      <div class="card bg-base-100 shadow-xl mb-6">
+        <div class="card-body">
+          <h1 class="text-2xl font-bold">Interview summary</h1>
+          <p class="text-base-content/70 mt-1">
+            {{ candidateName() }}
+            @if (interview.recruiterName.trim()) {
+              · with {{ interview.recruiterName }}
+            }
+          </p>
+          @if (interview.completedAt) {
+            <p class="text-sm text-base-content/50 mt-2">
+              Completed {{ formatDate(interview.completedAt) }}
+            </p>
+          }
+          @if (interview.feedbackScore !== null) {
+            <div class="mt-4">
+              <span
+                class="badge badge-lg"
+                [class]="scoreBadgeClass(interview.feedbackScore)"
+              >
+                Score {{ interview.feedbackScore }}/10
+              </span>
+            </div>
+          }
+        </div>
+      </div>
+
+      @if (interview.aiSummary) {
+        <div class="card bg-base-100 shadow mb-6">
+          <div class="card-body">
+            <h2 class="card-title text-lg">AI summary</h2>
+            <p class="text-sm text-base-content/80 leading-relaxed mt-2">
+              {{ interview.aiSummary }}
+            </p>
+          </div>
+        </div>
+      }
+
+      <div class="card bg-base-100 shadow mb-6">
+        <div class="card-body">
+          <h2 class="card-title text-lg">Your feedback</h2>
+          <p class="text-sm text-base-content/60">
+            Update your rating or notes — the candidate will see the latest
+            version on their dashboard.
+          </p>
+
+          @if (saveSuccess()) {
+            <div class="alert alert-success text-sm mt-4">Feedback saved.</div>
+          }
+
+          <form class="mt-4 space-y-4" (submit)="onSaveFeedback($event)">
+            <fieldset class="fieldset">
+              <label class="fieldset-label" for="summary-score"
+                >Overall score (1–10)</label
+              >
+              <input
+                id="summary-score"
+                type="number"
+                class="input input-bordered w-full max-w-xs"
+                [formField]="feedbackForm.score"
+              />
+            </fieldset>
+
+            <fieldset class="fieldset">
+              <label class="fieldset-label" for="summary-feedback"
+                >Feedback</label
+              >
+              <textarea
+                id="summary-feedback"
+                class="textarea textarea-bordered w-full"
+                rows="4"
+                [formField]="feedbackForm.text"
+              ></textarea>
+              <div class="min-h-5">
+                @if (
+                  feedbackForm.text().touched() && feedbackForm.text().invalid()
+                ) {
+                  @for (err of feedbackForm.text().errors(); track err.kind) {
+                    <p class="text-error text-xs mt-1">{{ err.message }}</p>
+                  }
+                }
+              </div>
+            </fieldset>
+
+            <button
+              type="submit"
+              class="btn btn-primary"
+              [disabled]="feedbackForm().invalid() || isSaving()"
+            >
+              @if (isSaving()) {
+                <span class="loading loading-spinner loading-sm"></span>
+                Saving...
+              } @else {
+                Save feedback
+              }
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow mb-6">
+        <div class="card-body">
+          <h2 class="card-title text-lg">Transcript</h2>
+          <lib-interview-transcript
+            [messages]="transcript()"
+            [isLoading]="isLoadingTranscript()"
+          />
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-3">
+        <a
+          [routerLink]="['/candidate', profileId]"
+          [queryParams]="{ interviewId }"
+          class="btn btn-ghost"
+        >
+          Back to profile
+        </a>
+        <a
+          [routerLink]="['/candidate', profileId, 'interview']"
+          class="btn btn-primary"
+        >
+          Restart interview
+        </a>
+      </div>
+    }
+  </div>
+</div>

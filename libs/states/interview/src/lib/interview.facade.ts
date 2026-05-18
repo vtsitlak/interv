@@ -311,7 +311,7 @@ export class InterviewFacade {
     }
   }
 
-  async confirmEndInterview(): Promise<void> {
+  async confirmEndInterview(options?: { skipFeedback?: boolean }): Promise<void> {
     const profileId = this.store.profileId();
     const interviewId = this.store.interviewId();
     if (!profileId || !interviewId) {
@@ -330,9 +330,13 @@ export class InterviewFacade {
     try {
       await this.service.completeInterview(profileId, interviewId);
       void this.service.requestInterviewSummary(profileId, interviewId);
-      await this.router.navigate(['/candidate', profileId, 'feedback'], {
-        queryParams: { interviewId },
-      });
+      if (options?.skipFeedback) {
+        await this.router.navigate(['/my-profile']);
+      } else {
+        await this.router.navigate(['/candidate', profileId, 'feedback'], {
+          queryParams: { interviewId },
+        });
+      }
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : String(e);
       this.store.setError(message);

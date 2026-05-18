@@ -52,6 +52,7 @@ def health():
     )
 
     from services.auth import firebase_auth_disabled
+    from services.email import email_configured
     from services.gemini import chat_model, profile_model
 
     return {
@@ -59,6 +60,7 @@ def health():
         "geminiConfigured": bool(os.getenv("GEMINI_API_KEY")),
         "geminiChatModel": chat_model(),
         "geminiProfileModel": profile_model(),
+        "emailConfigured": email_configured(),
         "firebaseAuthEnforced": not firebase_auth_disabled(),
         "chromaPersistDir": os.getenv("CHROMA_PERSIST_DIR", "./chroma_db"),
         "chromaAvailable": is_vector_store_available(),

@@ -12,6 +12,23 @@ export interface RecruiterInfo {
   company: string;
 }
 
+/** Default recruiter context when the candidate runs a self-test interview. */
+export const PRACTICE_RECRUITER_INFO: RecruiterInfo = {
+  name: 'Practice session',
+  role: 'Self-test',
+  company: '',
+};
+
+export function isPracticeRecruiterInfo(
+  info: Pick<RecruiterInfo, 'name' | 'role' | 'company'>,
+): boolean {
+  return (
+    info.name.trim() === PRACTICE_RECRUITER_INFO.name &&
+    info.role.trim() === PRACTICE_RECRUITER_INFO.role &&
+    info.company.trim() === PRACTICE_RECRUITER_INFO.company
+  );
+}
+
 export interface InterviewState {
   interviewId: string | null;
   profileId: string | null;
@@ -56,3 +73,18 @@ export const ASSISTANT_PROCESSING_SIGNAL = '__ASSISTANT_PROCESSING__';
 
 /** Plain-text error from FastAPI chat when `profiles/{id}` is missing for Admin SDK. */
 export const BACKEND_PROFILE_NOT_FOUND = 'Profile not found';
+
+/** Public recruiter view of a stored interview (profile page / summary). */
+export interface InterviewReview {
+  id: string;
+  profileId: string;
+  recruiterName: string;
+  recruiterRole: string;
+  recruiterCompany: string;
+  status: 'in_progress' | 'complete';
+  feedbackScore: number | null;
+  feedbackText: string | null;
+  aiSummary: string | null;
+  createdAt: Date;
+  completedAt: Date | null;
+}

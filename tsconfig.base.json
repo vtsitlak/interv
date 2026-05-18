@@ -27,9 +27,7 @@
       "@interv/candidate-dashboard": [
         "./libs/candidate-dashboard/src/lib/dashboard/dashboard.ts"
       ],
-      "@interv/recruiter-interview": [
-        "./libs/recruiter-interview/src/index.ts"
-      ],
+      "@interv/interview": ["./libs/interview/src/index.ts"],
       "@interv/recruiter-feedback": [
         "./libs/recruiter-feedback/src/lib/feedback/feedback.ts"
       ],

@@ -3,6 +3,8 @@ export interface InterviewSummary {
   recruiterName: string;
   recruiterRole: string;
   recruiterCompany: string;
+  /** Self-test via /test-interview (no recruiter feedback). */
+  isPracticeSession: boolean;
   status: 'in_progress' | 'complete';
   feedbackScore: number | null;
   feedbackText: string | null;

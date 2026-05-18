@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { InterviewFacade } from '@interv/state-interview';
+import { AuthFacade } from '@interv/state-auth';
+import { InterviewFacade, InterviewService } from '@interv/state-interview';
 import { InterviewComponent } from './interview';
 
 describe('InterviewComponent', () => {
@@ -15,7 +16,20 @@ describe('InterviewComponent', () => {
         {
           provide: ActivatedRoute,
           useValue: {
-            snapshot: { paramMap: convertToParamMap({ profileId: 'p1' }) },
+            snapshot: {
+              paramMap: convertToParamMap({ profileId: 'p1' }),
+              data: { testMode: false },
+            },
+          },
+        },
+        {
+          provide: AuthFacade,
+          useValue: { user: () => ({ uid: 'p1' }) },
+        },
+        {
+          provide: InterviewService,
+          useValue: {
+            getSuggestedQuestions: vi.fn().mockResolvedValue(['Hello?']),
           },
         },
         {
@@ -58,11 +72,19 @@ describe('InterviewComponent', () => {
       role: 'Recruiter',
       company: 'Acme',
     });
-    expect(facade.startInterview).toHaveBeenCalledWith('p1', {
-      name: 'Jane',
-      role: 'Recruiter',
-      company: 'Acme',
-    });
+    expect(facade.startInterview).toHaveBeenCalledWith(
+      'p1',
+      expect.objectContaining({ name: 'Jane' }),
+    );
     expect(component.isSetupComplete()).toBe(true);
+  });
+
+  it('onConfirmEnd skips feedback in test mode', () => {
+    const facade = TestBed.inject(InterviewFacade);
+    component.skipSetup.set(true);
+    component.onConfirmEnd();
+    expect(facade.confirmEndInterview).toHaveBeenCalledWith({
+      skipFeedback: true,
+    });
   });
 });

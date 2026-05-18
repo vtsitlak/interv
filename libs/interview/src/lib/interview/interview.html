@@ -1,8 +1,18 @@
 <div class="min-h-screen bg-base-200 flex flex-col">
-  @if (!isSetupComplete()) {
+  @if (skipSetup() && !isSetupComplete()) {
+    <div class="flex-1 flex flex-col items-center justify-center px-4 gap-4">
+      <span class="loading loading-spinner loading-lg"></span>
+      <p class="text-base-content/60 text-sm">Starting practice interview…</p>
+      @if (facade.error()) {
+        <div class="alert alert-error max-w-md">{{ facade.error() }}</div>
+      }
+    </div>
+  }
+
+  @if (!skipSetup() && !isSetupComplete()) {
     <div class="flex-1 flex items-center justify-center px-4">
       <lib-interview-setup
-        [profileId]="profileId"
+        [profileId]="profileId()"
         [error]="facade.error()"
         [isConnecting]="facade.isConnecting()"
         (startInterview)="onSetupStart($event)"
@@ -135,7 +145,14 @@
         </h3>
 
         <p class="text-base-content/60 text-sm mb-6">
-          @if (facade.isComplete()) {
+          @if (skipSetup()) {
+            @if (facade.isComplete()) {
+              You've completed all {{ facade.maxMessages() }} questions. End the
+              practice session or continue to ask more.
+            } @else {
+              You can end the practice session early.
+            }
+          } @else if (facade.isComplete()) {
             You've completed all {{ facade.maxMessages() }} questions. Leave
             feedback or continue the interview to ask more.
           } @else {
@@ -149,7 +166,11 @@
             Continue interview
           </button>
           <button type="button" class="btn btn-primary" (click)="onConfirmEnd()">
-            Leave feedback →
+            @if (skipSetup()) {
+              Confirm end interview
+            } @else {
+              Leave feedback →
+            }
           </button>
         </div>
       </div>

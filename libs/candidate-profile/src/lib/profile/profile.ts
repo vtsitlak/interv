@@ -13,7 +13,11 @@ import {
   type Profile as ProfileModel,
   type WorkPreference,
 } from '@interv/models';
-import { InterviewService } from '@interv/state-interview';
+import { ProfileService } from '@interv/state-profile';
+import {
+  InterviewService,
+  type InterviewReview,
+} from '@interv/state-interview';
 
 @Component({
   selector: 'lib-profile',
@@ -26,16 +30,22 @@ import { InterviewService } from '@interv/state-interview';
 export class ProfileComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly interviewService = inject(InterviewService);
+  private readonly profileService = inject(ProfileService);
 
-  readonly profileId =
-    this.route.snapshot.paramMap.get('profileId') ?? '';
-
+  readonly profileId = signal('');
+  readonly isOwnerView = signal(false);
   readonly profile = signal<ProfileModel | null>(null);
+  readonly reviewableInterview = signal<InterviewReview | null>(null);
   readonly isLoading = signal(true);
   readonly error = signal<string | null>(null);
   readonly photoLoadFailed = signal(false);
 
   ngOnInit(): void {
+    this.isOwnerView.set(this.route.snapshot.data['ownerMode'] === true);
+    const routeProfileId = this.route.snapshot.paramMap.get('profileId') ?? '';
+    if (routeProfileId) {
+      this.profileId.set(routeProfileId);
+    }
     void this.load();
   }
 
@@ -78,18 +88,62 @@ export class ProfileComponent implements OnInit {
   }
 
   private async load(): Promise<void> {
-    if (!this.profileId) {
+    let profileId = this.profileId();
+
+    if (this.isOwnerView()) {
+      const user = await this.profileService.currentUserOrNull();
+      if (!user) {
+        this.error.set('Sign in to view your profile.');
+        this.isLoading.set(false);
+        return;
+      }
+      profileId = user.uid;
+      this.profileId.set(profileId);
+    }
+
+    if (!profileId) {
       this.error.set('Profile not found.');
       this.isLoading.set(false);
       return;
     }
+
+    const queryInterviewId =
+      this.route.snapshot.queryParamMap.get('interviewId') ?? '';
+
     try {
-      const p = await this.interviewService.getPublicProfile(this.profileId);
+      const p = await this.interviewService.getPublicProfile(profileId);
       if (!p) {
-        this.error.set('This profile is not available yet.');
+        this.error.set(
+          this.isOwnerView()
+            ? 'Save and train your profile first.'
+            : 'This profile is not available yet.',
+        );
       } else {
         this.photoLoadFailed.set(false);
         this.profile.set(p);
+
+        if (!this.isOwnerView()) {
+          let review: InterviewReview | null = null;
+          if (queryInterviewId) {
+            const byId = await this.interviewService.getInterviewForReview(
+              profileId,
+              queryInterviewId,
+            );
+            if (
+              byId &&
+              byId.feedbackScore !== null &&
+              byId.feedbackText
+            ) {
+              review = byId;
+            }
+          }
+          if (!review) {
+            review = await this.interviewService.getLatestInterviewWithFeedback(
+              profileId,
+            );
+          }
+          this.reviewableInterview.set(review);
+        }
       }
     } catch (e: unknown) {
       this.error.set(e instanceof Error ? e.message : String(e));
