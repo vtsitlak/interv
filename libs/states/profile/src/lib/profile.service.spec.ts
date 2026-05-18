@@ -3,7 +3,7 @@ import { Auth } from '@angular/fire/auth';
 import { Firestore } from '@angular/fire/firestore';
 import { API_URL } from '@interv/util';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ProfileService } from './profile.service';
+import { ProfileService, validateProfilePhotoFile } from './profile.service';
 
 describe('ProfileService', () => {
   let service: ProfileService;
@@ -37,5 +37,10 @@ describe('ProfileService', () => {
     const localService = TestBed.inject(ProfileService);
 
     await expect(localService.currentUserOrNull()).resolves.toBe(fakeUser);
+  });
+
+  it('validateProfilePhotoFile rejects unsupported types', () => {
+    const file = new File(['x'], 'doc.pdf', { type: 'application/pdf' });
+    expect(validateProfilePhotoFile(file)).toContain('JPEG');
   });
 });

@@ -17,6 +17,7 @@
     "deploy:firebase": "firebase deploy --only hosting,firestore:rules",
     "deploy:firebase:ci": "firebase deploy --only hosting,firestore:rules --non-interactive",
     "deploy:firestore:rules": "firebase deploy --only firestore:rules",
+    "deploy:storage:rules": "firebase deploy --only storage",
     "release:hosting": "npm run build:interv:prod && npm run deploy:firebase"
   },
   "private": true,

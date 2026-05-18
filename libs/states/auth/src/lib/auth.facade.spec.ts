@@ -59,7 +59,7 @@ describe('AuthFacade', () => {
     await facade.login('a@b.com', 'pwd');
 
     expect(storeMock.login).toHaveBeenCalledWith('a@b.com', 'pwd');
-    expect(navigate).toHaveBeenCalledWith(['/dashboard']);
+    expect(navigate).toHaveBeenCalledWith(['/candidate/dashboard']);
   });
 
   it('login() does not navigate when no user is set', async () => {

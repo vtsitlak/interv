@@ -7,6 +7,12 @@ import {
   serverTimestamp,
   setDoc,
 } from '@angular/fire/firestore';
+import {
+  getDownloadURL,
+  ref,
+  Storage,
+  uploadBytes,
+} from '@angular/fire/storage';
 import type { User } from 'firebase/auth';
 import { API_URL } from '@interv/util';
 import type { Profile, ProfileLink, QAPair } from '@interv/models';
@@ -20,11 +26,28 @@ export interface IngestResult {
 import { filter, firstValueFrom, map, race, take, timer } from 'rxjs';
 
 const CURRENT_USER_TIMEOUT_MS = 5000;
+const MAX_PROFILE_PHOTO_BYTES = 2 * 1024 * 1024;
+const ALLOWED_PROFILE_PHOTO_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+]);
+
+export function validateProfilePhotoFile(file: File): string | null {
+  if (!ALLOWED_PROFILE_PHOTO_TYPES.has(file.type)) {
+    return 'Please choose a JPEG, PNG, or WebP image.';
+  }
+  if (file.size > MAX_PROFILE_PHOTO_BYTES) {
+    return 'Image must be 2 MB or smaller.';
+  }
+  return null;
+}
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
   private readonly firestore = inject(Firestore);
   private readonly auth = inject(Auth);
+  private readonly storage = inject(Storage);
   private readonly apiUrl = inject(API_URL);
 
   /**
@@ -49,6 +72,29 @@ export class ProfileService {
   async getProfile(uid: string): Promise<Profile | null> {
     const snap = await getDoc(doc(this.firestore, `profiles/${uid}`));
     return snap.exists() ? (snap.data() as Profile) : null;
+  }
+
+  async uploadProfilePhoto(uid: string, file: File): Promise<string> {
+    const validationError = validateProfilePhotoFile(file);
+    if (validationError) {
+      throw new Error(validationError);
+    }
+
+    const user = await this.currentUserOrNull();
+    if (!user || user.uid !== uid) {
+      throw new Error('You must be signed in to upload a photo.');
+    }
+
+    const ext = file.type === 'image/png'
+      ? 'png'
+      : file.type === 'image/webp'
+        ? 'webp'
+        : 'jpg';
+    const path = `profiles/${uid}/photo.${ext}`;
+    const storageRef = ref(this.storage, path);
+
+    await uploadBytes(storageRef, file, { contentType: file.type });
+    return getDownloadURL(storageRef);
   }
 
   private async authHeaders(

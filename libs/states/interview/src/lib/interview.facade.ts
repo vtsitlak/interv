@@ -331,7 +331,7 @@ export class InterviewFacade {
       await this.service.completeInterview(profileId, interviewId);
       void this.service.requestInterviewSummary(profileId, interviewId);
       if (options?.skipFeedback) {
-        await this.router.navigate(['/my-profile']);
+        await this.router.navigate(['/candidate/my-profile']);
       } else {
         await this.router.navigate(['/candidate', profileId, 'feedback'], {
           queryParams: { interviewId },

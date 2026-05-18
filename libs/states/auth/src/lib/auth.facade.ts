@@ -16,28 +16,28 @@ export class AuthFacade {
   async tryHandleRedirectResult(): Promise<void> {
     await this.store.tryHandleRedirectResult();
     if (this.store.user()) {
-      await this.router.navigate(['/dashboard']);
+      await this.router.navigate(['/candidate/dashboard']);
     }
   }
 
   async login(email: string, password: string): Promise<void> {
     await this.store.login(email, password);
     if (this.store.user()) {
-      await this.router.navigate(['/dashboard']);
+      await this.router.navigate(['/candidate/dashboard']);
     }
   }
 
   async register(name: string, email: string, password: string): Promise<void> {
     await this.store.register(name, email, password);
     if (this.store.user()) {
-      await this.router.navigate(['/dashboard']);
+      await this.router.navigate(['/candidate/dashboard']);
     }
   }
 
   async loginWithGoogle(): Promise<void> {
     await this.store.loginWithGoogle();
     if (this.store.user()) {
-      await this.router.navigate(['/dashboard']);
+      await this.router.navigate(['/candidate/dashboard']);
     }
   }
 

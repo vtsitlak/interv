@@ -23,7 +23,7 @@ export class HeaderComponent {
   readonly logoutRequested = output<void>();
 
   readonly homeLink = computed(() =>
-    this.isAuthenticated() ? '/dashboard' : '/login',
+    this.isAuthenticated() ? '/candidate/dashboard' : '/login',
   );
 
   onLogoutClick(): void {

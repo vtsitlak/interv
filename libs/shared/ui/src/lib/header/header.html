@@ -11,7 +11,7 @@
     <div class="navbar-end flex-wrap gap-1 sm:gap-2">
       @if (isAuthenticated()) {
         <a
-          routerLink="/dashboard"
+          routerLink="/candidate/dashboard"
           routerLinkActive="btn-active"
           [routerLinkActiveOptions]="{ exact: true }"
           class="btn btn-ghost btn-sm"
@@ -19,21 +19,21 @@
           Dashboard
         </a>
         <a
-          routerLink="/profile"
+          routerLink="/candidate/train-profile"
           routerLinkActive="btn-active"
           class="btn btn-ghost btn-sm"
         >
           Train profile
         </a>
         <a
-          routerLink="/my-profile"
+          routerLink="/candidate/my-profile"
           routerLinkActive="btn-active"
           class="btn btn-ghost btn-sm"
         >
           My profile
         </a>
         <a
-          routerLink="/test-interview"
+          routerLink="/candidate/test-interview"
           routerLinkActive="btn-active"
           class="btn btn-ghost btn-sm"
         >

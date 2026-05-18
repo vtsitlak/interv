@@ -113,11 +113,11 @@ export class InterviewService {
           const uid = this.auth.currentUser?.uid ?? null;
           if (uid === profileId) {
             throw new Error(
-              `No profile document at ${pathHint} yet. Go to /profile, fill the form, and click Save & train AI once (wait for success). Then open your interview link again.`,
+              `No profile document at ${pathHint} yet. Go to /candidate/train-profile, fill the form, and click Save & train AI once (wait for success). Then open your interview link again.`,
             );
           }
           throw new Error(
-            `No profile at ${pathHint}. The candidate must sign in, complete their profile at /profile, and click Save & train AI before anyone can start an interview.`,
+            `No profile at ${pathHint}. The candidate must sign in, complete their profile at /candidate/train-profile, and click Save & train AI before anyone can start an interview.`,
           );
         }
       });
@@ -138,7 +138,7 @@ export class InterviewService {
           : null;
       if (code === 'permission-denied') {
         throw new Error(
-          `No published profile at ${pathHint}. The candidate must save their profile at /profile before interviews can start.`,
+          `No published profile at ${pathHint}. The candidate must save their profile at /candidate/train-profile before interviews can start.`,
         );
       }
       throw this.mapFirestoreWriteError(e, pathHint);
@@ -206,7 +206,7 @@ export class InterviewService {
       }
       if (event.data === BACKEND_PROFILE_NOT_FOUND) {
         onError(
-          'The API could not load this candidate’s profile from Firestore. Confirm profiles/{uid} exists (candidate saved /profile) and that Railway uses the same Firebase project.',
+          'The API could not load this candidate’s profile from Firestore. Confirm profiles/{uid} exists (candidate saved /candidate/train-profile) and that Railway uses the same Firebase project.',
         );
         return;
       }

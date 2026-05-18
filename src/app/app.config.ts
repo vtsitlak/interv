@@ -2,6 +2,7 @@ import { ApplicationConfig, type Injector } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { FirebaseApp, provideFirebaseApp, initializeApp } from '@angular/fire/app';
 import { provideAuth, getAuth } from '@angular/fire/auth';
+import { provideStorage, getStorage } from '@angular/fire/storage';
 import {
   getFirestore,
   initializeFirestore,
@@ -32,5 +33,8 @@ export const appConfig: ApplicationConfig = {
     provideFirebaseApp(() => initializeApp(environment.firebaseConfig)),
     provideAuth((injector: Injector) => getAuth(injector.get(FirebaseApp))),
     provideFirestore(provideFirestoreInstance),
+    provideStorage((injector: Injector) =>
+      getStorage(injector.get(FirebaseApp)),
+    ),
   ],
 };
