@@ -51,6 +51,7 @@ def health():
         vector_store_unavailable_reason,
     )
 
+    from services.auth import firebase_auth_disabled
     from services.gemini import chat_model, profile_model
 
     return {
@@ -58,6 +59,7 @@ def health():
         "geminiConfigured": bool(os.getenv("GEMINI_API_KEY")),
         "geminiChatModel": chat_model(),
         "geminiProfileModel": profile_model(),
+        "firebaseAuthEnforced": not firebase_auth_disabled(),
         "chromaPersistDir": os.getenv("CHROMA_PERSIST_DIR", "./chroma_db"),
         "chromaAvailable": is_vector_store_available(),
         "chromaError": vector_store_unavailable_reason(),

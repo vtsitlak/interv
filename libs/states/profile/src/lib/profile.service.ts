@@ -51,6 +51,23 @@ export class ProfileService {
     return snap.exists() ? (snap.data() as Profile) : null;
   }
 
+  private async authHeaders(
+    json = true,
+  ): Promise<Record<string, string>> {
+    const user = await this.currentUserOrNull();
+    if (!user) {
+      throw new Error('You must be signed in to perform this action.');
+    }
+    const token = await user.getIdToken();
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${token}`,
+    };
+    if (json) {
+      headers['Content-Type'] = 'application/json';
+    }
+    return headers;
+  }
+
   async saveProfile(
     uid: string,
     data: Partial<Profile>,
@@ -89,7 +106,7 @@ export class ProfileService {
     try {
       response = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await this.authHeaders(),
         body: JSON.stringify({ cvText, personalQA, links: linkPayload }),
       });
     } catch {
@@ -129,7 +146,9 @@ export class ProfileService {
     const query = params.toString();
     const url = `${this.apiUrl}/profiles/${profileId}/personal-qa-questions${query ? `?${query}` : ''}`;
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        headers: await this.authHeaders(false),
+      });
       if (!response.ok) {
         return [];
       }

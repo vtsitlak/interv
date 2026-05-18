@@ -38,8 +38,8 @@ async def check_interview_rate_limit(profile_id: str, interview_id: str) -> bool
         )
     except asyncio.TimeoutError:
         logger.error(
-            'Firestore rate-limit timed out for %s/%s; allowing message',
+            'Firestore rate-limit timed out for %s/%s; denying message',
             profile_id,
             interview_id,
         )
-        return True
+        return False

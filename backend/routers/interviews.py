@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException
 from firebase_admin import firestore
 
 from services.interview_summary import generate_interview_summary
+from services.usage_rate_limit import check_summarize_allowed
 
 router = APIRouter(prefix='/interviews', tags=['interviews'])
 logger = logging.getLogger(__name__)
@@ -45,6 +46,10 @@ def _load_profile(profile_id: str) -> Optional[dict[str, Any]]:
 async def summarize_interview(profile_id: str, interview_id: str):
     """Generate and store a 3–5 sentence AI summary (one Gemini call)."""
     try:
+        allowed, reason = await check_summarize_allowed(profile_id)
+        if not allowed:
+            raise HTTPException(status_code=429, detail=reason or 'Rate limit exceeded')
+
         interview = await asyncio.to_thread(_load_interview, profile_id, interview_id)
         if interview is None:
             raise HTTPException(status_code=404, detail='Interview not found')
