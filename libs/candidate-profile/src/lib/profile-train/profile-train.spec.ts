@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProfileFacade } from '@interv/state-profile';
 import { ProfileTrainComponent } from './profile-train';
@@ -14,8 +14,10 @@ describe('ProfileTrainComponent', () => {
   const buildPersonalQA = vi.fn().mockResolvedValue([
     { question: 'As a T, what motivates you?', answer: '' },
   ]);
+  let successMessage: string | null = null;
 
   beforeEach(async () => {
+    successMessage = null;
     loadProfile.mockClear();
     saveProfile.mockClear();
     ingestToRAG.mockClear();
@@ -30,7 +32,7 @@ describe('ProfileTrainComponent', () => {
           provide: ProfileFacade,
           useValue: {
             error: () => null,
-            successMessage: () => null,
+            successMessage: () => successMessage,
             isLoading: () => false,
             isSaving: () => false,
             isIngesting: () => false,
@@ -88,6 +90,30 @@ describe('ProfileTrainComponent', () => {
     await component.onSave(event);
 
     expect(preventDefault).toHaveBeenCalled();
+  });
+
+  it('onSave redirects to my-profile after successful ingest', async () => {
+    ingestToRAG.mockImplementation(async () => {
+      successMessage = 'Profile saved.';
+    });
+    const router = TestBed.inject(Router);
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    component.profileModel.set({
+      name: 'Name',
+      title: 'Title',
+      photo: '',
+      summary: 'Summary',
+      cvText: 'Long cv',
+      linkedIn: '',
+      workPreferences: [],
+      links: [],
+      personalQA: [{ question: 'Q', answer: 'A' }],
+    });
+
+    await component.onSave();
+
+    expect(navigate).toHaveBeenCalledWith(['/my-profile']);
   });
 
   it('onSave calls saveProfile and ingestToRAG when valid', async () => {

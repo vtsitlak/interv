@@ -9,6 +9,7 @@ const sampleInterview: InterviewSummary = {
   recruiterName: 'Alex',
   recruiterRole: 'HR',
   recruiterCompany: 'Acme',
+  isPracticeSession: false,
   status: 'complete',
   feedbackScore: 8,
   feedbackText: 'Great fit',

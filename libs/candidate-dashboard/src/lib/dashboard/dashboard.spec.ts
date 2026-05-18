@@ -76,4 +76,10 @@ describe('DashboardComponent', () => {
     expect(component.scoreColor(6)).toBe('badge-warning');
     expect(component.scoreColor(3)).toBe('badge-error');
   });
+
+  it('roleLabel() uses You for practice session user messages', () => {
+    expect(component.roleLabel('user', true)).toBe('You');
+    expect(component.roleLabel('assistant', true)).toBe('AI twin');
+    expect(component.roleLabel('user', false)).toBe('Recruiter');
+  });
 });

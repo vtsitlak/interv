@@ -11,6 +11,7 @@ import {
   Timestamp,
 } from '@angular/fire/firestore';
 import type { Feedback } from '@interv/models';
+import { isPracticeRecruiterInfo } from '@interv/state-interview';
 import type { InterviewSummary, TranscriptMessage } from './dashboard.models';
 
 interface InterviewDoc {
@@ -51,12 +52,21 @@ export class DashboardService {
 
     return snap.docs.map((docSnap) => {
       const data = docSnap.data() as InterviewDoc;
-      const feedback = data.feedback ?? null;
+      const recruiterName = data.recruiterName ?? '';
+      const recruiterRole = data.recruiterRole ?? '';
+      const recruiterCompany = data.recruiterCompany ?? '';
+      const isPracticeSession = isPracticeRecruiterInfo({
+        name: recruiterName,
+        role: recruiterRole,
+        company: recruiterCompany,
+      });
+      const feedback = isPracticeSession ? null : (data.feedback ?? null);
       return {
         id: docSnap.id,
-        recruiterName: data.recruiterName ?? '',
-        recruiterRole: data.recruiterRole ?? '',
-        recruiterCompany: data.recruiterCompany ?? '',
+        recruiterName,
+        recruiterRole,
+        recruiterCompany,
+        isPracticeSession,
         status: data.status ?? 'in_progress',
         feedbackScore: feedback?.score ?? null,
         feedbackText: feedback?.text ?? null,

@@ -1,7 +1,7 @@
 {
-  "name": "recruiter-interview",
+  "name": "interview",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/recruiter-interview/src",
+  "sourceRoot": "libs/interview/src",
   "prefix": "lib",
   "projectType": "library",
   "tags": [],
@@ -10,7 +10,7 @@
       "executor": "@nx/vitest:test",
       "outputs": ["{options.reportsDirectory}"],
       "options": {
-        "reportsDirectory": "coverage/libs/recruiter-interview"
+        "reportsDirectory": "coverage/libs/interview"
       }
     },
     "lint": {

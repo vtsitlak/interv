@@ -125,7 +125,11 @@
                     }
                   </div>
                 </div>
-                @if (interview.feedbackScore !== null) {
+                @if (interview.isPracticeSession) {
+                  <span class="badge badge-outline badge-lg ml-3 shrink-0"
+                    >Practice</span
+                  >
+                } @else if (interview.feedbackScore !== null) {
                   <div class="ml-3 shrink-0">
                     <span
                       class="badge badge-lg {{ scoreColor(interview.feedbackScore) }}"
@@ -158,10 +162,20 @@
           ✕
         </button>
 
-        <h3 class="font-bold text-lg mb-1">{{ interview.recruiterName }}</h3>
+        <h3 class="font-bold text-lg mb-1">
+          @if (interview.isPracticeSession) {
+            Practice session
+          } @else {
+            {{ interview.recruiterName }}
+          }
+        </h3>
         <p class="text-sm text-base-content/60 mb-4">
-          {{ interview.recruiterRole }} @ {{ interview.recruiterCompany }} ·
-          {{ formatDate(interview.createdAt) }}
+          @if (interview.isPracticeSession) {
+            Self-test · {{ formatDate(interview.createdAt) }}
+          } @else {
+            {{ interview.recruiterRole }} @ {{ interview.recruiterCompany }} ·
+            {{ formatDate(interview.createdAt) }}
+          }
         </p>
 
         <div class="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-4">
@@ -183,15 +197,21 @@
               <dt class="font-medium">Completed</dt>
               <dd>{{ formatDate(interview.completedAt) }}</dd>
             }
-            <dt class="font-medium">Recruiter</dt>
-            <dd class="col-span-2 sm:col-span-1">
-              {{ interview.recruiterName }} · {{ interview.recruiterRole }} @
-              {{ interview.recruiterCompany }}
-            </dd>
+            @if (!interview.isPracticeSession) {
+              <dt class="font-medium">Recruiter</dt>
+              <dd class="col-span-2 sm:col-span-1">
+                {{ interview.recruiterName }} · {{ interview.recruiterRole }} @
+                {{ interview.recruiterCompany }}
+              </dd>
+            }
           </dl>
           @if (interview.aiSummary) {
             <p class="text-sm text-base-content/80 leading-relaxed">
               {{ interview.aiSummary }}
+            </p>
+          } @else if (interview.isPracticeSession) {
+            <p class="text-sm text-base-content/60 leading-relaxed">
+              AI summary is generated after you complete the practice session.
             </p>
           } @else {
             <p class="text-sm text-base-content/60 leading-relaxed">
@@ -201,24 +221,26 @@
           }
         </div>
 
-        @if (interview.feedbackScore !== null) {
-          <div class="bg-base-200 rounded-xl p-4 mb-4">
-            <div class="flex items-center gap-3 mb-2">
-              <span class="font-medium text-sm">Feedback</span>
-              <span class="badge {{ scoreColor(interview.feedbackScore) }}">
-                {{ interview.feedbackScore }}/10
-              </span>
+        @if (!interview.isPracticeSession) {
+          @if (interview.feedbackScore !== null) {
+            <div class="bg-base-200 rounded-xl p-4 mb-4">
+              <div class="flex items-center gap-3 mb-2">
+                <span class="font-medium text-sm">Feedback</span>
+                <span class="badge {{ scoreColor(interview.feedbackScore) }}">
+                  {{ interview.feedbackScore }}/10
+                </span>
+              </div>
+              @if (interview.feedbackText) {
+                <p class="text-sm text-base-content/80 leading-relaxed">
+                  {{ interview.feedbackText }}
+                </p>
+              }
             </div>
-            @if (interview.feedbackText) {
-              <p class="text-sm text-base-content/80 leading-relaxed">
-                {{ interview.feedbackText }}
-              </p>
-            }
-          </div>
-        } @else {
-          <div class="alert alert-ghost mb-4 text-sm">
-            No feedback submitted yet
-          </div>
+          } @else {
+            <div class="alert alert-ghost mb-4 text-sm">
+              No feedback submitted yet
+            </div>
+          }
         }
 
         <div class="divider text-xs">Interview transcript</div>
@@ -241,7 +263,7 @@
               >
                 <div class="flex items-center justify-between gap-2 mb-1">
                   <span class="font-medium text-xs">{{
-                    roleLabel(message.role)
+                    roleLabel(message.role, interview.isPracticeSession)
                   }}</span>
                   @if (message.timestamp) {
                     <span class="text-xs text-base-content/40">{{

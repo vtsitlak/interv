@@ -16,7 +16,11 @@ describe('ProfileComponent', () => {
         {
           provide: ActivatedRoute,
           useValue: {
-            snapshot: { paramMap: convertToParamMap({ profileId: 'p1' }) },
+            snapshot: {
+              paramMap: convertToParamMap({ profileId: 'p1' }),
+              queryParamMap: convertToParamMap({}),
+              data: { ownerMode: false },
+            },
           },
         },
         {
@@ -37,6 +41,8 @@ describe('ProfileComponent', () => {
                 },
               ],
             }),
+            getInterviewForReview: vi.fn().mockResolvedValue(null),
+            getLatestInterviewWithFeedback: vi.fn().mockResolvedValue(null),
           },
         },
       ],

@@ -8,6 +8,9 @@ import {
   doc,
   getDoc,
   getDocFromServer,
+  getDocs,
+  orderBy,
+  query,
   serverTimestamp,
   updateDoc,
 } from '@angular/fire/firestore';
@@ -20,6 +23,7 @@ import {
   BACKEND_PROFILE_NOT_FOUND,
   ChatMessage,
   INTERVIEW_COMPLETE_SIGNAL,
+  InterviewReview,
   RecruiterInfo,
 } from './interview.models';
 
@@ -271,27 +275,122 @@ export class InterviewService {
     score: number,
     text: string,
   ): Promise<void> {
-    const pathHint = `profiles/${profileId}/interviews/${interviewId}`;
-    const fs = this.firestore;
+    const url = `${this.apiUrl}/interviews/${profileId}/${interviewId}/feedback`;
+    const clampedScore = Math.min(10, Math.max(1, Math.round(score)));
+    const trimmed = text.trim();
+    if (!trimmed) {
+      throw new Error('Feedback text is required');
+    }
+
     try {
-      await this.runFirestore(async () => {
-        const ref = doc(fs, 'profiles', profileId, 'interviews', interviewId);
-        await updateDoc(ref, {
-          feedback: {
-            score,
-            text,
-            submittedAt: serverTimestamp(),
-          },
-        });
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ score: clampedScore, text: trimmed }),
       });
+
+      if (!response.ok) {
+        let detail = `Failed to submit feedback (${response.status})`;
+        try {
+          const data = (await response.json()) as { detail?: string };
+          if (data.detail) {
+            detail = data.detail;
+          }
+        } catch {
+          /* ignore parse errors */
+        }
+        throw new Error(detail);
+      }
     } catch (e: unknown) {
-      throw this.mapFirestoreWriteError(e, pathHint);
+      if (e instanceof Error) {
+        throw e;
+      }
+      throw new Error(String(e));
     }
   }
 
   async getPublicProfile(profileId: string): Promise<Profile | null> {
     const snap = await getDoc(doc(this.firestore, 'profiles', profileId));
     return snap.exists() ? (snap.data() as Profile) : null;
+  }
+
+  async listInterviewsForProfile(profileId: string): Promise<InterviewReview[]> {
+    const pathHint = `profiles/${profileId}/interviews`;
+    const fs = this.firestore;
+    try {
+      return await this.runFirestore(async () => {
+        const ref = collection(fs, 'profiles', profileId, 'interviews');
+        const q = query(ref, orderBy('createdAt', 'desc'));
+        const snap = await getDocs(q);
+        return snap.docs.map((docSnap) =>
+          this.mapInterviewReview(profileId, docSnap.id, docSnap.data()),
+        );
+      });
+    } catch (e: unknown) {
+      throw this.mapFirestoreWriteError(e, pathHint);
+    }
+  }
+
+  async getInterviewForReview(
+    profileId: string,
+    interviewId: string,
+  ): Promise<InterviewReview | null> {
+    const pathHint = `profiles/${profileId}/interviews/${interviewId}`;
+    const fs = this.firestore;
+    try {
+      return await this.runFirestore(async () => {
+        const ref = doc(fs, 'profiles', profileId, 'interviews', interviewId);
+        const snap = await getDoc(ref);
+        if (!snap.exists()) {
+          return null;
+        }
+        return this.mapInterviewReview(profileId, snap.id, snap.data());
+      });
+    } catch (e: unknown) {
+      throw this.mapFirestoreWriteError(e, pathHint);
+    }
+  }
+
+  async getLatestInterviewWithFeedback(
+    profileId: string,
+  ): Promise<InterviewReview | null> {
+    const interviews = await this.listInterviewsForProfile(profileId);
+    return (
+      interviews.find((item) => item.feedbackScore !== null && item.feedbackText) ??
+      null
+    );
+  }
+
+  private mapInterviewReview(
+    profileId: string,
+    id: string,
+    data: Record<string, unknown>,
+  ): InterviewReview {
+    const feedback = data['feedback'] as
+      | { score?: number; text?: string }
+      | null
+      | undefined;
+    const createdAt = data['createdAt'] as Timestamp | undefined;
+    const completedAt = data['completedAt'] as Timestamp | undefined | null;
+    const status = data['status'] === 'complete' ? 'complete' : 'in_progress';
+
+    return {
+      id,
+      profileId,
+      recruiterName: String(data['recruiterName'] ?? ''),
+      recruiterRole: String(data['recruiterRole'] ?? ''),
+      recruiterCompany: String(data['recruiterCompany'] ?? ''),
+      status,
+      feedbackScore:
+        typeof feedback?.score === 'number' ? feedback.score : null,
+      feedbackText: feedback?.text?.trim() ? feedback.text.trim() : null,
+      aiSummary:
+        typeof data['aiSummary'] === 'string' && data['aiSummary'].trim()
+          ? data['aiSummary'].trim()
+          : null,
+      createdAt: createdAt?.toDate() ?? new Date(),
+      completedAt: completedAt?.toDate() ?? null,
+    };
   }
 
   async getInterviewMessages(

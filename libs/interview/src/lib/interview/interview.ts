@@ -8,9 +8,11 @@ import {
   signal,
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { AuthFacade } from '@interv/state-auth';
 import {
   InterviewFacade,
   InterviewService,
+  PRACTICE_RECRUITER_INFO,
   type RecruiterInfo,
 } from '@interv/state-interview';
 import { InterviewSetupComponent } from '../interview-setup/interview-setup';
@@ -27,11 +29,11 @@ import { InterviewSuggestedQuestionsComponent } from '../interview-suggested-que
 export class InterviewComponent implements OnInit, OnDestroy {
   readonly facade = inject(InterviewFacade);
   private readonly interviewService = inject(InterviewService);
+  private readonly authFacade = inject(AuthFacade);
   private readonly route = inject(ActivatedRoute);
 
-  readonly profileId =
-    this.route.snapshot.paramMap.get('profileId') ?? '';
-
+  readonly profileId = signal('');
+  readonly skipSetup = signal(false);
   readonly isSetupComplete = signal(false);
 
   readonly chatText = signal('');
@@ -42,6 +44,22 @@ export class InterviewComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.facade.disconnect();
+
+    const routeProfileId = this.route.snapshot.paramMap.get('profileId') ?? '';
+    if (routeProfileId) {
+      this.profileId.set(routeProfileId);
+    }
+
+    const testMode = this.route.snapshot.data['testMode'] === true;
+    this.skipSetup.set(testMode);
+
+    if (testMode) {
+      const uid = this.authFacade.user()?.uid;
+      if (uid) {
+        this.profileId.set(uid);
+      }
+      void this.startPracticeInterview();
+    }
   }
 
   ngOnDestroy(): void {
@@ -49,11 +67,13 @@ export class InterviewComponent implements OnInit, OnDestroy {
   }
 
   async onSetupStart(info: RecruiterInfo): Promise<void> {
-    if (!this.profileId) return;
+    if (!this.profileId()) {
+      return;
+    }
     this.usedSuggestions.set(new Set());
     this.suggestedQuestions.set([]);
     try {
-      await this.facade.startInterview(this.profileId, info);
+      await this.facade.startInterview(this.profileId(), info);
       this.isSetupComplete.set(true);
       await this.loadSuggestedQuestionsWithRetry();
     } catch {
@@ -63,7 +83,9 @@ export class InterviewComponent implements OnInit, OnDestroy {
 
   async sendMessage(): Promise<void> {
     const content = this.chatText().trim();
-    if (!content || !this.facade.canSendMessage()) return;
+    if (!content || !this.facade.canSendMessage()) {
+      return;
+    }
     this.markMatchingSuggestionUsed(content);
     this.chatText.set('');
     await this.facade.sendMessage(content);
@@ -89,7 +111,9 @@ export class InterviewComponent implements OnInit, OnDestroy {
   }
 
   onConfirmEnd(): void {
-    void this.facade.confirmEndInterview();
+    void this.facade.confirmEndInterview({
+      skipFeedback: this.skipSetup(),
+    });
   }
 
   onSuggestionSelected(question: string): void {
@@ -101,6 +125,24 @@ export class InterviewComponent implements OnInit, OnDestroy {
     }
     this.chatText.set(question);
     void this.sendMessage();
+  }
+
+  private async startPracticeInterview(): Promise<void> {
+    if (!this.profileId()) {
+      return;
+    }
+    this.usedSuggestions.set(new Set());
+    this.suggestedQuestions.set([]);
+    try {
+      await this.facade.startInterview(
+        this.profileId(),
+        PRACTICE_RECRUITER_INFO,
+      );
+      this.isSetupComplete.set(true);
+      await this.loadSuggestedQuestionsWithRetry();
+    } catch {
+      // Error text is shown via facade.error() in template
+    }
   }
 
   private normalizeQuestion(question: string): string {
@@ -148,13 +190,13 @@ export class InterviewComponent implements OnInit, OnDestroy {
   }
 
   private async loadSuggestedQuestions(): Promise<void> {
-    if (!this.profileId) {
+    if (!this.profileId()) {
       return;
     }
     this.isLoadingSuggestedQuestions.set(true);
     try {
       const questions = await this.interviewService.getSuggestedQuestions(
-        this.profileId,
+        this.profileId(),
       );
       this.suggestedQuestions.set(questions);
     } finally {

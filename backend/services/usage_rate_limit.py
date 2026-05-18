@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from firebase_admin import firestore
 
 from services.api_limits import (
+    FEEDBACK_MAX_PER_HOUR,
     INGEST_COOLDOWN_SEC,
     PERSONAL_QA_MAX_PER_HOUR,
     SUMMARIZE_MAX_PER_HOUR,
@@ -132,6 +133,10 @@ async def check_suggested_questions_allowed(
 
 async def check_summarize_allowed(profile_id: str) -> tuple[bool, str | None]:
     return await _check_hourly_quota(profile_id, 'summarize', SUMMARIZE_MAX_PER_HOUR)
+
+
+async def check_feedback_allowed(profile_id: str) -> tuple[bool, str | None]:
+    return await _check_hourly_quota(profile_id, 'feedback', FEEDBACK_MAX_PER_HOUR)
 
 
 async def _check_hourly_quota(

@@ -23,7 +23,9 @@ export const DashboardStore = signalStore(
       interviews().filter((i) => i.status === 'complete').length,
     ),
     averageScore: computed(() => {
-      const scored = interviews().filter((i) => i.feedbackScore !== null);
+      const scored = interviews().filter(
+        (i) => !i.isPracticeSession && i.feedbackScore !== null,
+      );
       if (!scored.length) {
         return null;
       }
