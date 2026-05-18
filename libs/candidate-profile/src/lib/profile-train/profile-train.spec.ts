@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ProfileFacade } from '@interv/state-profile';
+import { ProfileFacade, ProfileService } from '@interv/state-profile';
 import { ProfileTrainComponent } from './profile-train';
 
 describe('ProfileTrainComponent', () => {
@@ -28,6 +28,13 @@ describe('ProfileTrainComponent', () => {
       imports: [ProfileTrainComponent],
       providers: [
         provideRouter([]),
+        {
+          provide: ProfileService,
+          useValue: {
+            currentUserOrNull: vi.fn().mockResolvedValue({ uid: 'u1' }),
+            uploadProfilePhoto: vi.fn().mockResolvedValue('https://cdn.example/photo.jpg'),
+          },
+        },
         {
           provide: ProfileFacade,
           useValue: {
@@ -113,7 +120,7 @@ describe('ProfileTrainComponent', () => {
 
     await component.onSave();
 
-    expect(navigate).toHaveBeenCalledWith(['/my-profile']);
+    expect(navigate).toHaveBeenCalledWith(['/candidate/my-profile']);
   });
 
   it('onSave calls saveProfile and ingestToRAG when valid', async () => {
@@ -171,6 +178,21 @@ describe('ProfileTrainComponent', () => {
     const before = component.profileModel().links.length;
     component.addLink();
     expect(component.profileModel().links.length).toBe(before + 1);
+  });
+
+  it('onPhotoSelected uploads and sets photo URL on the model', async () => {
+    const profileService = TestBed.inject(ProfileService);
+    const file = new File(['x'], 'photo.jpg', { type: 'image/jpeg' });
+
+    await component.onPhotoSelected({
+      target: { files: [file], value: '' },
+    } as unknown as Event);
+
+    expect(profileService.uploadProfilePhoto).toHaveBeenCalledWith(
+      'u1',
+      file,
+    );
+    expect(component.profileModel().photo).toBe('https://cdn.example/photo.jpg');
   });
 
   it('removeQA removes the QA at the given index', () => {

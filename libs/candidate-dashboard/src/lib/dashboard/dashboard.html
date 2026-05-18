@@ -35,12 +35,12 @@
               <button
                 type="button"
                 class="btn btn-outline btn-sm gap-2"
-                (click)="copyShareLink()"
+                (click)="copyPublicProfileLink()"
               >
                 @if (copySuccess()) {
                   Copied!
                 } @else {
-                  Copy interview link
+                  Copy public profile link
                 }
               </button>
             }
@@ -91,7 +91,7 @@
           <div class="text-center py-12 text-base-content/40">
             <p class="text-4xl mb-3" aria-hidden="true">📭</p>
             <p class="font-medium">No interviews yet</p>
-            <p class="text-sm mt-1">Share your interview link to get started</p>
+            <p class="text-sm mt-1">Share your public profile link to get started</p>
           </div>
         } @else {
           <div class="space-y-3">

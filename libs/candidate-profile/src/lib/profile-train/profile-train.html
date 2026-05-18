@@ -1,13 +1,11 @@
 <div class="min-h-screen bg-base-200 py-10 px-4">
   <div class="max-w-3xl mx-auto">
-    <div class="flex items-center justify-between mb-8">
-      <div>
-        <h1 class="text-3xl font-bold">Your AI Profile</h1>
-        <p class="text-base-content/60 mt-1">
-          This is what your AI twin will know about you
-        </p>
-      </div>
-      <a routerLink="/dashboard" class="btn btn-ghost">← Dashboard</a>
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold">Train your profile</h1>
+      <p class="text-base-content/60 mt-1">
+        Add your details and Q&amp;A so your AI twin can represent you in
+        interviews
+      </p>
     </div>
 
     @if (facade.successMessage()) {
@@ -81,16 +79,54 @@
             </div>
 
             <fieldset class="fieldset mt-2">
-              <label class="fieldset-label" for="profile-photo">Photo URL</label>
-              <input
-                id="profile-photo"
-                type="text"
-                inputmode="url"
-                autocomplete="url"
-                [formField]="profileForm.photo"
-                class="input input-bordered w-full"
-                placeholder="https://..."
-              />
+              <label class="fieldset-label" for="profile-photo">Photo</label>
+              <div class="flex flex-col sm:flex-row gap-4 items-start mt-2">
+                @if (hasPhotoPreview()) {
+                  <img
+                    [src]="photoPreview()"
+                    alt="Profile photo preview"
+                    class="w-24 h-24 rounded-2xl object-cover border border-base-300 shrink-0"
+                  />
+                } @else {
+                  <div
+                    class="w-24 h-24 rounded-2xl bg-base-200 border border-dashed border-base-300 flex items-center justify-center text-base-content/40 text-xs text-center px-2 shrink-0"
+                    aria-hidden="true"
+                  >
+                    No photo
+                  </div>
+                }
+                <div class="flex flex-col gap-2 min-w-0 flex-1">
+                  <input
+                    id="profile-photo"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    class="file-input file-input-bordered w-full max-w-md"
+                    [disabled]="isUploadingPhoto()"
+                    (change)="onPhotoSelected($event)"
+                  />
+                  <p class="text-xs text-base-content/60">
+                    JPEG, PNG, or WebP · max 2 MB
+                  </p>
+                  @if (isUploadingPhoto()) {
+                    <span class="text-sm text-base-content/60 flex items-center gap-2">
+                      <span class="loading loading-spinner loading-sm"></span>
+                      Uploading...
+                    </span>
+                  }
+                  @if (hasPhotoPreview() && !isUploadingPhoto()) {
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-sm w-fit"
+                      (click)="removePhoto()"
+                    >
+                      Remove photo
+                    </button>
+                  }
+                </div>
+              </div>
+              @if (photoUploadError()) {
+                <p class="text-error text-xs mt-2">{{ photoUploadError() }}</p>
+              }
             </fieldset>
 
             <fieldset class="fieldset mt-2">

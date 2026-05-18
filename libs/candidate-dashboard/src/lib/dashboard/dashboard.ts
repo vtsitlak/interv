@@ -40,17 +40,17 @@ export class DashboardComponent implements OnInit {
   }
 
   editProfile(): void {
-    void this.router.navigate(['/profile']);
+    void this.router.navigate(['/candidate/train-profile']);
   }
 
-  async copyShareLink(): Promise<void> {
+  async copyPublicProfileLink(): Promise<void> {
     const sharePath = this.profile.shareUrl();
     const uid = this.auth.user()?.uid;
     const path = sharePath ?? (uid ? `/candidate/${uid}` : null);
     if (!path) {
       return;
     }
-    const url = `${globalThis.location.origin}${path}/interview`;
+    const url = `${globalThis.location.origin}${path}`;
     try {
       await navigator.clipboard.writeText(url);
       this.copySuccess.set(true);

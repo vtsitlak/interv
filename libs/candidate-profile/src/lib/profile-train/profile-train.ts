@@ -13,13 +13,14 @@ import {
   FormField,
   required,
 } from '@angular/forms/signals';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import type { ProfileLink, QAPair, WorkPreference } from '@interv/models';
 import { normalizeWorkPreferences, WORK_PREFERENCE_GROUPS } from '@interv/models';
 import {
   canGenerateRoleSpecificPersonalQA,
   hasPersonalQAAnswers,
   ProfileFacade,
+  ProfileService,
 } from '@interv/state-profile';
 
 interface ProfileFormModel {
@@ -59,7 +60,7 @@ function normalizeLinks(
 @Component({
   selector: 'lib-profile-train',
   standalone: true,
-  imports: [FormField, FormsModule, RouterLink],
+  imports: [FormField, FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './profile-train.html',
   styleUrl: './profile-train.scss',
@@ -69,11 +70,14 @@ export class ProfileTrainComponent implements OnInit {
   private readonly router = inject(Router);
 
   readonly facade = inject(ProfileFacade);
+  private readonly profileService = inject(ProfileService);
 
   readonly workPreferenceGroups = WORK_PREFERENCE_GROUPS;
 
   readonly profileModel = signal<ProfileFormModel>({ ...EMPTY_MODEL });
   readonly isLoadingPersonalQA = signal(false);
+  readonly isUploadingPhoto = signal(false);
+  readonly photoUploadError = signal<string | null>(null);
   readonly profileId = signal<string | null>(null);
 
   readonly profileForm = form(this.profileModel, (path) => {
@@ -170,6 +174,47 @@ export class ProfileTrainComponent implements OnInit {
     return this.profileModel().workPreferences.includes(id);
   }
 
+  hasPhotoPreview(): boolean {
+    return !!this.profileModel().photo.trim();
+  }
+
+  photoPreview(): string {
+    return this.profileModel().photo.trim();
+  }
+
+  removePhoto(): void {
+    this.photoUploadError.set(null);
+    this.profileModel.update((m) => ({ ...m, photo: '' }));
+  }
+
+  async onPhotoSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) {
+      return;
+    }
+
+    const user = await this.profileService.currentUserOrNull();
+    if (!user) {
+      this.photoUploadError.set('You must be signed in to upload a photo.');
+      return;
+    }
+
+    this.photoUploadError.set(null);
+    this.isUploadingPhoto.set(true);
+    try {
+      const url = await this.profileService.uploadProfilePhoto(user.uid, file);
+      this.profileModel.update((m) => ({ ...m, photo: url }));
+    } catch (e: unknown) {
+      this.photoUploadError.set(
+        e instanceof Error ? e.message : 'Could not upload photo.',
+      );
+    } finally {
+      this.isUploadingPhoto.set(false);
+    }
+  }
+
   toggleWorkPreference(id: WorkPreference): void {
     this.profileModel.update((m) => {
       const next = new Set(m.workPreferences);
@@ -249,7 +294,7 @@ export class ProfileTrainComponent implements OnInit {
       this.profileId.set(profile.id);
       await this.facade.ingestToRAG(profile.id, cvText, personalQA, links);
       if (this.facade.successMessage()) {
-        await this.router.navigate(['/my-profile']);
+        await this.router.navigate(['/candidate/my-profile']);
       }
     }
   }

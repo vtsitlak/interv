@@ -13,52 +13,70 @@ export const appRoutes: Routes = [
       import('@interv/feature-auth').then(m => m.RegisterComponent),
   },
   {
-    path: 'dashboard',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('@interv/candidate-dashboard').then(m => m.DashboardComponent),
+    path: 'candidate',
+    children: [
+      {
+        path: 'dashboard',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('@interv/candidate-dashboard').then(m => m.DashboardComponent),
+      },
+      {
+        path: 'train-profile',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('@interv/candidate-profile/train').then(
+            m => m.ProfileTrainComponent,
+          ),
+      },
+      {
+        path: 'my-profile',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('@interv/candidate-profile').then(m => m.ProfileComponent),
+        data: { ownerMode: true },
+      },
+      {
+        path: 'test-interview',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('@interv/interview').then(m => m.InterviewComponent),
+        data: { testMode: true },
+      },
+      {
+        path: ':profileId',
+        loadComponent: () =>
+          import('@interv/candidate-profile').then(m => m.ProfileComponent),
+      },
+      {
+        path: ':profileId/interview/:interviewId/summary',
+        loadComponent: () =>
+          import('@interv/interview').then(m => m.InterviewSummaryComponent),
+      },
+      {
+        path: ':profileId/interview',
+        loadComponent: () =>
+          import('@interv/interview').then(m => m.InterviewComponent),
+      },
+      {
+        path: ':profileId/feedback',
+        loadComponent: () =>
+          import('@interv/recruiter-feedback').then(m => m.FeedbackComponent),
+      },
+    ],
   },
+  { path: 'dashboard', redirectTo: 'candidate/dashboard', pathMatch: 'full' },
+  { path: 'profile', redirectTo: 'candidate/train-profile', pathMatch: 'full' },
   {
-    path: 'profile',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('@interv/candidate-profile/train').then(m => m.ProfileTrainComponent),
+    path: 'candidate/profile',
+    redirectTo: 'candidate/train-profile',
+    pathMatch: 'full',
   },
-  {
-    path: 'my-profile',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('@interv/candidate-profile').then(m => m.ProfileComponent),
-    data: { ownerMode: true },
-  },
+  { path: 'my-profile', redirectTo: 'candidate/my-profile', pathMatch: 'full' },
   {
     path: 'test-interview',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('@interv/interview').then(m => m.InterviewComponent),
-    data: { testMode: true },
-  },
-  {
-    path: 'candidate/:profileId',
-    loadComponent: () =>
-      import('@interv/candidate-profile').then(m => m.ProfileComponent),
-  },
-  {
-    path: 'candidate/:profileId/interview/:interviewId/summary',
-    loadComponent: () =>
-      import('@interv/interview').then(
-        (m) => m.InterviewSummaryComponent,
-      ),
-  },
-  {
-    path: 'candidate/:profileId/interview',
-    loadComponent: () =>
-      import('@interv/interview').then(m => m.InterviewComponent),
-  },
-  {
-    path: 'candidate/:profileId/feedback',
-    loadComponent: () =>
-      import('@interv/recruiter-feedback').then(m => m.FeedbackComponent),
+    redirectTo: 'candidate/test-interview',
+    pathMatch: 'full',
   },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: '**', redirectTo: 'login' },
