@@ -37,6 +37,10 @@
           placeholder="What stood out? Anything missing?"
           [formField]="feedbackForm.text"
         ></textarea>
+        <interv-remaining-chars
+          [value]="feedbackModel().text"
+          [maxLength]="fieldLimits.text"
+        />
         <div class="min-h-5">
           @if (
             feedbackForm.text().touched() && feedbackForm.text().invalid()
@@ -79,6 +83,7 @@
           type="submit"
           class="btn btn-primary flex-1"
           [disabled]="
+            !isDirty() ||
             feedbackForm().invalid() ||
             isSubmitting() ||
             !profileId() ||

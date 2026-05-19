@@ -40,6 +40,10 @@
                   "
                   placeholder="Vasileios Tsitlakidis"
                 />
+                <interv-remaining-chars
+                  [value]="profileModel().name"
+                  [maxLength]="fieldLimits.name"
+                />
                 <div class="min-h-5">
                   @if (
                     profileForm.name().touched() &&
@@ -65,6 +69,10 @@
                   "
                   placeholder="Senior Frontend Engineer"
                 />
+                <interv-remaining-chars
+                  [value]="profileModel().title"
+                  [maxLength]="fieldLimits.title"
+                />
                 <div class="min-h-5">
                   @if (
                     profileForm.title().touched() &&
@@ -81,21 +89,12 @@
             <fieldset class="fieldset mt-2">
               <label class="fieldset-label" for="profile-photo">Photo</label>
               <div class="flex flex-col sm:flex-row gap-4 items-start mt-2">
-                @if (hasProfilePhoto()) {
-                  <img
-                    [src]="profileModel().photo.trim()"
-                    alt="Profile photo preview"
-                    class="w-24 h-24 rounded-2xl object-cover shrink-0"
-                    (error)="onPhotoError()"
-                  />
-                } @else {
-                  <div
-                    class="w-24 h-24 rounded-2xl bg-primary/10 flex items-center justify-center text-3xl font-bold text-primary shrink-0"
-                    aria-hidden="true"
-                  >
-                    {{ profileInitial() }}
-                  </div>
-                }
+                <interv-profile-photo
+                  [photo]="profileModel().photo"
+                  [name]="profileModel().name"
+                  alt="Profile photo preview"
+                  size="lg"
+                />
                 <div class="flex flex-col gap-2 min-w-0 flex-1">
                   <input
                     id="profile-photo"
@@ -143,6 +142,10 @@
                 rows="3"
                 placeholder="A short bio shown on your public profile page"
               ></textarea>
+              <interv-remaining-chars
+                [value]="profileModel().summary"
+                [maxLength]="fieldLimits.summary"
+              />
               <div class="min-h-5">
                 @if (
                   profileForm.summary().touched() &&
@@ -201,6 +204,14 @@
             <p class="text-sm text-base-content/60">
               Paste your CV text — this is what the AI uses to answer questions
             </p>
+            <div class="alert alert-warning text-sm mt-3">
+              <span>
+                Avoid including sensitive personal data such as your date of
+                birth, home address, phone number, or other contact details.
+                Focus on professional experience and skills your AI twin can
+                discuss in interviews.
+              </span>
+            </div>
             <fieldset class="fieldset mt-2">
               <label class="sr-only" for="profile-cv">CV text</label>
               <textarea
@@ -214,6 +225,10 @@
                 rows="10"
                 placeholder="Paste your full CV text here..."
               ></textarea>
+              <interv-remaining-chars
+                [value]="profileModel().cvText"
+                [maxLength]="fieldLimits.cvText"
+              />
               <div class="min-h-5">
                 @if (
                   profileForm.cvText().touched() &&
@@ -249,6 +264,10 @@
                 class="input input-bordered w-full"
                 placeholder="https://www.linkedin.com/in/your-handle"
               />
+              <interv-remaining-chars
+                [value]="profileModel().linkedIn"
+                [maxLength]="fieldLimits.linkedIn"
+              />
             </fieldset>
           </div>
         </div>
@@ -276,38 +295,50 @@
               let i = $index
             ) {
               <div class="flex flex-col sm:flex-row gap-3 mt-3 items-start">
-                <input
-                  [formField]="profileForm.links[i].description"
-                  type="text"
-                  class="input input-bordered w-full sm:w-48"
-                  placeholder="e.g. My GitHub profile"
-                  aria-label="Link description"
-                />
-                <div class="flex-1">
-                  <input
-                    [formField]="profileForm.links[i].link"
-                    type="text"
-                    inputmode="url"
-                    class="input input-bordered w-full"
-                    [class.input-error]="
-                      profileForm.links[i].link().touched() &&
-                      profileForm.links[i].link().invalid()
-                    "
-                    placeholder="https://..."
-                    aria-label="Link URL"
-                  />
-                  <div class="min-h-5">
-                    @if (
-                      profileForm.links[i].link().touched() &&
-                      profileForm.links[i].link().invalid()
-                    ) {
-                      @for (
-                        err of profileForm.links[i].link().errors();
-                        track err.kind
+                <div class="flex-1 min-w-0 w-full space-y-3">
+                  <div>
+                    <input
+                      [formField]="profileForm.links[i].link"
+                      type="text"
+                      inputmode="url"
+                      class="input input-bordered w-full"
+                      [class.input-error]="
+                        profileForm.links[i].link().touched() &&
+                        profileForm.links[i].link().invalid()
+                      "
+                      placeholder="https://..."
+                      aria-label="Link URL"
+                    />
+                    <interv-remaining-chars
+                      [value]="profileModel().links[i].link"
+                      [maxLength]="fieldLimits.linkUrl"
+                    />
+                    <div class="min-h-5">
+                      @if (
+                        profileForm.links[i].link().touched() &&
+                        profileForm.links[i].link().invalid()
                       ) {
-                        <p class="text-error text-xs mt-1">{{ err.message }}</p>
+                        @for (
+                          err of profileForm.links[i].link().errors();
+                          track err.kind
+                        ) {
+                          <p class="text-error text-xs mt-1">{{ err.message }}</p>
+                        }
                       }
-                    }
+                    </div>
+                  </div>
+                  <div>
+                    <textarea
+                      [formField]="profileForm.links[i].description"
+                      class="textarea textarea-bordered w-full"
+                      rows="2"
+                      placeholder="e.g. My GitHub profile"
+                      aria-label="Link description"
+                    ></textarea>
+                    <interv-remaining-chars
+                      [value]="profileModel().links[i].description"
+                      [maxLength]="fieldLimits.linkDescription"
+                    />
                   </div>
                 </div>
                 <button
@@ -379,6 +410,10 @@
                   placeholder="Question"
                   aria-label="Question"
                 />
+                <interv-remaining-chars
+                  [value]="profileModel().personalQA[i].question"
+                  [maxLength]="fieldLimits.qaQuestion"
+                />
                 <textarea
                   [formField]="profileForm.personalQA[i].answer"
                   class="textarea textarea-bordered w-full"
@@ -386,6 +421,10 @@
                   placeholder="Your answer"
                   aria-label="Answer"
                 ></textarea>
+                <interv-remaining-chars
+                  [value]="profileModel().personalQA[i].answer"
+                  [maxLength]="fieldLimits.qaAnswer"
+                />
                 <button
                   type="button"
                   class="btn btn-xs btn-ghost text-error mt-2"
@@ -403,6 +442,7 @@
             type="submit"
             class="btn btn-primary"
             [disabled]="
+              !isDirty() ||
               facade.isSaving() ||
               facade.isIngesting() ||
               profileForm().invalid()

@@ -66,10 +66,4 @@ describe('ProfileComponent', () => {
     expect(component.profileOverview()).toContain('Ada Lovelace is a Engineer.');
     expect(component.profileOverview()).toContain('Core skills: Angular');
   });
-
-  it('hasProfilePhoto() is false for empty photo', () => {
-    expect(component.hasProfilePhoto('')).toBe(false);
-    expect(component.hasProfilePhoto('   ')).toBe(false);
-    expect(component.hasProfilePhoto('https://example.com/p.jpg')).toBe(true);
-  });
 });

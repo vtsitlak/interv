@@ -1,0 +1,12 @@
+@if (showPhoto()) {
+  <img
+    [src]="photoSrc()"
+    [alt]="altText()"
+    [class]="imageClass()"
+    (error)="onPhotoError()"
+  />
+} @else {
+  <div [class]="placeholderClass()" aria-hidden="true">
+    {{ initial() }}
+  </div>
+}

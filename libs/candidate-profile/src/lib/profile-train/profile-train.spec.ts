@@ -76,6 +76,14 @@ describe('ProfileTrainComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it('isDirty is false until the form changes', async () => {
+    await fixture.whenStable();
+    expect(component.isDirty()).toBe(false);
+
+    component.profileModel.update((model) => ({ ...model, name: 'Changed' }));
+    expect(component.isDirty()).toBe(true);
+  });
+
   it('onSave calls preventDefault when a submit event is passed', async () => {
     component.profileModel.set({
       name: 'Name',
@@ -197,20 +205,26 @@ describe('ProfileTrainComponent', () => {
 
   it('shows placeholder initial when photo URL is empty', () => {
     component.profileModel.update((m) => ({ ...m, photo: '', name: 'Ada' }));
-    expect(component.hasProfilePhoto()).toBe(false);
-    expect(component.profileInitial()).toBe('A');
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement
+        .querySelector('interv-profile-photo [aria-hidden="true"]')
+        ?.textContent?.trim(),
+    ).toBe('A');
   });
 
-  it('onPhotoError falls back to placeholder instead of broken image', () => {
+  it('removePhoto clears stored photo URL', () => {
     component.profileModel.update((m) => ({
       ...m,
       photo: 'https://example.com/missing.jpg',
       name: 'Bob',
     }));
-    expect(component.hasProfilePhoto()).toBe(true);
-    component.onPhotoError();
-    expect(component.hasProfilePhoto()).toBe(false);
     expect(component.hasStoredPhoto()).toBe(true);
+
+    component.removePhoto();
+
+    expect(component.hasStoredPhoto()).toBe(false);
   });
 
   it('removeQA removes the QA at the given index', () => {

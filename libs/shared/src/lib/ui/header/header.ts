@@ -23,6 +23,8 @@ export class HeaderComponent {
   readonly isRecruiter = input(false);
 
   readonly logoutRequested = output<void>();
+  readonly resetProfileRequested = output<void>();
+  readonly deleteAccountRequested = output<void>();
 
   readonly homeLink = computed(() => {
     if (!this.isAuthenticated()) {
@@ -35,5 +37,13 @@ export class HeaderComponent {
 
   onLogoutClick(): void {
     this.logoutRequested.emit();
+  }
+
+  onResetProfileClick(): void {
+    this.resetProfileRequested.emit();
+  }
+
+  onDeleteAccountClick(): void {
+    this.deleteAccountRequested.emit();
   }
 }

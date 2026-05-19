@@ -29,9 +29,11 @@ describe('HeaderComponent', () => {
     const spy = vi.fn();
     component.logoutRequested.subscribe(spy);
 
-    const btn: HTMLButtonElement = fixture.nativeElement.querySelector(
-      'button.btn-outline',
-    );
+    const btn: HTMLButtonElement | null = Array.from(
+      fixture.nativeElement.querySelectorAll('button.btn-outline'),
+    ).find((element: HTMLButtonElement) =>
+      element.textContent?.trim().includes('Logout'),
+    ) ?? null;
     expect(btn).toBeTruthy();
     btn.click();
 

@@ -1,12 +1,18 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   OnInit,
   signal,
 } from '@angular/core';
 import { form, FormField, required } from '@angular/forms/signals';
 import { Router } from '@angular/router';
+import {
+  RECRUITER_FIELD_LIMITS,
+  RemainingCharsComponent,
+  serializeRecruiterForm,
+} from '@interv/shared';
 import type { RecruiterInfo } from '@interv/state-interview';
 import { RecruiterFacade } from '@interv/state-recruiter';
 
@@ -19,18 +25,27 @@ interface RecruiterFormModel {
 @Component({
   selector: 'interv-recruiter-profile',
   standalone: true,
-  imports: [FormField],
+  imports: [FormField, RemainingCharsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './recruiter-profile.html',
 })
 export class RecruiterProfileComponent implements OnInit {
   private readonly router = inject(Router);
   readonly recruiter = inject(RecruiterFacade);
+  readonly fieldLimits = RECRUITER_FIELD_LIMITS;
 
   readonly recruiterModel = signal<RecruiterFormModel>({
     name: '',
     role: '',
     company: '',
+  });
+  private readonly savedSnapshot = signal<string | null>(null);
+  readonly isDirty = computed(() => {
+    const saved = this.savedSnapshot();
+    if (saved === null) {
+      return false;
+    }
+    return serializeRecruiterForm(this.recruiterModel()) !== saved;
   });
 
   readonly recruiterForm = form(this.recruiterModel, (path) => {
@@ -53,6 +68,11 @@ export class RecruiterProfileComponent implements OnInit {
         company: profile.company,
       });
     }
+    this.markSavedSnapshot();
+  }
+
+  private markSavedSnapshot(): void {
+    this.savedSnapshot.set(serializeRecruiterForm(this.recruiterModel()));
   }
 
   async onSave(): Promise<void> {
@@ -62,6 +82,7 @@ export class RecruiterProfileComponent implements OnInit {
     const info: RecruiterInfo = this.recruiterModel();
     const saved = await this.recruiter.saveProfile(info);
     if (saved) {
+      this.markSavedSnapshot();
       await this.router.navigate(['/recruiter/dashboard']);
     }
   }

@@ -206,6 +206,10 @@ export const AuthStore = signalStore(
         patchState(store, { user: null, role: null });
       },
 
+      async clearSession(): Promise<void> {
+        patchState(store, { user: null, role: null, loading: false, error: null });
+      },
+
       async setUser(user: ProfileUser | null): Promise<void> {
         if (!user) {
           patchState(store, { user: null, role: null });
