@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 
 @Component({
-  selector: 'lib-interview-suggested-questions',
+  selector: 'interv-interview-suggested-questions',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './interview-suggested-questions.html',

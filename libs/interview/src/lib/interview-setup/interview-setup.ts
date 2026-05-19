@@ -15,7 +15,7 @@ interface RecruiterFormModel {
 }
 
 @Component({
-  selector: 'lib-interview-setup',
+  selector: 'interv-interview-setup',
   standalone: true,
   imports: [FormField],
   changeDetection: ChangeDetectionStrategy.OnPush,

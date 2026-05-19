@@ -9,10 +9,13 @@ import { Router } from '@angular/router';
 import { AuthFacade } from '@interv/state-auth';
 import { DashboardFacade, type InterviewSummary } from '@interv/state-dashboard';
 import { ProfileFacade } from '@interv/state-profile';
+import { ProfileVisibilitySettingsComponent } from '../profile-visibility-settings/profile-visibility-settings';
+import { InterviewListComponent } from '../interview-list/interview-list';
 
 @Component({
-  selector: 'lib-dashboard',
+  selector: 'interv-dashboard',
   standalone: true,
+  imports: [ProfileVisibilitySettingsComponent, InterviewListComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
@@ -39,13 +42,22 @@ export class DashboardComponent implements OnInit {
     this.dashboard.closeDetail();
   }
 
+  closeDetailOnBackdrop(event: MouseEvent): void {
+    if (event.target === event.currentTarget) {
+      this.closeDetail();
+    }
+  }
+
   editProfile(): void {
     void this.router.navigate(['/candidate/train-profile']);
   }
 
-  onHideFromRecruitersChange(event: Event): void {
-    const hidden = (event.target as HTMLInputElement).checked;
-    void this.profile.setProfileDiscoverability(!hidden);
+  onPublicProfileEnabledChange(enabled: boolean): void {
+    void this.profile.setPublicProfileEnabled(enabled);
+  }
+
+  onDiscoverableByRecruitersChange(discoverable: boolean): void {
+    void this.profile.setProfileDiscoverability(discoverable);
   }
 
   async copyPublicProfileLink(): Promise<void> {

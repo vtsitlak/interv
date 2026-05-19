@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'lib-util',
+  selector: 'interv-util',
   imports: [],
   templateUrl: './util.html',
   styleUrl: './util.scss',

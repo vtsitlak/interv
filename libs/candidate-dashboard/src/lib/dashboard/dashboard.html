@@ -31,7 +31,7 @@
             }
           </div>
           <div class="flex gap-2 flex-wrap">
-            @if (profile.isComplete()) {
+            @if (profile.isComplete() && profile.isPublicProfileEnabled()) {
               <button
                 type="button"
                 class="btn btn-outline btn-sm gap-2"
@@ -55,33 +55,14 @@
         </div>
 
         @if (profile.profile() && profile.isComplete()) {
-          <div class="mt-4 pt-4 border-t border-base-300">
-            <label class="flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                class="checkbox checkbox-secondary mt-1"
-                [checked]="!profile.isDiscoverableByRecruiters()"
-                [disabled]="profile.isUpdatingVisibility()"
-                (change)="onHideFromRecruitersChange($event)"
-              />
-              <span class="min-w-0">
-                <span class="font-medium">Hide my profile from recruiters</span>
-                <p class="text-sm text-base-content/60 mt-1 leading-relaxed">
-                  When enabled, your profile won't appear in recruiter search and
-                  recruiters won't be able to view your profile. Turn this off
-                  anytime to become discoverable again.
-                </p>
-              </span>
-            </label>
-            @if (profile.isUpdatingVisibility()) {
-              <p class="text-xs text-base-content/50 mt-2 flex items-center gap-2">
-                <span class="loading loading-spinner loading-xs"></span>
-                Saving…
-              </p>
-            } @else if (profile.successMessage()) {
-              <p class="text-sm text-success mt-2">{{ profile.successMessage() }}</p>
-            }
-          </div>
+          <interv-profile-visibility-settings
+            [isPublicProfileEnabled]="profile.isPublicProfileEnabled()"
+            [isDiscoverableByRecruiters]="profile.isDiscoverableByRecruiters()"
+            [isUpdating]="profile.isUpdatingVisibility()"
+            [successMessage]="profile.successMessage()"
+            (publicProfileEnabledChange)="onPublicProfileEnabledChange($event)"
+            (discoverableByRecruitersChange)="onDiscoverableByRecruitersChange($event)"
+          />
         }
       </div>
     </div>
@@ -98,7 +79,7 @@
         </div>
       </div>
       <div class="stat bg-base-100 shadow rounded-2xl col-span-2 sm:col-span-1">
-        <div class="stat-title text-xs">Average score</div>
+        <div class="stat-title text-xs">Average match score</div>
         <div class="stat-value text-2xl">
           @if (dashboard.averageScore() !== null) {
             {{ dashboard.averageScore() }}/10
@@ -124,65 +105,25 @@
             <p class="text-sm mt-1">Share your public profile link to get started</p>
           </div>
         } @else {
-          <div class="space-y-3">
-            @for (interview of dashboard.interviews(); track interview.id) {
-              <button
-                type="button"
-                class="flex w-full items-center justify-between p-4 bg-base-200 rounded-xl hover:bg-base-300 cursor-pointer transition-colors text-left"
-                (click)="selectInterview(interview)"
-              >
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <span class="font-medium truncate">{{
-                      interview.recruiterName
-                    }}</span>
-                    <span class="text-xs text-base-content/50">
-                      {{ interview.recruiterRole }} @
-                      {{ interview.recruiterCompany }}
-                    </span>
-                  </div>
-                  <div class="flex items-center gap-3 mt-1 flex-wrap">
-                    <span class="text-xs text-base-content/40">
-                      {{ formatDate(interview.createdAt) }}
-                    </span>
-                    <span class="text-xs text-base-content/40">
-                      {{ interview.messageCount }} messages
-                    </span>
-                    @if (interview.status === 'in_progress') {
-                      <span class="badge badge-xs badge-warning"
-                        >In progress</span
-                      >
-                    }
-                  </div>
-                </div>
-                @if (interview.isPracticeSession) {
-                  <span class="badge badge-outline badge-lg ml-3 shrink-0"
-                    >Practice</span
-                  >
-                } @else if (interview.feedbackScore !== null) {
-                  <div class="ml-3 shrink-0">
-                    <span
-                      class="badge badge-lg {{ scoreColor(interview.feedbackScore) }}"
-                    >
-                      {{ interview.feedbackScore }}/10
-                    </span>
-                  </div>
-                } @else {
-                  <span class="badge badge-ghost badge-lg ml-3 shrink-0"
-                    >No score</span
-                  >
-                }
-              </button>
-            }
-          </div>
+          <interv-interview-list
+            [interviews]="dashboard.interviews()"
+            (interviewSelect)="selectInterview($event)"
+          />
         }
       </div>
     </div>
   </div>
 
   @if (dashboard.selectedInterview(); as interview) {
-    <div class="modal modal-open" (click)="closeDetail()">
-      <div class="modal-box max-w-2xl" (click)="$event.stopPropagation()">
+    <div
+      class="modal modal-open"
+      tabindex="0"
+      role="button"
+      aria-label="Close interview details"
+      (click)="closeDetailOnBackdrop($event)"
+      (keydown.escape)="closeDetail()"
+    >
+      <div class="modal-box max-w-2xl">
         <button
           type="button"
           class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4"
@@ -255,7 +196,7 @@
           @if (interview.feedbackScore !== null) {
             <div class="bg-base-200 rounded-xl p-4 mb-4">
               <div class="flex items-center gap-3 mb-2">
-                <span class="font-medium text-sm">Feedback</span>
+                <span class="font-medium text-sm">Match score</span>
                 <span class="badge {{ scoreColor(interview.feedbackScore) }}">
                   {{ interview.feedbackScore }}/10
                 </span>
@@ -269,6 +210,26 @@
           } @else {
             <div class="alert alert-ghost mb-4 text-sm">
               No feedback submitted yet
+            </div>
+          }
+
+          @if (
+            interview.requestContact && interview.recruiterContactEmail
+          ) {
+            <div
+              class="bg-secondary/10 border border-secondary/20 rounded-xl p-4 mb-4"
+            >
+              <p class="font-medium text-sm mb-1">Contact request</p>
+              <p class="text-sm text-base-content/70 mb-3">
+                This recruiter would like to get in touch with you about this
+                interview.
+              </p>
+              <a
+                [href]="'mailto:' + interview.recruiterContactEmail"
+                class="link link-secondary text-sm font-medium"
+              >
+                {{ interview.recruiterContactEmail }}
+              </a>
             </div>
           }
         }

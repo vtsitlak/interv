@@ -10,6 +10,9 @@ export interface Feedback {
   text: string;
   score: number;
   submittedAt: Timestamp;
+  /** Recruiter opted in to share email so the candidate can reach out. */
+  requestContact?: boolean;
+  recruiterEmail?: string | null;
 }
 
 export interface Interview {

@@ -22,6 +22,7 @@ export class ProfileFacade {
   readonly successMessage = this.store.successMessage;
   readonly isComplete = this.store.isComplete;
   readonly isDiscoverableByRecruiters = this.store.isDiscoverableByRecruiters;
+  readonly isPublicProfileEnabled = this.store.isPublicProfileEnabled;
   readonly isUpdatingVisibility = this.store.isUpdatingVisibility;
   readonly shareUrl = this.store.shareUrl;
 
@@ -35,6 +36,10 @@ export class ProfileFacade {
 
   setProfileDiscoverability(isPublished: boolean): Promise<void> {
     return this.store.setProfileDiscoverability(isPublished);
+  }
+
+  setPublicProfileEnabled(isPublicProfileEnabled: boolean): Promise<void> {
+    return this.store.setPublicProfileEnabled(isPublicProfileEnabled);
   }
 
   ingestToRAG(

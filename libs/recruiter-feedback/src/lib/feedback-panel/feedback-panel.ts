@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   input,
@@ -8,6 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { form, FormField, required } from '@angular/forms/signals';
+import { AuthFacade } from '@interv/state-auth';
 import {
   InterviewService,
   type ChatMessage,
@@ -17,10 +19,11 @@ import { InterviewTranscriptComponent } from '@interv/interview';
 interface FeedbackFormModel {
   score: number;
   text: string;
+  requestContact: boolean;
 }
 
 @Component({
-  selector: 'lib-interview-feedback-panel',
+  selector: 'interv-interview-feedback-panel',
   standalone: true,
   imports: [FormField, InterviewTranscriptComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -28,22 +31,33 @@ interface FeedbackFormModel {
 })
 export class InterviewFeedbackPanelComponent {
   private readonly interviewService = inject(InterviewService);
+  private readonly auth = inject(AuthFacade);
 
   readonly profileId = input.required<string>();
   readonly interviewId = input.required<string>();
   readonly embedded = input(false);
   readonly title = input('Your feedback');
   readonly description = input(
-    'Rate how the AI twin represented the candidate. You can update this anytime.',
+    'How well did the AI twin match what you were looking for? You can update this anytime.',
   );
 
-  readonly feedbackSaved = output<{ score: number; text: string }>();
+  readonly feedbackSaved = output<{
+    score: number;
+    text: string;
+    requestContact: boolean;
+  }>();
 
-  readonly feedbackModel = signal<FeedbackFormModel>({ score: 8, text: '' });
+  readonly feedbackModel = signal<FeedbackFormModel>({
+    score: 8,
+    text: '',
+    requestContact: false,
+  });
 
   readonly feedbackForm = form(this.feedbackModel, (path) => {
     required(path.text, { message: 'Feedback is required' });
   });
+
+  readonly recruiterEmail = computed(() => this.auth.user()?.email?.trim() ?? null);
 
   readonly isSubmitting = signal(false);
   readonly isLoading = signal(false);
@@ -66,6 +80,14 @@ export class InterviewFeedbackPanelComponent {
     });
   }
 
+  toggleRequestContact(event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    this.feedbackModel.update((model) => ({
+      ...model,
+      requestContact: checked,
+    }));
+  }
+
   async onSubmit(event?: Event): Promise<void> {
     event?.preventDefault();
     const profileId = this.profileId();
@@ -74,8 +96,17 @@ export class InterviewFeedbackPanelComponent {
       return;
     }
 
-    const { score, text } = this.feedbackModel();
+    const { score, text, requestContact } = this.feedbackModel();
     const clampedScore = Math.min(10, Math.max(1, Math.round(score)));
+    const email = this.recruiterEmail();
+
+    if (requestContact && !email) {
+      this.error.set(
+        'Add an email to your account before sharing contact details with candidates.',
+      );
+      return;
+    }
+
     this.isSubmitting.set(true);
     this.error.set(null);
 
@@ -85,9 +116,17 @@ export class InterviewFeedbackPanelComponent {
         interviewId,
         clampedScore,
         text.trim(),
+        {
+          requestContact,
+          recruiterEmail: requestContact ? email : null,
+        },
       );
       this.hasExistingFeedback.set(true);
-      this.feedbackSaved.emit({ score: clampedScore, text: text.trim() });
+      this.feedbackSaved.emit({
+        score: clampedScore,
+        text: text.trim(),
+        requestContact,
+      });
     } catch (e: unknown) {
       this.error.set(e instanceof Error ? e.message : String(e));
     } finally {
@@ -140,10 +179,11 @@ export class InterviewFeedbackPanelComponent {
         this.feedbackModel.set({
           score: review.feedbackScore,
           text: review.feedbackText,
+          requestContact: review.requestContact,
         });
         this.hasExistingFeedback.set(true);
       } else {
-        this.feedbackModel.set({ score: 8, text: '' });
+        this.feedbackModel.set({ score: 8, text: '', requestContact: false });
         this.hasExistingFeedback.set(false);
       }
     } catch (e: unknown) {

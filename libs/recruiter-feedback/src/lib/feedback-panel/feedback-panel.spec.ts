@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { AuthFacade } from '@interv/state-auth';
 import { InterviewService } from '@interv/state-interview';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { InterviewFeedbackPanelComponent } from './feedback-panel';
@@ -15,6 +16,12 @@ describe('InterviewFeedbackPanelComponent', () => {
     await TestBed.configureTestingModule({
       imports: [InterviewFeedbackPanelComponent],
       providers: [
+        {
+          provide: AuthFacade,
+          useValue: {
+            user: () => ({ uid: 'r1', email: 'recruiter@example.com' }),
+          },
+        },
         {
           provide: InterviewService,
           useValue: {
@@ -39,10 +46,42 @@ describe('InterviewFeedbackPanelComponent', () => {
 
   it('submits feedback when form is valid', async () => {
     const component = fixture.componentInstance;
-    component.feedbackModel.set({ score: 7, text: 'Solid answers' });
+    component.feedbackModel.set({
+      score: 7,
+      text: 'Solid answers',
+      requestContact: false,
+    });
 
     await component.onSubmit();
 
-    expect(submitFeedback).toHaveBeenCalledWith('p1', 'int1', 7, 'Solid answers');
+    expect(submitFeedback).toHaveBeenCalledWith(
+      'p1',
+      'int1',
+      7,
+      'Solid answers',
+      { requestContact: false, recruiterEmail: null },
+    );
+  });
+
+  it('includes recruiter email when contact is requested', async () => {
+    const component = fixture.componentInstance;
+    component.feedbackModel.set({
+      score: 9,
+      text: 'Great twin',
+      requestContact: true,
+    });
+
+    await component.onSubmit();
+
+    expect(submitFeedback).toHaveBeenCalledWith(
+      'p1',
+      'int1',
+      9,
+      'Great twin',
+      {
+        requestContact: true,
+        recruiterEmail: 'recruiter@example.com',
+      },
+    );
   });
 });

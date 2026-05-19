@@ -44,7 +44,7 @@ describe('FeedbackComponent', () => {
   });
 
   it('marks saved when panel emits feedbackSaved', () => {
-    component.onFeedbackSaved({ score: 9, text: 'Great' });
+    component.onFeedbackSaved({ score: 9, text: 'Great', requestContact: true });
     expect(component.saved()).toBe(true);
     expect(component.savedScore()).toBe(9);
   });

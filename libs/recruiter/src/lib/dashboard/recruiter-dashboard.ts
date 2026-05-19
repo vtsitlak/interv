@@ -9,7 +9,7 @@ import { RecruiterFacade, type RecruiterInterviewSummary } from '@interv/state-r
 import { InterviewFeedbackPanelComponent } from '@interv/recruiter-feedback';
 
 @Component({
-  selector: 'lib-recruiter-dashboard',
+  selector: 'interv-recruiter-dashboard',
   standalone: true,
   imports: [RouterLink, InterviewFeedbackPanelComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,

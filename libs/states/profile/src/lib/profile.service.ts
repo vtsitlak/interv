@@ -129,6 +129,10 @@ export class ProfileService {
         data.isPublished !== undefined
           ? data.isPublished
           : (existing?.isPublished ?? true),
+      isPublicProfileEnabled:
+        data.isPublicProfileEnabled !== undefined
+          ? data.isPublicProfileEnabled
+          : (existing?.isPublicProfileEnabled ?? true),
       updatedAt: serverTimestamp(),
       createdAt: existing?.createdAt ?? serverTimestamp(),
     };
@@ -149,6 +153,27 @@ export class ProfileService {
     await setDoc(
       ref,
       { isPublished, updatedAt: serverTimestamp() },
+      { merge: true },
+    );
+    const refreshed = await getDoc(ref);
+    return refreshed.data() as Profile;
+  }
+
+  async setPublicProfileEnabled(
+    uid: string,
+    isPublicProfileEnabled: boolean,
+  ): Promise<Profile> {
+    const existing = await this.getProfile(uid);
+    if (!existing) {
+      throw new Error(
+        'Complete and save your profile first, then you can change visibility.',
+      );
+    }
+
+    const ref = doc(this.firestore, `profiles/${uid}`);
+    await setDoc(
+      ref,
+      { isPublicProfileEnabled, updatedAt: serverTimestamp() },
       { merge: true },
     );
     const refreshed = await getDoc(ref);

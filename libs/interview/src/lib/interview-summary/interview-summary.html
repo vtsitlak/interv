@@ -35,7 +35,7 @@
                 class="badge badge-lg"
                 [class]="scoreBadgeClass(interview.feedbackScore)"
               >
-                Score {{ interview.feedbackScore }}/10
+                Match score {{ interview.feedbackScore }}/10
               </span>
             </div>
           }
@@ -57,7 +57,7 @@
         <div class="card-body">
           <h2 class="card-title text-lg">Your feedback</h2>
           <p class="text-sm text-base-content/60">
-            Update your rating or notes — the candidate will see the latest
+            Update your match score or notes — the candidate will see the latest
             version on their dashboard.
           </p>
 
@@ -68,7 +68,7 @@
           <form class="mt-4 space-y-4" (submit)="onSaveFeedback($event)">
             <fieldset class="fieldset">
               <label class="fieldset-label" for="summary-score"
-                >Overall score (1–10)</label
+                >Match score (1–10)</label
               >
               <input
                 id="summary-score"
@@ -118,7 +118,7 @@
       <div class="card bg-base-100 shadow mb-6">
         <div class="card-body">
           <h2 class="card-title text-lg">Transcript</h2>
-          <lib-interview-transcript
+          <interv-interview-transcript
             [messages]="transcript()"
             [isLoading]="isLoadingTranscript()"
           />

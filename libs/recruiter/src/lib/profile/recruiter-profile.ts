@@ -17,7 +17,7 @@ interface RecruiterFormModel {
 }
 
 @Component({
-  selector: 'lib-recruiter-profile',
+  selector: 'interv-recruiter-profile',
   standalone: true,
   imports: [FormField],
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -11,6 +11,10 @@ service cloud.firestore {
       return profileDoc(profileId).data.get('isPublished', false) == true;
     }
 
+    function profileIsPublic(profileId) {
+      return profileDoc(profileId).data.get('isPublicProfileEnabled', true) == true;
+    }
+
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
@@ -25,7 +29,10 @@ service cloud.firestore {
 
     match /profiles/{profileId} {
       allow read: if request.auth != null && request.auth.uid == profileId
-        || (resource != null && resource.data.get('isPublished', false) == true);
+        || (resource != null && resource.data.get('isPublicProfileEnabled', true) == true)
+        || (resource != null
+          && resource.data.get('isPublished', false) == true
+          && request.auth != null);
 
       allow create: if request.auth != null && request.auth.uid == profileId;
 
@@ -33,21 +40,27 @@ service cloud.firestore {
 
       match /interviews/{interviewId} {
         allow read: if request.auth != null && request.auth.uid == profileId
+          || profileIsPublic(profileId)
           || profileIsPublished(profileId)
           || (request.auth != null
             && resource != null
             && resource.data.get('recruiterUid', '') == request.auth.uid);
 
-        allow create: if profileIsPublished(profileId)
-          && request.resource.data.profileId == profileId
+        allow create: if request.resource.data.profileId == profileId
           && request.resource.data.status == 'in_progress'
           && (
-            !('recruiterUid' in request.resource.data)
-            || request.resource.data.recruiterUid == null
-            || request.resource.data.recruiterUid == request.auth.uid
+            (profileIsPublic(profileId)
+              && (
+                !('recruiterUid' in request.resource.data)
+                || request.resource.data.recruiterUid == null
+              ))
+            || (profileIsPublished(profileId)
+              && request.auth != null
+              && request.resource.data.recruiterUid == request.auth.uid)
           );
 
-        allow update: if profileIsPublished(profileId)
+        allow update: if profileIsPublic(profileId)
+          || profileIsPublished(profileId)
           || (request.auth != null
             && resource != null
             && resource.data.get('recruiterUid', '') == request.auth.uid);

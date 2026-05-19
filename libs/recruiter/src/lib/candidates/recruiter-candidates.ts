@@ -10,7 +10,7 @@ import { RouterLink } from '@angular/router';
 import { RecruiterFacade } from '@interv/state-recruiter';
 
 @Component({
-  selector: 'lib-recruiter-candidates',
+  selector: 'interv-recruiter-candidates',
   standalone: true,
   imports: [RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,

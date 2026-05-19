@@ -7,10 +7,10 @@
           <h2 class="text-xl font-bold mb-2">Feedback saved</h2>
           <p class="text-sm text-base-content/60 mb-6">
             @if (isRecruiterFlow) {
-              Your rating has been saved. You can update it anytime from the
-              dashboard or candidate profile.
+              Your match score and notes have been saved. You can update them
+              anytime from the dashboard or candidate profile.
             } @else {
-              Your rating has been saved. The candidate can see it on their
+              Your match score has been saved. The candidate can see it on their
               dashboard.
             }
           </p>
@@ -28,7 +28,7 @@
               @if (isRecruiterFlow) {
                 Back to candidate profile
               } @else {
-                Done
+                Back to home
               }
             </button>
           </div>
@@ -36,14 +36,14 @@
       } @else if (error()) {
         <div class="alert alert-error text-sm" role="alert">{{ error() }}</div>
       } @else {
-        <lib-interview-feedback-panel
+        <interv-interview-feedback-panel
           [profileId]="profileId"
           [interviewId]="interviewId"
           [title]="isRecruiterFlow ? 'Interview feedback' : 'Leave feedback'"
           [description]="
             isRecruiterFlow
-              ? 'Update your score and notes for this interview.'
-              : 'How did the AI twin do? Your feedback helps the candidate improve.'
+              ? 'Update your match score and notes for this interview.'
+              : 'How well did the AI twin match what you were looking for? Your feedback helps the candidate improve.'
           "
           (feedbackSaved)="onFeedbackSaved($event)"
         />

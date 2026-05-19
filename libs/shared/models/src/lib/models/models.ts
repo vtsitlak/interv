@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'lib-models',
+  selector: 'interv-models',
   imports: [],
   templateUrl: './models.html',
   styleUrl: './models.scss',

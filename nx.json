@@ -74,10 +74,12 @@
     },
     "@nx/angular:library": {
       "linter": "eslint",
-      "unitTestRunner": "vitest-analog"
+      "unitTestRunner": "vitest-analog",
+      "prefix": "interv"
     },
     "@nx/angular:component": {
-      "style": "css"
+      "style": "css",
+      "prefix": "interv"
     }
   },
   "defaultProject": "interv"

@@ -9,7 +9,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { InterviewFeedbackPanelComponent } from '../feedback-panel/feedback-panel';
 
 @Component({
-  selector: 'lib-feedback',
+  selector: 'interv-feedback',
   standalone: true,
   imports: [InterviewFeedbackPanelComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,7 +37,7 @@ export class FeedbackComponent implements OnInit {
     }
   }
 
-  onFeedbackSaved(event: { score: number; text: string }): void {
+  onFeedbackSaved(event: { score: number; text: string; requestContact: boolean }): void {
     this.savedScore.set(event.score);
     this.saved.set(true);
   }
@@ -47,9 +47,7 @@ export class FeedbackComponent implements OnInit {
       void this.router.navigate(['/recruiter/candidates', this.profileId]);
       return;
     }
-    void this.router.navigate(['/candidate', this.profileId], {
-      queryParams: { interviewId: this.interviewId },
-    });
+    void this.router.navigate(['/']);
   }
 
   goDashboard(): void {

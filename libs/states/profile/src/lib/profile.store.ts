@@ -27,6 +27,9 @@ export const ProfileStore = signalStore(
       return !!(p?.name && p?.title && p?.summary && p?.cvText);
     }),
     isDiscoverableByRecruiters: computed(() => profile()?.isPublished !== false),
+    isPublicProfileEnabled: computed(
+      () => profile()?.isPublicProfileEnabled !== false,
+    ),
     shareUrl: computed(() => {
       const p = profile();
       return p ? `/candidate/${p.id}` : null;
@@ -161,6 +164,42 @@ export const ProfileStore = signalStore(
             successMessage: isPublished
               ? 'Your profile is visible to recruiters in search.'
               : 'Your profile is hidden from recruiter search.',
+          });
+        } catch (e: unknown) {
+          patchState(store, {
+            error: errMessage(e),
+            isUpdatingVisibility: false,
+            successMessage: null,
+          });
+        }
+      },
+
+      async setPublicProfileEnabled(isPublicProfileEnabled: boolean): Promise<void> {
+        const user = await profileService.currentUserOrNull();
+        if (!user) {
+          patchState(store, {
+            error: NOT_SIGNED_IN_SAVE_MESSAGE,
+            successMessage: null,
+          });
+          return;
+        }
+
+        patchState(store, {
+          isUpdatingVisibility: true,
+          error: null,
+          successMessage: null,
+        });
+        try {
+          const profile = await profileService.setPublicProfileEnabled(
+            user.uid,
+            isPublicProfileEnabled,
+          );
+          patchState(store, {
+            profile,
+            isUpdatingVisibility: false,
+            successMessage: isPublicProfileEnabled
+              ? 'Your public profile link is active again.'
+              : 'Your public profile is disabled. Shared links no longer work.',
           });
         } catch (e: unknown) {
           patchState(store, {

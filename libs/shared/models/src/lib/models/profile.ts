@@ -24,7 +24,10 @@ export interface Profile {
   links: ProfileLink[];
   personalQA: QAPair[];
   skills?: string[];
+  /** Visible in recruiter search when true. */
   isPublished: boolean;
+  /** Public link (/candidate/:id) and anonymous interviews when true. */
+  isPublicProfileEnabled?: boolean;
   shareUrl: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;

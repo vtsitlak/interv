@@ -82,7 +82,7 @@
                           [class.badge-success]="interview.status === 'complete'"
                         >
                           @if (interview.feedbackScore !== null) {
-                            Interviewed · {{ interview.feedbackScore }}/10
+                            Interviewed · Match {{ interview.feedbackScore }}/10
                           } @else if (interview.status === 'complete') {
                             Interviewed
                           } @else {
