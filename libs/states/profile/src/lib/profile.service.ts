@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { Auth, authState } from '@angular/fire/auth';
+import { Auth } from '@angular/fire/auth';
 import {
   doc,
   Firestore,
@@ -14,7 +14,7 @@ import {
   uploadBytes,
 } from '@angular/fire/storage';
 import type { User } from 'firebase/auth';
-import { API_URL } from '@interv/shared';
+import { API_URL, currentFirebaseUserOrNull } from '@interv/shared';
 import type { Profile, ProfileLink, QAPair } from '@interv/shared';
 
 export interface IngestResult {
@@ -23,9 +23,7 @@ export interface IngestResult {
   skippedReason?: string | null;
   warning?: string | null;
 }
-import { filter, firstValueFrom, map, race, take, timer } from 'rxjs';
 
-const CURRENT_USER_TIMEOUT_MS = 5000;
 const MAX_PROFILE_PHOTO_BYTES = 2 * 1024 * 1024;
 const ALLOWED_PROFILE_PHOTO_TYPES = new Set([
   'image/jpeg',
@@ -55,18 +53,7 @@ export class ProfileService {
    * for `authState` to emit when the user is not yet hydrated.
    */
   currentUserOrNull(): Promise<User | null> {
-    if (this.auth.currentUser) {
-      return Promise.resolve(this.auth.currentUser);
-    }
-    return firstValueFrom(
-      race(
-        authState(this.auth).pipe(
-          filter((u): u is User => u != null),
-          take(1),
-        ),
-        timer(CURRENT_USER_TIMEOUT_MS).pipe(map((): User | null => null)),
-      ),
-    );
+    return currentFirebaseUserOrNull(this.auth);
   }
 
   async getProfile(uid: string): Promise<Profile | null> {

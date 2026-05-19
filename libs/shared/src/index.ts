@@ -23,6 +23,15 @@ export {
 
 export { remainingChars } from './lib/util/remaining-chars';
 export {
+  currentFirebaseUserOrNull,
+  DEFAULT_FIREBASE_USER_TIMEOUT_MS,
+} from './lib/util/current-firebase-user';
+export {
+  isProfileComplete,
+  PROFILE_TWIN_INCOMPLETE_HINT,
+  PROFILE_TWIN_INCOMPLETE_MESSAGE,
+} from './lib/util/profile-complete';
+export {
   serializeFeedbackForm,
   serializeProfileTrainForm,
   serializeRecruiterForm,

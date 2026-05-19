@@ -6,6 +6,7 @@ import {
   output,
 } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { PROFILE_TWIN_INCOMPLETE_MESSAGE } from '../../util/profile-complete';
 import { LogoComponent } from '../logo/logo';
 
 @Component({
@@ -22,6 +23,10 @@ export class HeaderComponent {
   readonly isAuthenticated = input(false);
 
   readonly isRecruiter = input(false);
+
+  readonly canTestInterview = input(false);
+
+  readonly profileTwinIncompleteMessage = PROFILE_TWIN_INCOMPLETE_MESSAGE;
 
   readonly logoutRequested = output<void>();
   readonly resetProfileRequested = output<void>();

@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { InterviewService } from '@interv/state-interview';
+import { ProfileService } from '@interv/state-profile';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProfileComponent } from './profile';
 
@@ -65,5 +66,58 @@ describe('ProfileComponent', () => {
   it('builds profile overview from loaded profile', () => {
     expect(component.profileOverview()).toContain('Ada Lovelace is a Engineer.');
     expect(component.profileOverview()).toContain('Core skills: Angular');
+  });
+
+  it('disables test interview on owner view when profile is incomplete', async () => {
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [ProfileComponent],
+      providers: [
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              paramMap: convertToParamMap({ profileId: 'p1' }),
+              queryParamMap: convertToParamMap({}),
+              data: { ownerMode: true },
+            },
+          },
+        },
+        {
+          provide: ProfileService,
+          useValue: {
+            currentUserOrNull: vi.fn().mockResolvedValue({ uid: 'p1' }),
+          },
+        },
+        {
+          provide: InterviewService,
+          useValue: {
+            getPublicProfile: vi.fn().mockResolvedValue({
+              id: 'p1',
+              name: 'Ada Lovelace',
+              title: 'Engineer',
+              photo: '',
+              summary: '',
+              cvText: '',
+              skills: [],
+              links: [],
+            }),
+          },
+        },
+      ],
+    }).compileComponents();
+
+    const ownerFixture = TestBed.createComponent(ProfileComponent);
+    ownerFixture.detectChanges();
+    await ownerFixture.whenStable();
+
+    expect(ownerFixture.componentInstance.canTestInterview()).toBe(false);
+    expect(
+      ownerFixture.nativeElement.querySelector('button.btn-disabled'),
+    ).toBeTruthy();
+    expect(
+      ownerFixture.nativeElement.querySelector('a[routerlink="/candidate/test-interview"]'),
+    ).toBeNull();
   });
 });

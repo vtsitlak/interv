@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   OnInit,
   signal,
@@ -9,8 +10,10 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   buildProfileOverview,
   formatWorkPreferenceLabel,
+  isProfileComplete,
   normalizeWorkPreferences,
   ProfilePhotoComponent,
+  PROFILE_TWIN_INCOMPLETE_MESSAGE,
   type Profile as ProfileModel,
   type WorkPreference,
 } from '@interv/shared';
@@ -40,6 +43,9 @@ export class ProfileComponent implements OnInit {
   readonly isLoading = signal(true);
   readonly error = signal<string | null>(null);
   readonly publicProfileDisabled = signal(false);
+
+  readonly profileTwinIncompleteMessage = PROFILE_TWIN_INCOMPLETE_MESSAGE;
+  readonly canTestInterview = computed(() => isProfileComplete(this.profile()));
 
   ngOnInit(): void {
     this.isOwnerView.set(this.route.snapshot.data['ownerMode'] === true);

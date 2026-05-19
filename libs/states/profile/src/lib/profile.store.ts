@@ -7,6 +7,7 @@ import {
   withState,
 } from '@ngrx/signals';
 import type { Profile, ProfileLink, QAPair } from '@interv/shared';
+import { isProfileComplete } from '@interv/shared';
 import {
   errMessage,
   INVALID_FORM_MESSAGE,
@@ -22,10 +23,7 @@ export const ProfileStore = signalStore(
   { providedIn: 'root' },
   withState<ProfileState>(profileInitialState),
   withComputed(({ profile }) => ({
-    isComplete: computed(() => {
-      const p = profile();
-      return !!(p?.name && p?.title && p?.summary && p?.cvText);
-    }),
+    isComplete: computed(() => isProfileComplete(profile())),
     isDiscoverableByRecruiters: computed(() => profile()?.isPublished !== false),
     isPublicProfileEnabled: computed(
       () => profile()?.isPublicProfileEnabled !== false,

@@ -7,7 +7,7 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthFacade } from '@interv/state-auth';
 import {
   InterviewFacade,
@@ -15,14 +15,19 @@ import {
   PRACTICE_RECRUITER_INFO,
   type RecruiterInfo,
 } from '@interv/state-interview';
+import { ProfileFacade } from '@interv/state-profile';
 import { RecruiterFacade } from '@interv/state-recruiter';
+import {
+  PROFILE_TWIN_INCOMPLETE_HINT,
+  PROFILE_TWIN_INCOMPLETE_MESSAGE,
+} from '@interv/shared';
 import { InterviewSetupComponent } from '../interview-setup/interview-setup';
 import { InterviewSuggestedQuestionsComponent } from '../interview-suggested-questions/interview-suggested-questions';
 
 @Component({
   selector: 'interv-interview',
   standalone: true,
-  imports: [InterviewSetupComponent, InterviewSuggestedQuestionsComponent],
+  imports: [InterviewSetupComponent, InterviewSuggestedQuestionsComponent, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './interview.html',
   styleUrl: './interview.scss',
@@ -31,6 +36,7 @@ export class InterviewComponent implements OnInit, OnDestroy {
   readonly facade = inject(InterviewFacade);
   private readonly interviewService = inject(InterviewService);
   private readonly authFacade = inject(AuthFacade);
+  private readonly profileFacade = inject(ProfileFacade);
   private readonly recruiterFacade = inject(RecruiterFacade);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -40,6 +46,11 @@ export class InterviewComponent implements OnInit, OnDestroy {
   readonly skipSetup = signal(false);
   readonly isPracticeMode = signal(false);
   readonly isSetupComplete = signal(false);
+  readonly isCheckingProfile = signal(false);
+  readonly profileNotReady = signal(false);
+
+  readonly profileTwinIncompleteMessage = PROFILE_TWIN_INCOMPLETE_MESSAGE;
+  readonly profileTwinIncompleteHint = PROFILE_TWIN_INCOMPLETE_HINT;
 
   readonly chatText = signal('');
   readonly suggestedQuestions = signal<string[]>([]);
@@ -67,7 +78,7 @@ export class InterviewComponent implements OnInit, OnDestroy {
       if (uid) {
         this.profileId.set(uid);
       }
-      void this.startPracticeInterview();
+      void this.initializePracticeInterview();
       return;
     }
 
@@ -186,6 +197,20 @@ export class InterviewComponent implements OnInit, OnDestroy {
       await this.loadSuggestedQuestionsWithRetry();
     } catch {
       // Error text is shown via facade.error() in template
+    }
+  }
+
+  private async initializePracticeInterview(): Promise<void> {
+    this.isCheckingProfile.set(true);
+    try {
+      await this.profileFacade.loadProfile();
+      if (!this.profileFacade.isComplete()) {
+        this.profileNotReady.set(true);
+        return;
+      }
+      await this.startPracticeInterview();
+    } finally {
+      this.isCheckingProfile.set(false);
     }
   }
 

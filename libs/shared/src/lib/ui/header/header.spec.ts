@@ -22,6 +22,21 @@ describe('HeaderComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it('disables Test interview when canTestInterview is false', () => {
+    fixture.componentRef.setInput('isAuthenticated', true);
+    fixture.componentRef.setInput('isRecruiter', false);
+    fixture.componentRef.setInput('canTestInterview', false);
+    fixture.detectChanges();
+
+    const disabledLink = fixture.nativeElement.querySelector(
+      'span.btn-disabled',
+    );
+    expect(disabledLink?.textContent?.trim()).toBe('Test interview');
+    expect(
+      fixture.nativeElement.querySelector('a[routerlink="/candidate/test-interview"]'),
+    ).toBeNull();
+  });
+
   it('emits logoutRequested when Logout is clicked', () => {
     fixture.componentRef.setInput('isAuthenticated', true);
     fixture.detectChanges();

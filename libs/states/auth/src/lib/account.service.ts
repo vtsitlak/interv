@@ -1,13 +1,9 @@
 import { inject, Injectable } from '@angular/core';
-import { Auth, authState } from '@angular/fire/auth';
+import { Auth } from '@angular/fire/auth';
 import { doc, Firestore, getDoc, setDoc } from '@angular/fire/firestore';
-import { API_URL } from '@interv/shared';
-import type { User } from 'firebase/auth';
-import { filter, firstValueFrom, map, race, take, timer } from 'rxjs';
+import { API_URL, currentFirebaseUserOrNull } from '@interv/shared';
 
 export type UserRole = 'candidate' | 'recruiter';
-
-const CURRENT_USER_TIMEOUT_MS = 5000;
 
 @Injectable({ providedIn: 'root' })
 export class AccountService {
@@ -62,19 +58,8 @@ export class AccountService {
     }
   }
 
-  private currentUserOrNull(): Promise<User | null> {
-    if (this.auth.currentUser) {
-      return Promise.resolve(this.auth.currentUser);
-    }
-    return firstValueFrom(
-      race(
-        authState(this.auth).pipe(
-          filter((u): u is User => u != null),
-          take(1),
-        ),
-        timer(CURRENT_USER_TIMEOUT_MS).pipe(map((): User | null => null)),
-      ),
-    );
+  private currentUserOrNull() {
+    return currentFirebaseUserOrNull(this.auth);
   }
 
   private async authHeaders(): Promise<Record<string, string>> {

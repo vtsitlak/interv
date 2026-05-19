@@ -1,9 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
-import { Auth, authState } from '@angular/fire/auth';
+import { Component, effect, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ConfirmModalComponent, HeaderComponent } from '@interv/shared';
-import { AuthFacade } from '@interv/state-auth';
-import { take } from 'rxjs';
+import { AuthFacade, AuthSyncService } from '@interv/state-auth';
+import { ProfileFacade } from '@interv/state-profile';
 
 type AccountConfirmAction = 'reset' | 'delete';
 
@@ -16,7 +15,9 @@ type AccountConfirmAction = 'reset' | 'delete';
 export class App {
   protected readonly title = 'Interv';
   protected readonly authFacade = inject(AuthFacade);
-  private readonly auth = inject(Auth);
+  protected readonly profileFacade = inject(ProfileFacade);
+  /** Ensures Firebase Auth stays synced with {@link AuthStore} for the app lifetime. */
+  private readonly authSync = inject(AuthSyncService);
 
   readonly accountConfirmAction = signal<AccountConfirmAction | null>(null);
   readonly isAccountActionLoading = signal(false);
@@ -29,18 +30,12 @@ export class App {
 
   constructor() {
     void this.authFacade.tryHandleRedirectResult();
-    authState(this.auth)
-      .pipe(take(1))
-      .subscribe((user) => {
-        if (!user) {
-          return;
-        }
-        void this.authFacade.setUser({
-          uid: user.uid,
-          email: user.email,
-          displayName: user.displayName,
-        });
-      });
+
+    effect(() => {
+      if (this.authFacade.isAuthenticated() && this.authFacade.isCandidate()) {
+        void this.profileFacade.loadProfile();
+      }
+    });
   }
 
   protected async onLogout(): Promise<void> {

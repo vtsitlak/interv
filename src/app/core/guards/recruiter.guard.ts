@@ -3,7 +3,7 @@ import { Router, type CanActivateFn } from '@angular/router';
 import { Auth, authState } from '@angular/fire/auth';
 import { AccountService } from '@interv/state-auth';
 import { AuthFacade } from '@interv/state-auth';
-import { from, switchMap, take } from 'rxjs';
+import { from, of, switchMap, take } from 'rxjs';
 
 export const recruiterGuard: CanActivateFn = () => {
   const auth = inject(Auth);
@@ -15,7 +15,7 @@ export const recruiterGuard: CanActivateFn = () => {
     take(1),
     switchMap((user) => {
       if (!user) {
-        return from(Promise.resolve(router.createUrlTree(['/recruiter/login'])));
+        return of(router.createUrlTree(['/recruiter/login']));
       }
       return from(
         (async () => {
@@ -45,7 +45,7 @@ export const candidateGuard: CanActivateFn = () => {
     take(1),
     switchMap((user) => {
       if (!user) {
-        return from(Promise.resolve(router.createUrlTree(['/'])));
+        return of(router.createUrlTree(['/']));
       }
       return from(
         (async () => {

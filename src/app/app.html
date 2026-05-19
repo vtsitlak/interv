@@ -3,6 +3,7 @@
     [title]="title"
     [isAuthenticated]="authFacade.isAuthenticated()"
     [isRecruiter]="authFacade.isRecruiter()"
+    [canTestInterview]="profileFacade.isComplete()"
     (logoutRequested)="onLogout()"
     (resetProfileRequested)="openResetProfileConfirm()"
     (deleteAccountRequested)="openDeleteAccountConfirm()"

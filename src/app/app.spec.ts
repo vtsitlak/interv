@@ -1,20 +1,55 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Auth } from '@angular/fire/auth';
+import { provideRouter } from '@angular/router';
+import { AuthFacade, AuthSyncService } from '@interv/state-auth';
+import { ProfileFacade } from '@interv/state-profile';
+import { of } from 'rxjs';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './app';
-import { NxWelcome } from './nx-welcome';
+
+vi.mock('@angular/fire/auth', () => ({
+  authState: () => of(null),
+}));
 
 describe('App', () => {
+  let fixture: ComponentFixture<App>;
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [App, NxWelcome],
+      imports: [App],
+      providers: [
+        provideRouter([]),
+        { provide: Auth, useValue: {} },
+        { provide: AuthSyncService, useValue: {} },
+        {
+          provide: AuthFacade,
+          useValue: {
+            isAuthenticated: () => false,
+            isRecruiter: () => false,
+            isCandidate: () => false,
+            tryHandleRedirectResult: vi.fn().mockResolvedValue(undefined),
+            setUser: vi.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: ProfileFacade,
+          useValue: {
+            isComplete: () => false,
+            loadProfile: vi.fn().mockResolvedValue(undefined),
+          },
+        },
+      ],
     }).compileComponents();
+
+    fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
   });
 
-  it('should render title', async () => {
-    const fixture = TestBed.createComponent(App);
-    await fixture.whenStable();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain(
-      'Welcome interv',
-    );
+  it('should create', () => {
+    expect(fixture.componentInstance).toBeTruthy();
+  });
+
+  it('renders the app header', () => {
+    expect(fixture.nativeElement.querySelector('interv-header')).toBeTruthy();
   });
 });

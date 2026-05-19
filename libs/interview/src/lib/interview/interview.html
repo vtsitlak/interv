@@ -1,5 +1,28 @@
 <div class="min-h-screen bg-base-200 flex flex-col">
-  @if (skipSetup() && !isSetupComplete()) {
+  @if (isPracticeMode() && isCheckingProfile()) {
+    <div class="flex-1 flex flex-col items-center justify-center px-4 gap-4">
+      <span class="loading loading-spinner loading-lg"></span>
+      <p class="text-base-content/60 text-sm">Checking your profile…</p>
+    </div>
+  } @else if (isPracticeMode() && profileNotReady()) {
+    <div class="flex-1 flex items-center justify-center px-4 py-10">
+      <div class="card bg-base-100 shadow-xl max-w-md w-full">
+        <div class="card-body text-center">
+          <p class="text-4xl mb-4" aria-hidden="true">⚠</p>
+          <h1 class="text-2xl font-bold">Test interview unavailable</h1>
+          <p class="text-sm text-warning flex items-center justify-center gap-1 mt-3">
+            <span aria-hidden="true">⚠</span> {{ profileTwinIncompleteMessage }}
+          </p>
+          <p class="text-base-content/70 mt-3 text-sm leading-relaxed">
+            {{ profileTwinIncompleteHint }}
+          </p>
+          <a routerLink="/candidate/train-profile" class="btn btn-primary mt-6">
+            Train profile
+          </a>
+        </div>
+      </div>
+    </div>
+  } @else if (skipSetup() && !isSetupComplete()) {
     <div class="flex-1 flex flex-col items-center justify-center px-4 gap-4">
       <span class="loading loading-spinner loading-lg"></span>
       <p class="text-base-content/60 text-sm">Starting interview…</p>

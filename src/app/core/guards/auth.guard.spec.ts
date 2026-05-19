@@ -73,6 +73,6 @@ describe('authGuard', () => {
     const result = await firstValueFrom(runGuard());
 
     expect(result).toBe(FAKE_URL_TREE);
-    expect(createUrlTree).toHaveBeenCalledWith(['/login']);
+    expect(createUrlTree).toHaveBeenCalledWith(['/']);
   });
 });
