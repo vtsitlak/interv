@@ -1,0 +1,29 @@
+<div class="inline-flex items-center gap-2.5 shrink-0" [class]="hostClass()">
+  <svg
+    [class]="iconClass()"
+    viewBox="0 0 64 64"
+    xmlns="http://www.w3.org/2000/svg"
+    role="img"
+    [attr.aria-label]="showWordmark() ? null : wordmark()"
+  >
+    @if (showWordmark()) {
+      <title>{{ wordmark() }}</title>
+    }
+    <rect width="64" height="64" rx="14" fill="#6366f1" />
+    <text
+      x="32"
+      y="44"
+      text-anchor="middle"
+      font-family="system-ui,sans-serif"
+      font-size="32"
+      font-weight="700"
+      fill="white"
+    >
+      i
+    </text>
+    <circle cx="32" cy="14" r="6" fill="#a5f3fc" />
+  </svg>
+  @if (showWordmark()) {
+    <span [class]="wordmarkClass()" aria-hidden="true">{{ wordmark() }}</span>
+  }
+</div>

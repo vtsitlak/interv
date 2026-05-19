@@ -6,11 +6,12 @@ import {
   output,
 } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { LogoComponent } from '../logo/logo';
 
 @Component({
   selector: 'interv-header',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, LogoComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './header.html',
   styleUrl: './header.scss',

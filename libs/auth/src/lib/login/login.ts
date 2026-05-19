@@ -19,7 +19,7 @@ import {
   AuthFacade,
   type AuthAudience,
 } from '@interv/state-auth';
-import { SI_GOOGLE_PATH } from '@interv/shared';
+import { SI_GOOGLE_PATH, LogoComponent } from '@interv/shared';
 
 interface LoginFormModel {
   email: string;
@@ -29,7 +29,7 @@ interface LoginFormModel {
 @Component({
   selector: 'interv-login',
   standalone: true,
-  imports: [FormField, RouterLink],
+  imports: [FormField, RouterLink, LogoComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './login.html',
   styleUrl: './login.scss',

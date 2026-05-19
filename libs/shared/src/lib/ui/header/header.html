@@ -3,9 +3,10 @@
     <div class="navbar-start">
       <a
         [routerLink]="homeLink()"
-        class="btn btn-ghost text-lg font-semibold tracking-tight normal-case"
+        class="btn btn-ghost normal-case px-2 sm:px-3"
+        [attr.aria-label]="title()"
       >
-        {{ title() }}
+        <interv-logo size="sm" [wordmark]="title()" />
       </a>
     </div>
     <div class="navbar-end flex-wrap gap-1 sm:gap-2">

@@ -5,6 +5,8 @@ export * from './lib/models/interview-visibility';
 export * from './lib/profile-overview';
 
 export { SI_GOOGLE_PATH } from './lib/ui/icons/si-google.icon';
+export { LogoComponent } from './lib/ui/logo/logo';
+export type { LogoSize } from './lib/ui/logo/logo';
 export { HeaderComponent } from './lib/ui/header/header';
 export { ConfirmModalComponent } from './lib/ui/confirm-modal/confirm-modal';
 export { ProfilePhotoComponent } from './lib/ui/profile-photo/profile-photo';
