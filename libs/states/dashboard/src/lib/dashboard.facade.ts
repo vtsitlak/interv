@@ -12,6 +12,8 @@ export class DashboardFacade {
   readonly selectedInterview = this.store.selectedInterview;
   readonly transcript = this.store.transcript;
   readonly isLoading = this.store.isLoading;
+  readonly isLoadingMoreInterviews = this.store.isLoadingMoreInterviews;
+  readonly hasMoreInterviews = this.store.hasMoreInterviews;
   readonly isLoadingTranscript = this.store.isLoadingTranscript;
   readonly error = this.store.error;
   readonly totalInterviews = this.store.totalInterviews;
@@ -20,6 +22,10 @@ export class DashboardFacade {
 
   loadInterviews(): Promise<void> {
     return this.store.loadInterviews();
+  }
+
+  loadMoreInterviews(): Promise<void> {
+    return this.store.loadMoreInterviews();
   }
 
   async selectInterview(interview: InterviewSummary): Promise<void> {
@@ -33,5 +39,9 @@ export class DashboardFacade {
 
   closeDetail(): void {
     this.store.setSelected(null);
+  }
+
+  hideInterview(interviewId: string): Promise<void> {
+    return this.store.hideInterview(interviewId);
   }
 }

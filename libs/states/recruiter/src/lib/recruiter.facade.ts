@@ -21,6 +21,10 @@ export class RecruiterFacade {
   readonly searchLoading = this.store.searchLoading;
   readonly interviews = this.store.interviews;
   readonly interviewsLoading = this.store.interviewsLoading;
+  readonly isLoadingMoreInterviews = this.store.isLoadingMoreInterviews;
+  readonly hasMoreInterviews = this.store.hasMoreInterviews;
+  readonly hasMoreCandidates = this.store.hasMoreCandidates;
+  readonly isLoadingMoreCandidates = this.store.isLoadingMoreCandidates;
   readonly selectedInterview = this.store.selectedInterview;
   readonly transcript = this.store.transcript;
   readonly transcriptLoading = this.store.transcriptLoading;
@@ -59,12 +63,24 @@ export class RecruiterFacade {
     return this.store.loadInterviews();
   }
 
+  loadMoreInterviews(): Promise<void> {
+    return this.store.loadMoreInterviews();
+  }
+
+  loadMoreCandidates(): Promise<void> {
+    return this.store.loadMoreCandidates();
+  }
+
   selectInterview(interview: RecruiterInterviewSummary): Promise<void> {
     return this.store.selectInterview(interview);
   }
 
   closeInterviewDetail(): void {
     this.store.closeInterviewDetail();
+  }
+
+  hideInterview(interview: RecruiterInterviewSummary): Promise<void> {
+    return this.store.hideInterview(interview);
   }
 
   clearProfileError(): void {

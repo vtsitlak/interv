@@ -1,4 +1,5 @@
-<div class="min-h-screen bg-base-200 py-10 px-4">
+<div>
+  <div class="min-h-screen bg-base-200 py-10 px-4">
   <div class="max-w-4xl mx-auto">
     <div class="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
       <div>
@@ -46,7 +47,12 @@
             </a>
           </div>
         } @else {
-          <div class="space-y-3">
+          <div
+            class="max-h-[32rem] overflow-y-auto space-y-3 pr-1"
+            intervInfiniteScroll
+            [disabled]="!recruiter.hasMoreInterviews() || recruiter.isLoadingMoreInterviews()"
+            (scrolled)="loadMoreInterviews()"
+          >
             @for (interview of recruiter.interviews(); track interview.id) {
               <button
                 type="button"
@@ -76,6 +82,12 @@
                 </p>
               </button>
             }
+
+            @if (recruiter.isLoadingMoreInterviews()) {
+              <div class="flex justify-center py-4">
+                <span class="loading loading-spinner loading-sm"></span>
+              </div>
+            }
           </div>
         }
       </div>
@@ -91,6 +103,14 @@
             </div>
             <button type="button" class="btn btn-ghost btn-sm" (click)="closeDetail()">
               Close
+            </button>
+            <button
+              type="button"
+              class="btn btn-outline btn-error btn-sm"
+              [disabled]="isRemovingInterview()"
+              (click)="openRemoveConfirm()"
+            >
+              Remove
             </button>
           </div>
 
@@ -135,4 +155,16 @@
       </div>
     }
   </div>
+
+  <interv-confirm-modal
+    [open]="showRemoveConfirm()"
+    title="Remove interview?"
+    [message]="removeConfirmMessage"
+    confirmLabel="Remove"
+    cancelLabel="Keep"
+    [isConfirming]="isRemovingInterview()"
+    confirmButtonClass="btn-error"
+    (confirmed)="confirmRemoveInterview()"
+    (cancelled)="cancelRemoveConfirm()"
+  />
 </div>

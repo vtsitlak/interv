@@ -152,6 +152,18 @@
     }
 
     <div class="modal-action">
+      <button
+        type="button"
+        class="btn btn-outline btn-error"
+        [disabled]="isRemoving()"
+        (click)="requestRemove()"
+      >
+        @if (isRemoving()) {
+          <span class="loading loading-spinner loading-xs"></span>
+        } @else {
+          Remove from my list
+        }
+      </button>
       <button type="button" class="btn btn-ghost" (click)="close()">
         Close
       </button>

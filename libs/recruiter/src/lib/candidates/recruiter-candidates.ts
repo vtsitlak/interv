@@ -7,12 +7,13 @@ import {
 } from '@angular/core';
 import type { CandidateSearchResult } from '@interv/state-recruiter';
 import { RouterLink } from '@angular/router';
+import { InfiniteScrollDirective } from '@interv/shared';
 import { RecruiterFacade } from '@interv/state-recruiter';
 
 @Component({
   selector: 'interv-recruiter-candidates',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, InfiniteScrollDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './recruiter-candidates.html',
 })
@@ -38,6 +39,10 @@ export class RecruiterCandidatesComponent implements OnInit {
       event.preventDefault();
       void this.recruiter.searchCandidates();
     }
+  }
+
+  loadMoreCandidates(): void {
+    void this.recruiter.loadMoreCandidates();
   }
 
   skillsPreview(skills: string[]): string {

@@ -1,5 +1,22 @@
 import type { RecruiterInfo } from '@interv/state-interview';
 
+export interface RecruiterInterviewStats {
+  total: number;
+  completed: number;
+}
+
+export interface RecruiterInterviewPage {
+  items: RecruiterInterviewSummary[];
+  nextCursor: unknown | null;
+  hasMore: boolean;
+}
+
+export interface CandidateSearchPage {
+  items: CandidateSearchResult[];
+  nextCursor: unknown | null;
+  hasMore: boolean;
+}
+
 export interface RecruiterProfile extends RecruiterInfo {
   uid: string;
   profileComplete: boolean;
@@ -27,6 +44,7 @@ export interface RecruiterInterviewSummary {
   feedbackText: string | null;
   aiSummary: string | null;
   messageCount: number;
+  hiddenFromRecruiter: boolean;
   createdAt: Date;
   completedAt: Date | null;
 }

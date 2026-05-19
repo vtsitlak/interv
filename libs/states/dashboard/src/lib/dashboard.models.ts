@@ -22,12 +22,28 @@ export interface TranscriptMessage {
   timestamp: Date | null;
 }
 
+export interface InterviewStats {
+  total: number;
+  completed: number;
+  averageScore: number | null;
+}
+
+export interface InterviewPage {
+  items: InterviewSummary[];
+  nextCursor: unknown | null;
+  hasMore: boolean;
+}
+
 export interface DashboardState {
   interviews: InterviewSummary[];
   selectedInterview: InterviewSummary | null;
   transcript: TranscriptMessage[];
   isLoading: boolean;
+  isLoadingMoreInterviews: boolean;
   isLoadingTranscript: boolean;
+  hasMoreInterviews: boolean;
+  interviewsPageCursor: unknown | null;
+  interviewStats: InterviewStats | null;
   error: string | null;
 }
 
@@ -36,7 +52,11 @@ export const INITIAL_DASHBOARD_STATE: DashboardState = {
   selectedInterview: null,
   transcript: [],
   isLoading: false,
+  isLoadingMoreInterviews: false,
   isLoadingTranscript: false,
+  hasMoreInterviews: false,
+  interviewsPageCursor: null,
+  interviewStats: null,
   error: null,
 };
 

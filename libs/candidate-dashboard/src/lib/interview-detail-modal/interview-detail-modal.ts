@@ -19,8 +19,10 @@ export class InterviewDetailModalComponent {
   readonly interview = input.required<InterviewSummary>();
   readonly transcript = input<TranscriptMessage[]>([]);
   readonly isLoadingTranscript = input(false);
+  readonly isRemoving = input(false);
 
   readonly closed = output<void>();
+  readonly removeRequested = output<void>();
 
   close(): void {
     this.closed.emit();
@@ -74,5 +76,9 @@ export class InterviewDetailModalComponent {
       return role === 'user' ? 'You' : 'AI twin';
     }
     return role === 'user' ? 'Recruiter' : 'AI twin';
+  }
+
+  requestRemove(): void {
+    this.removeRequested.emit();
   }
 }

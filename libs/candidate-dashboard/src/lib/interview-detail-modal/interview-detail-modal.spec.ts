@@ -78,4 +78,12 @@ describe('InterviewDetailModalComponent', () => {
     } as unknown as MouseEvent);
     expect(emit).toHaveBeenCalled();
   });
+
+  it('requestRemove() emits removeRequested', () => {
+    const emit = vi.spyOn(component.removeRequested, 'emit');
+
+    component.requestRemove();
+
+    expect(emit).toHaveBeenCalled();
+  });
 });

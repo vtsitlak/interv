@@ -4,18 +4,23 @@ import {
   input,
   output,
 } from '@angular/core';
+import { InfiniteScrollDirective } from '@interv/shared';
 import type { InterviewSummary } from '@interv/state-dashboard';
 
 @Component({
   selector: 'interv-interview-list',
   standalone: true,
+  imports: [InfiniteScrollDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './interview-list.html',
 })
 export class InterviewListComponent {
   readonly interviews = input<InterviewSummary[]>([]);
+  readonly hasMore = input(false);
+  readonly isLoadingMore = input(false);
 
   readonly interviewSelect = output<InterviewSummary>();
+  readonly loadMore = output<void>();
 
   formatDate(date: Date): string {
     return new Intl.DateTimeFormat('en-GB', {
@@ -40,5 +45,9 @@ export class InterviewListComponent {
 
   onSelect(interview: InterviewSummary): void {
     this.interviewSelect.emit(interview);
+  }
+
+  onLoadMore(): void {
+    this.loadMore.emit();
   }
 }

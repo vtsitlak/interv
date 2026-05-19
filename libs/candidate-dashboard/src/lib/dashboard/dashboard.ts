@@ -6,6 +6,7 @@ import {
   signal,
 } from '@angular/core';
 import { Router } from '@angular/router';
+import { ConfirmModalComponent } from '@interv/shared';
 import { AuthFacade } from '@interv/state-auth';
 import { DashboardFacade, type InterviewSummary } from '@interv/state-dashboard';
 import { ProfileFacade } from '@interv/state-profile';
@@ -20,6 +21,7 @@ import { ProfileVisibilitySettingsComponent } from '../profile-visibility-settin
     ProfileVisibilitySettingsComponent,
     InterviewListComponent,
     InterviewDetailModalComponent,
+    ConfirmModalComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard.html',
@@ -33,6 +35,11 @@ export class DashboardComponent implements OnInit {
   readonly profile = inject(ProfileFacade);
 
   readonly copySuccess = signal(false);
+  readonly isRemovingInterview = signal(false);
+  readonly showRemoveConfirm = signal(false);
+
+  readonly removeConfirmMessage =
+    'The interview data is kept, but it will no longer appear in your list or match score totals.';
 
   ngOnInit(): void {
     void this.dashboard.loadInterviews();
@@ -43,8 +50,36 @@ export class DashboardComponent implements OnInit {
     void this.dashboard.selectInterview(interview);
   }
 
+  loadMoreInterviews(): void {
+    void this.dashboard.loadMoreInterviews();
+  }
+
   closeDetail(): void {
     this.dashboard.closeDetail();
+  }
+
+  openRemoveConfirm(): void {
+    if (this.dashboard.selectedInterview() && !this.isRemovingInterview()) {
+      this.showRemoveConfirm.set(true);
+    }
+  }
+
+  cancelRemoveConfirm(): void {
+    this.showRemoveConfirm.set(false);
+  }
+
+  async confirmRemoveInterview(): Promise<void> {
+    const interview = this.dashboard.selectedInterview();
+    if (!interview || this.isRemovingInterview()) {
+      return;
+    }
+    this.isRemovingInterview.set(true);
+    try {
+      await this.dashboard.hideInterview(interview.id);
+      this.showRemoveConfirm.set(false);
+    } finally {
+      this.isRemovingInterview.set(false);
+    }
   }
 
   editProfile(): void {
