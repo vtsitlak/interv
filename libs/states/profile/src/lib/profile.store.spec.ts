@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Profile } from '@interv/models';
+import type { Profile } from '@interv/shared';
 import {
   INVALID_FORM_MESSAGE,
   NOT_SIGNED_IN_LOAD_MESSAGE,

@@ -14,8 +14,8 @@ import {
   uploadBytes,
 } from '@angular/fire/storage';
 import type { User } from 'firebase/auth';
-import { API_URL } from '@interv/util';
-import type { Profile, ProfileLink, QAPair } from '@interv/models';
+import { API_URL } from '@interv/shared';
+import type { Profile, ProfileLink, QAPair } from '@interv/shared';
 
 export interface IngestResult {
   linksScraped?: number;

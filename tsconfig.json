@@ -21,6 +21,9 @@
     },
     {
       "path": "./tsconfig.spec.json"
+    },
+    {
+      "path": "./libs/candidate-dashboard/tsconfig.lib.json"
     }
   ],
   "extends": "./tsconfig.base.json"

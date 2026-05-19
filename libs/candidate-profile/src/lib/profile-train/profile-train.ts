@@ -14,8 +14,8 @@ import {
   required,
 } from '@angular/forms/signals';
 import { Router } from '@angular/router';
-import type { ProfileLink, QAPair, WorkPreference } from '@interv/models';
-import { normalizeWorkPreferences, WORK_PREFERENCE_GROUPS } from '@interv/models';
+import type { ProfileLink, QAPair, WorkPreference } from '@interv/shared';
+import { normalizeWorkPreferences, WORK_PREFERENCE_GROUPS } from '@interv/shared';
 import {
   canGenerateRoleSpecificPersonalQA,
   hasPersonalQAAnswers,

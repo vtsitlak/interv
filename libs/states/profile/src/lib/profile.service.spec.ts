@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Auth } from '@angular/fire/auth';
 import { Firestore } from '@angular/fire/firestore';
-import { API_URL } from '@interv/util';
+import { API_URL } from '@interv/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ProfileService, validateProfilePhotoFile } from './profile.service';
 

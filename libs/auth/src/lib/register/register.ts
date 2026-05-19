@@ -19,7 +19,7 @@ import {
   AuthFacade,
   type AuthAudience,
 } from '@interv/state-auth';
-import { SI_GOOGLE_PATH } from '@interv/ui';
+import { SI_GOOGLE_PATH } from '@interv/shared';
 
 interface RegisterFormModel {
   name: string;

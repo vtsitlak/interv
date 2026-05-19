@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Auth } from '@angular/fire/auth';
 import { Firestore } from '@angular/fire/firestore';
-import { WS_URL } from '@interv/util';
+import { WS_URL } from '@interv/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { InterviewService } from './interview.service';
 

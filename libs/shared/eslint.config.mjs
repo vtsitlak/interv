@@ -1,5 +1,5 @@
 import nx from '@nx/eslint-plugin';
-import baseConfig from '../../../eslint.base.config.mjs';
+import baseConfig from '../../eslint.base.config.mjs';
 
 export default [
   ...nx.configs['flat/angular'],
@@ -28,7 +28,6 @@ export default [
   },
   {
     files: ['**/*.html'],
-    // Override or add rules here
     rules: {},
   },
 ];

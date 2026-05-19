@@ -14,7 +14,7 @@ import {
   Timestamp,
   where,
 } from '@angular/fire/firestore';
-import type { Profile } from '@interv/models';
+import type { Profile } from '@interv/shared';
 import type { RecruiterInfo } from '@interv/state-interview';
 import type {
   CandidateSearchResult,

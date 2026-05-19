@@ -9,13 +9,18 @@ import { Router } from '@angular/router';
 import { AuthFacade } from '@interv/state-auth';
 import { DashboardFacade, type InterviewSummary } from '@interv/state-dashboard';
 import { ProfileFacade } from '@interv/state-profile';
-import { ProfileVisibilitySettingsComponent } from '../profile-visibility-settings/profile-visibility-settings';
+import { InterviewDetailModalComponent } from '../interview-detail-modal/interview-detail-modal';
 import { InterviewListComponent } from '../interview-list/interview-list';
+import { ProfileVisibilitySettingsComponent } from '../profile-visibility-settings/profile-visibility-settings';
 
 @Component({
   selector: 'interv-dashboard',
   standalone: true,
-  imports: [ProfileVisibilitySettingsComponent, InterviewListComponent],
+  imports: [
+    ProfileVisibilitySettingsComponent,
+    InterviewListComponent,
+    InterviewDetailModalComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
@@ -40,12 +45,6 @@ export class DashboardComponent implements OnInit {
 
   closeDetail(): void {
     this.dashboard.closeDetail();
-  }
-
-  closeDetailOnBackdrop(event: MouseEvent): void {
-    if (event.target === event.currentTarget) {
-      this.closeDetail();
-    }
   }
 
   editProfile(): void {
@@ -75,46 +74,5 @@ export class DashboardComponent implements OnInit {
     } catch {
       /* clipboard unavailable */
     }
-  }
-
-  formatDate(date: Date): string {
-    return new Intl.DateTimeFormat('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    }).format(date);
-  }
-
-  formatTime(date: Date | null): string {
-    if (!date) {
-      return '';
-    }
-    return new Intl.DateTimeFormat('en-GB', {
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(date);
-  }
-
-  scoreColor(score: number | null): string {
-    if (score === null) {
-      return 'badge-ghost';
-    }
-    if (score >= 8) {
-      return 'badge-success';
-    }
-    if (score >= 5) {
-      return 'badge-warning';
-    }
-    return 'badge-error';
-  }
-
-  roleLabel(
-    role: 'user' | 'assistant',
-    isPracticeSession: boolean,
-  ): string {
-    if (isPracticeSession) {
-      return role === 'user' ? 'You' : 'AI twin';
-    }
-    return role === 'user' ? 'Recruiter' : 'AI twin';
   }
 }

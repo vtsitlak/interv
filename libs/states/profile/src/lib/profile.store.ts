@@ -6,7 +6,7 @@ import {
   withMethods,
   withState,
 } from '@ngrx/signals';
-import type { Profile, ProfileLink, QAPair } from '@interv/models';
+import type { Profile, ProfileLink, QAPair } from '@interv/shared';
 import {
   errMessage,
   INVALID_FORM_MESSAGE,

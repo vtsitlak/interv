@@ -10,7 +10,7 @@ import {
   query,
   Timestamp,
 } from '@angular/fire/firestore';
-import type { Feedback } from '@interv/models';
+import type { Feedback } from '@interv/shared';
 import { isPracticeRecruiterInfo } from '@interv/state-interview';
 import type { InterviewSummary, TranscriptMessage } from './dashboard.models';
 

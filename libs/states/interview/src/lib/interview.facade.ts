@@ -1,6 +1,6 @@
 import { inject, Injectable, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
-import { WS_URL } from '@interv/util';
+import { WS_URL } from '@interv/shared';
 import { InterviewService, type WsCloseMeta } from './interview.service';
 import { InterviewStore } from './interview.store';
 import {

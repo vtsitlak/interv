@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { Auth, authState } from '@angular/fire/auth';
 import { RouterOutlet } from '@angular/router';
-import { HeaderComponent } from '@interv/ui';
+import { HeaderComponent } from '@interv/shared';
 import { AuthFacade } from '@interv/state-auth';
 import { take } from 'rxjs';
 

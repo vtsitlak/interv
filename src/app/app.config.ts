@@ -9,7 +9,7 @@ import {
   memoryLocalCache,
   provideFirestore,
 } from '@angular/fire/firestore';
-import { API_URL, WS_URL } from '@interv/util';
+import { API_URL, WS_URL } from '@interv/shared';
 import { appRoutes } from './app.routes';
 import { environment } from '../environments/environment';
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Profile } from '@interv/models';
+import type { Profile } from '@interv/shared';
 import {
   buildGenericFallbackQuestions,
   buildSuggestedQuestionsFromProfile,

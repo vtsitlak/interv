@@ -16,8 +16,8 @@ import {
   updateDoc,
 } from '@angular/fire/firestore';
 import { Auth } from '@angular/fire/auth';
-import { API_URL, WS_URL } from '@interv/util';
-import type { Profile } from '@interv/models';
+import { API_URL, WS_URL } from '@interv/shared';
+import type { Profile } from '@interv/shared';
 import {
   ASSISTANT_PROCESSING_SIGNAL,
   ASSISTANT_STREAM_DONE_SIGNAL,

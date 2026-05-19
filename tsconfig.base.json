@@ -14,9 +14,7 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "paths": {
-      "@interv/ui": ["./libs/shared/ui/src/index.ts"],
-      "@interv/models": ["./libs/shared/models/src/index.ts"],
-      "@interv/util": ["./libs/shared/util/src/index.ts"],
+      "@interv/shared": ["./libs/shared/src/index.ts"],
       "@interv/feature-auth": ["./libs/auth/src/index.ts"],
       "@interv/home": ["./libs/home/src/index.ts"],
       "@interv/candidate-profile": [
@@ -26,7 +24,7 @@
         "./libs/candidate-profile/src/lib/profile-train/profile-train.ts"
       ],
       "@interv/candidate-dashboard": [
-        "./libs/candidate-dashboard/src/lib/dashboard/dashboard.ts"
+        "./libs/candidate-dashboard/src/index.ts"
       ],
       "@interv/interview": ["./libs/interview/src/index.ts"],
       "@interv/recruiter-feedback": ["./libs/recruiter-feedback/src/index.ts"],

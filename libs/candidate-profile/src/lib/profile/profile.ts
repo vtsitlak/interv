@@ -12,7 +12,7 @@ import {
   normalizeWorkPreferences,
   type Profile as ProfileModel,
   type WorkPreference,
-} from '@interv/models';
+} from '@interv/shared';
 import { ProfileService } from '@interv/state-profile';
 import { InterviewService } from '@interv/state-interview';
 import { RecruiterFacade } from '@interv/state-recruiter';
