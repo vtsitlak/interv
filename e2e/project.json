@@ -5,5 +5,40 @@
   "sourceRoot": "e2e/src",
   "implicitDependencies": ["interv"],
   "// targets": "to see all targets run: nx show project e2e --web",
-  "targets": {}
+  "targets": {
+    "e2e": {
+      "dependsOn": []
+    },
+    "e2e-ci": {
+      "dependsOn": [
+        {
+          "target": "e2e-ci--src/auth-redirects.spec.ts",
+          "projects": "self",
+          "params": "forward",
+          "options": "forward"
+        },
+        {
+          "target": "e2e-ci--src/public-pages.spec.ts",
+          "projects": "self",
+          "params": "forward",
+          "options": "forward"
+        },
+        {
+          "target": "e2e-ci--src/public-routes.spec.ts",
+          "projects": "self",
+          "params": "forward",
+          "options": "forward"
+        }
+      ]
+    },
+    "e2e-ci--src/auth-redirects.spec.ts": {
+      "dependsOn": []
+    },
+    "e2e-ci--src/public-pages.spec.ts": {
+      "dependsOn": []
+    },
+    "e2e-ci--src/public-routes.spec.ts": {
+      "dependsOn": []
+    }
+  }
 }

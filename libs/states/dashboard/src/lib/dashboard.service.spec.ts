@@ -22,7 +22,11 @@ describe('DashboardService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('getInterviews() returns empty list when not signed in', async () => {
-    await expect(service.getInterviews()).resolves.toEqual([]);
+  it('getInterviewsPage() returns empty page when not signed in', async () => {
+    await expect(service.getInterviewsPage()).resolves.toEqual({
+      items: [],
+      nextCursor: null,
+      hasMore: false,
+    });
   });
 });

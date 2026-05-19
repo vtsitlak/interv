@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProfileFacade } from './profile.facade';
+import { ProfileService } from './profile.service';
 import { ProfileStore } from './profile.store';
 
 describe('ProfileFacade', () => {
@@ -42,6 +43,12 @@ describe('ProfileFacade', () => {
       providers: [
         ProfileFacade,
         { provide: ProfileStore, useValue: storeMock },
+        {
+          provide: ProfileService,
+          useValue: {
+            fetchPersonalQAQuestionsFromApi: vi.fn().mockResolvedValue([]),
+          },
+        },
       ],
     });
 

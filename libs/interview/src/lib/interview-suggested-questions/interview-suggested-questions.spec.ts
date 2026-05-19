@@ -39,6 +39,8 @@ describe('InterviewSuggestedQuestionsComponent', () => {
   it('emits questionSelected when a chip is clicked', () => {
     const spy = vi.fn();
     component.questionSelected.subscribe(spy);
+    fixture.componentRef.setInput('canSendMessage', true);
+    fixture.detectChanges();
 
     component.onSelect('Tell me about your experience.');
 

@@ -1,7 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { AuthFacade } from '@interv/state-auth';
 import { InterviewService } from '@interv/state-interview';
 import { ProfileService } from '@interv/state-profile';
+import { RecruiterFacade } from '@interv/state-recruiter';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProfileComponent } from './profile';
 
@@ -44,6 +46,20 @@ describe('ProfileComponent', () => {
             }),
             getInterviewForReview: vi.fn().mockResolvedValue(null),
             getLatestInterviewWithFeedback: vi.fn().mockResolvedValue(null),
+          },
+        },
+        {
+          provide: ProfileService,
+          useValue: {
+            currentUserOrNull: vi.fn().mockResolvedValue(null),
+          },
+        },
+        {
+          provide: RecruiterFacade,
+          useValue: {
+            loadProfile: vi.fn().mockResolvedValue(undefined),
+            profile: () => null,
+            isProfileComplete: () => true,
           },
         },
       ],
@@ -105,13 +121,27 @@ describe('ProfileComponent', () => {
             }),
           },
         },
+        {
+          provide: RecruiterFacade,
+          useValue: {
+            loadProfile: vi.fn().mockResolvedValue(undefined),
+            profile: () => null,
+            isProfileComplete: () => false,
+          },
+        },
       ],
     }).compileComponents();
 
     const ownerFixture = TestBed.createComponent(ProfileComponent);
     ownerFixture.detectChanges();
     await ownerFixture.whenStable();
+    await vi.waitFor(() => {
+      expect(ownerFixture.componentInstance.isLoading()).toBe(false);
+      expect(ownerFixture.componentInstance.profile()).not.toBeNull();
+    });
+    ownerFixture.detectChanges();
 
+    expect(ownerFixture.componentInstance.isOwnerView()).toBe(true);
     expect(ownerFixture.componentInstance.canTestInterview()).toBe(false);
     expect(
       ownerFixture.nativeElement.querySelector('button.btn-disabled'),

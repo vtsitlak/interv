@@ -4,12 +4,10 @@ import { of, timer } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { currentFirebaseUserOrNull } from './current-firebase-user';
 
-vi.mock('@angular/fire/auth', async () => {
-  const actual = await vi.importActual<typeof import('@angular/fire/auth')>(
-    '@angular/fire/auth',
-  );
-  return { ...actual, authState: vi.fn() };
-});
+vi.mock('@angular/fire/auth', () => ({
+  Auth: class Auth {},
+  authState: vi.fn(() => of(null)),
+}));
 
 describe('currentFirebaseUserOrNull', () => {
   beforeEach(() => {

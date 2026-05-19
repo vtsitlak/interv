@@ -5,34 +5,26 @@ import {
   type RouterStateSnapshot,
   type UrlTree,
 } from '@angular/router';
-import { AuthFacade } from '@interv/state-auth';
-import { Auth, type User } from '@angular/fire/auth';
+import { Auth, authState, type User } from '@angular/fire/auth';
 import { firstValueFrom, of, type Observable } from 'rxjs';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-
-vi.mock('@angular/fire/auth', async () => {
-  const actual =
-    await vi.importActual<typeof import('@angular/fire/auth')>(
-      '@angular/fire/auth'
-    );
-  return {
-    ...actual,
-    authState: vi.fn(),
-  };
-});
-
-import { authState } from '@angular/fire/auth';
 import { authGuard } from './auth.guard';
+
+jest.mock('@interv/state-auth', () => ({
+  AuthFacade: class AuthFacade {},
+}));
+
+import { AuthFacade } from '@interv/state-auth';
 
 describe('authGuard', () => {
   const FAKE_URL_TREE = {} as UrlTree;
-  let createUrlTree: ReturnType<typeof vi.fn>;
-
-  let setUser: ReturnType<typeof vi.fn>;
+  let createUrlTree: jest.Mock;
+  let setUser: jest.Mock;
 
   beforeEach(() => {
-    createUrlTree = vi.fn().mockReturnValue(FAKE_URL_TREE);
-    setUser = vi.fn();
+    jest.mocked(authState).mockReset();
+    jest.mocked(authState).mockReturnValue(of(null));
+    createUrlTree = jest.fn().mockReturnValue(FAKE_URL_TREE);
+    setUser = jest.fn().mockResolvedValue(undefined);
     TestBed.configureTestingModule({
       providers: [
         { provide: Auth, useValue: {} },
@@ -47,12 +39,12 @@ describe('authGuard', () => {
       () =>
         authGuard(
           {} as ActivatedRouteSnapshot,
-          {} as RouterStateSnapshot
-        ) as Observable<boolean | UrlTree>
+          {} as RouterStateSnapshot,
+        ) as Observable<boolean | UrlTree>,
     );
 
   it('allows navigation when a user is signed in', async () => {
-    vi.mocked(authState).mockReturnValue(
+    jest.mocked(authState).mockReturnValue(
       of({ uid: 'u1', email: 'e@x.com', displayName: 'E' } as User),
     );
 
@@ -67,8 +59,8 @@ describe('authGuard', () => {
     });
   });
 
-  it('redirects to /login when no user is signed in', async () => {
-    vi.mocked(authState).mockReturnValue(of(null));
+  it('redirects to home when no user is signed in', async () => {
+    jest.mocked(authState).mockReturnValue(of(null));
 
     const result = await firstValueFrom(runGuard());
 

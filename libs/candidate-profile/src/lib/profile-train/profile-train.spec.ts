@@ -19,8 +19,8 @@ describe('ProfileTrainComponent', () => {
   beforeEach(async () => {
     successMessage = null;
     loadProfile.mockClear();
-    saveProfile.mockClear();
-    ingestToRAG.mockClear();
+    saveProfile.mockReset().mockResolvedValue(undefined);
+    ingestToRAG.mockReset().mockResolvedValue(undefined);
     reportInvalidForm.mockClear();
     buildPersonalQA.mockClear();
 
@@ -132,6 +132,9 @@ describe('ProfileTrainComponent', () => {
   });
 
   it('onSave calls saveProfile and ingestToRAG when valid', async () => {
+    const router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
     component.profileModel.set({
       name: 'Name',
       title: 'Title',

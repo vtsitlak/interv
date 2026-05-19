@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
+import { WS_URL } from '@interv/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { InterviewFacade } from './interview.facade';
 import { InterviewService } from './interview.service';
@@ -7,6 +8,7 @@ import { InterviewStore } from './interview.store';
 
 describe('InterviewFacade', () => {
   let facade: InterviewFacade;
+  let store: InstanceType<typeof InterviewStore>;
   let service: Pick<
     InterviewService,
     | 'assertCandidateProfileExists'
@@ -15,6 +17,7 @@ describe('InterviewFacade', () => {
     | 'disconnect'
     | 'completeInterview'
     | 'extendMessageLimit'
+    | 'requestInterviewSummary'
   >;
   let router: { navigate: ReturnType<typeof vi.fn> };
 
@@ -23,10 +26,22 @@ describe('InterviewFacade', () => {
     service = {
       assertCandidateProfileExists: vi.fn().mockResolvedValue(undefined),
       createInterview: vi.fn().mockResolvedValue('int1'),
-      connect: vi.fn(),
+      connect: vi.fn(
+        (
+          _profileId,
+          _interviewId,
+          _onMessage,
+          _onComplete,
+          _onError,
+          onOpen,
+        ) => {
+          onOpen();
+        },
+      ),
       disconnect: vi.fn(),
       completeInterview: vi.fn().mockResolvedValue(undefined),
       extendMessageLimit: vi.fn().mockResolvedValue(undefined),
+      requestInterviewSummary: vi.fn().mockResolvedValue(undefined),
     };
 
     TestBed.configureTestingModule({
@@ -35,10 +50,13 @@ describe('InterviewFacade', () => {
         InterviewFacade,
         { provide: InterviewService, useValue: service },
         { provide: Router, useValue: router },
+        { provide: WS_URL, useValue: 'ws://127.0.0.1:8000' },
       ],
     });
 
     facade = TestBed.inject(InterviewFacade);
+    store = TestBed.inject(InterviewStore);
+    store.reset();
   });
 
   it('startInterview creates interview and connects websocket', async () => {
@@ -53,12 +71,11 @@ describe('InterviewFacade', () => {
       name: 'Jane',
       role: 'Recruiter',
       company: 'Acme',
-    });
+    }, { recruiterUid: undefined });
     expect(service.connect).toHaveBeenCalled();
   });
 
   it('confirmEndInterview completes and navigates to feedback', async () => {
-    const store = TestBed.inject(InterviewStore);
     store.setSession('p1', 'int1', {
       name: 'Jane',
       role: 'Recruiter',
@@ -77,7 +94,6 @@ describe('InterviewFacade', () => {
   });
 
   it('cancelEndInterview after limit extends max messages and resumes chat', async () => {
-    const store = TestBed.inject(InterviewStore);
     store.setSession('p1', 'int1', {
       name: 'Jane',
       role: 'Recruiter',

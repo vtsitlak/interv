@@ -1,7 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
+import { ProfileFacade } from '@interv/state-profile';
 import { RecruiterFacade } from '@interv/state-recruiter';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { AccountService } from './account.service';
+import { AuthService } from './auth.service';
 import { AuthFacade } from './auth.facade';
 import { AuthStore } from './auth.store';
 
@@ -47,6 +50,15 @@ describe('AuthFacade', () => {
       providers: [
         AuthFacade,
         { provide: AuthStore, useValue: storeMock },
+        { provide: AuthService, useValue: {} },
+        { provide: AccountService, useValue: {} },
+        {
+          provide: ProfileFacade,
+          useValue: {
+            loadProfile: vi.fn().mockResolvedValue(undefined),
+            isProfileComplete: vi.fn().mockReturnValue(true),
+          },
+        },
         { provide: Router, useValue: { navigate } },
         {
           provide: RecruiterFacade,
