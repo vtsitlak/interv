@@ -8,6 +8,8 @@ export interface InterviewSummary {
   status: 'in_progress' | 'complete';
   feedbackScore: number | null;
   feedbackText: string | null;
+  requestContact: boolean;
+  recruiterContactEmail: string | null;
   aiSummary: string | null;
   messageCount: number;
   createdAt: Date;

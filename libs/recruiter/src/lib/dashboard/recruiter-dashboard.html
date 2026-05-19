@@ -71,7 +71,7 @@
                 <p class="text-xs text-base-content/50 mt-2">
                   {{ formatDate(interview.createdAt) }}
                   @if (interview.feedbackScore !== null) {
-                    · Score {{ interview.feedbackScore }}/10
+                    · Match score {{ interview.feedbackScore }}/10
                   }
                 </p>
               </button>
@@ -123,12 +123,12 @@
           }
 
           <div class="divider my-4"></div>
-          <lib-interview-feedback-panel
+          <interv-interview-feedback-panel
             [embedded]="true"
             [profileId]="selected.candidateProfileId"
             [interviewId]="selected.id"
-            title="Score & feedback"
-            description="Update your rating and notes for this interview."
+            title="Match score & feedback"
+            description="Update your match score and notes for this interview."
             (feedbackSaved)="onFeedbackSaved(selected.id)"
           />
         </div>

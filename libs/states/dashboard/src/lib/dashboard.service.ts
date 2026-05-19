@@ -61,6 +61,11 @@ export class DashboardService {
         company: recruiterCompany,
       });
       const feedback = isPracticeSession ? null : (data.feedback ?? null);
+      const requestContact = feedback?.requestContact === true;
+      const recruiterContactEmail =
+        requestContact && feedback?.recruiterEmail?.trim()
+          ? feedback.recruiterEmail.trim()
+          : null;
       return {
         id: docSnap.id,
         recruiterName,
@@ -70,6 +75,8 @@ export class DashboardService {
         status: data.status ?? 'in_progress',
         feedbackScore: feedback?.score ?? null,
         feedbackText: feedback?.text ?? null,
+        requestContact,
+        recruiterContactEmail,
         aiSummary: data.aiSummary ?? null,
         messageCount:
           data.messages?.filter((m) => m.role === 'user').length ??

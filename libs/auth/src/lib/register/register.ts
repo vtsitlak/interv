@@ -28,7 +28,7 @@ interface RegisterFormModel {
 }
 
 @Component({
-  selector: 'lib-register',
+  selector: 'interv-register',
   standalone: true,
   imports: [FormField, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,

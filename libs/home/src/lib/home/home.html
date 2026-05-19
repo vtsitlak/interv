@@ -11,9 +11,10 @@
           Your profile. Your AI twin. Better interviews.
         </h1>
         <p class="py-6 text-lg text-base-content/70 max-w-2xl mx-auto">
-          Interv helps candidates build an AI representation of their experience
-          and lets recruiters discover profiles, run structured interviews, and
-          leave scores and feedback—without scheduling back-and-forth.
+          Interv helps candidates train an AI twin from their experience and lets
+          recruiters run async interviews via a public profile link or in-app search.
+          Match scores, feedback, and optional contact requests keep both sides
+          moving without calendar coordination.
         </p>
       </div>
     </div>
@@ -25,15 +26,16 @@
         <div class="card-body">
           <h2 class="card-title text-2xl">For candidates</h2>
           <p class="text-base-content/70">
-            Train your AI twin from your CV, links, and personal Q&amp;A, then share
-            a public profile or keep it hidden from recruiter search until you are
-            ready.
+            Sign in, train your twin from CV text, links, and personal Q&amp;A, then
+            manage everything from your dashboard — including who can find you and
+            whether your public link is active.
           </p>
           <ul class="list-disc list-inside text-sm text-base-content/80 space-y-1 mt-2">
             <li>Train and edit your profile anytime</li>
-            <li>Practice with a test interview on your dashboard</li>
-            <li>Control recruiter discoverability from your dashboard</li>
-            <li>See interview feedback and scores in one place</li>
+            <li>Share a public link so anyone can start an interview</li>
+            <li>Disable the public link or hide from recruiter search separately</li>
+            <li>Practice with a test interview before going live</li>
+            <li>Review match scores, feedback, and contact requests on your dashboard</li>
           </ul>
           <div class="card-actions flex-col sm:flex-row gap-2 mt-6">
             <a routerLink="/login" class="btn btn-primary w-full sm:w-auto">
@@ -53,15 +55,16 @@
         <div class="card-body">
           <h2 class="card-title text-2xl">For recruiters</h2>
           <p class="text-base-content/70">
-            Sign in, set up your recruiter profile, search published candidates,
-            and run interviews with their AI twin. Review transcripts, score each
-            session, and update feedback from your dashboard.
+            Create a recruiter account, complete your profile, then search
+            published candidates and interview their AI twin — no setup form on
+            each interview. Leave a match score, notes, and optionally share your
+            email so strong matches can reach out.
           </p>
           <ul class="list-disc list-inside text-sm text-base-content/80 space-y-1 mt-2">
             <li>Search candidates by name, role, or skills</li>
-            <li>Start or restart interviews from a candidate profile</li>
-            <li>Score and feedback saved per interview</li>
-            <li>Dashboard with interview history and transcripts</li>
+            <li>See who you have already interviewed from search and profiles</li>
+            <li>Start, restart, or review interviews with match scores and transcripts</li>
+            <li>Update feedback anytime from your dashboard or candidate profile</li>
           </ul>
           <div class="card-actions flex-col sm:flex-row gap-2 mt-6">
             <a
@@ -99,18 +102,20 @@
             <span class="badge badge-secondary badge-lg">2</span>
             <h3 class="font-semibold mt-2">Run the interview</h3>
             <p class="text-sm text-base-content/70">
-              Recruiters find candidates in search or open a shared link, then
-              chat with the AI twin in a guided session.
+              Someone opens the candidate's public link and starts an interview,
+              or a signed-in recruiter finds them in search and runs a session from
+              the app.
             </p>
           </div>
         </div>
         <div class="card bg-base-100 shadow-md">
           <div class="card-body items-center text-center">
             <span class="badge badge-primary badge-lg">3</span>
-            <h3 class="font-semibold mt-2">Score &amp; iterate</h3>
+            <h3 class="font-semibold mt-2">Match score &amp; follow up</h3>
             <p class="text-sm text-base-content/70">
-              Recruiters leave a score and notes; candidates see feedback on
-              their dashboard and can improve their profile.
+              After the interview, the recruiter leaves a match score and feedback.
+              They can optionally share their email; the candidate sees everything
+              on their dashboard and can keep improving their twin.
             </p>
           </div>
         </div>

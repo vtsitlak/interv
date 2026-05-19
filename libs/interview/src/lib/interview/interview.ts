@@ -20,7 +20,7 @@ import { InterviewSetupComponent } from '../interview-setup/interview-setup';
 import { InterviewSuggestedQuestionsComponent } from '../interview-suggested-questions/interview-suggested-questions';
 
 @Component({
-  selector: 'lib-interview',
+  selector: 'interv-interview',
   standalone: true,
   imports: [InterviewSetupComponent, InterviewSuggestedQuestionsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -311,9 +311,16 @@ export class InterviewService {
     interviewId: string,
     score: number,
     text: string,
+    options?: { requestContact?: boolean; recruiterEmail?: string | null },
   ): Promise<void> {
     const pathHint = `profiles/${profileId}/interviews/${interviewId}`;
     const fs = this.firestore;
+    const requestContact = options?.requestContact === true;
+    const recruiterEmail =
+      requestContact && options?.recruiterEmail?.trim()
+        ? options.recruiterEmail.trim()
+        : null;
+
     try {
       await this.runFirestore(async () => {
         const ref = doc(fs, 'profiles', profileId, 'interviews', interviewId);
@@ -322,6 +329,8 @@ export class InterviewService {
             score,
             text,
             submittedAt: serverTimestamp(),
+            requestContact,
+            recruiterEmail,
           },
         });
 
@@ -331,7 +340,13 @@ export class InterviewService {
           await setDoc(
             doc(fs, 'recruiters', recruiterUid, 'interviews', interviewId),
             {
-              feedback: { score, text, submittedAt: serverTimestamp() },
+              feedback: {
+                score,
+                text,
+                submittedAt: serverTimestamp(),
+                requestContact,
+                recruiterEmail,
+              },
             },
             { merge: true },
           );
@@ -400,12 +415,22 @@ export class InterviewService {
     data: Record<string, unknown>,
   ): InterviewReview {
     const feedback = data['feedback'] as
-      | { score?: number; text?: string }
+      | {
+          score?: number;
+          text?: string;
+          requestContact?: boolean;
+          recruiterEmail?: string | null;
+        }
       | null
       | undefined;
     const createdAt = data['createdAt'] as Timestamp | undefined;
     const completedAt = data['completedAt'] as Timestamp | undefined | null;
     const status = data['status'] === 'complete' ? 'complete' : 'in_progress';
+    const requestContact = feedback?.requestContact === true;
+    const recruiterContactEmail =
+      requestContact && feedback?.recruiterEmail?.trim()
+        ? feedback.recruiterEmail.trim()
+        : null;
 
     return {
       id,
@@ -417,6 +442,8 @@ export class InterviewService {
       feedbackScore:
         typeof feedback?.score === 'number' ? feedback.score : null,
       feedbackText: feedback?.text?.trim() ? feedback.text.trim() : null,
+      requestContact,
+      recruiterContactEmail,
       aiSummary:
         typeof data['aiSummary'] === 'string' && data['aiSummary'].trim()
           ? data['aiSummary'].trim()

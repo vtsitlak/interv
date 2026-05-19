@@ -4,6 +4,18 @@
       <div class="flex justify-center py-20">
         <span class="loading loading-spinner loading-lg"></span>
       </div>
+    } @else if (publicProfileDisabled()) {
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body text-center py-12">
+          <p class="text-4xl mb-4" aria-hidden="true">🔒</p>
+          <h1 class="text-2xl font-bold">Public profile unavailable</h1>
+          <p class="text-base-content/70 mt-3 max-w-md mx-auto leading-relaxed">
+            This candidate has disabled their public profile. The link no longer
+            shows profile details and interviews cannot be started.
+          </p>
+          <a routerLink="/" class="btn btn-primary mt-8">Back to home</a>
+        </div>
+      </div>
     } @else if (error()) {
       <div class="alert alert-error">{{ error() }}</div>
     } @else if (profile(); as p) {
@@ -53,7 +65,7 @@
                       [class.badge-success]="prior.status === 'complete'"
                     >
                       @if (prior.feedbackScore !== null) {
-                        Interviewed · {{ prior.feedbackScore }}/10
+                        Interviewed · Match {{ prior.feedbackScore }}/10
                       } @else if (prior.status === 'complete') {
                         Interviewed
                       } @else {
@@ -94,33 +106,12 @@
                     Start interview →
                   </a>
                 }
-              } @else if (reviewableInterview(); as interview) {
-                <div class="flex flex-wrap gap-3 mt-6">
-                  <a
-                    [routerLink]="[
-                      '/candidate',
-                      profileId(),
-                      'interview',
-                      interview.id,
-                      'summary',
-                    ]"
-                    class="btn btn-outline"
-                  >
-                    View interview
-                  </a>
-                  <a
-                    [routerLink]="['/candidate', profileId(), 'interview']"
-                    class="btn btn-primary"
-                  >
-                    Restart interview →
-                  </a>
-                </div>
-              } @else {
+              } @else if (isPublicView()) {
                 <a
                   [routerLink]="['/candidate', profileId(), 'interview']"
                   class="btn btn-primary mt-6"
                 >
-                  Start AI interview →
+                  Start interview →
                 </a>
               }
             </div>

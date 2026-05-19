@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import type { ChatMessage } from '@interv/state-interview';
 
 @Component({
-  selector: 'lib-interview-transcript',
+  selector: 'interv-interview-transcript',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './interview-transcript.html',

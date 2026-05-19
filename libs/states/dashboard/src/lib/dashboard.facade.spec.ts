@@ -14,6 +14,8 @@ const interview: InterviewSummary = {
   status: 'in_progress',
   feedbackScore: null,
   feedbackText: null,
+  requestContact: false,
+  recruiterContactEmail: null,
   messageCount: 0,
   createdAt: new Date(),
   completedAt: null,

@@ -58,7 +58,7 @@ function normalizeLinks(
 }
 
 @Component({
-  selector: 'lib-profile-train',
+  selector: 'interv-profile-train',
   standalone: true,
   imports: [FormField, FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -27,7 +27,7 @@ interface LoginFormModel {
 }
 
 @Component({
-  selector: 'lib-login',
+  selector: 'interv-login',
   standalone: true,
   imports: [FormField, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,

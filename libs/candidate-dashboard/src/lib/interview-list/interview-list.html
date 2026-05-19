@@ -1,0 +1,47 @@
+<div class="space-y-3">
+  @for (interview of interviews(); track interview.id) {
+    <button
+      type="button"
+      class="flex w-full items-center justify-between p-4 bg-base-200 rounded-xl hover:bg-base-300 cursor-pointer transition-colors text-left"
+      (click)="onSelect(interview)"
+    >
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="font-medium truncate">{{ interview.recruiterName }}</span>
+          <span class="text-xs text-base-content/50">
+            {{ interview.recruiterRole }} @ {{ interview.recruiterCompany }}
+          </span>
+        </div>
+        <div class="flex items-center gap-3 mt-1 flex-wrap">
+          <span class="text-xs text-base-content/40">
+            {{ formatDate(interview.createdAt) }}
+          </span>
+          <span class="text-xs text-base-content/40">
+            {{ interview.messageCount }} messages
+          </span>
+          @if (interview.status === 'in_progress') {
+            <span class="badge badge-xs badge-warning">In progress</span>
+          }
+          @if (interview.requestContact && interview.recruiterContactEmail) {
+            <span class="badge badge-xs badge-secondary">Contact request</span>
+          }
+        </div>
+      </div>
+      @if (interview.isPracticeSession) {
+        <span class="badge badge-outline badge-lg ml-3 shrink-0">Practice</span>
+      } @else if (interview.feedbackScore !== null) {
+        <div class="ml-3 shrink-0">
+          <span
+            class="badge badge-lg {{ scoreColor(interview.feedbackScore) }}"
+          >
+            {{ interview.feedbackScore }}/10
+          </span>
+        </div>
+      } @else {
+        <span class="badge badge-ghost badge-lg ml-3 shrink-0"
+          >No match score</span
+        >
+      }
+    </button>
+  }
+</div>

@@ -44,8 +44,10 @@ describe('DashboardComponent', () => {
             profile: () => null,
             isComplete: () => false,
             isDiscoverableByRecruiters: () => true,
+            isPublicProfileEnabled: () => true,
             isUpdatingVisibility: () => false,
             setProfileDiscoverability: vi.fn().mockResolvedValue(undefined),
+            setPublicProfileEnabled: vi.fn().mockResolvedValue(undefined),
             successMessage: () => null,
             shareUrl: () => '/candidate/u1',
           },
@@ -74,16 +76,28 @@ describe('DashboardComponent', () => {
     expect(loadProfile).toHaveBeenCalled();
   });
 
-  it('scoreColor() maps scores to badge classes', () => {
-    expect(component.scoreColor(null)).toBe('badge-ghost');
-    expect(component.scoreColor(9)).toBe('badge-success');
-    expect(component.scoreColor(6)).toBe('badge-warning');
-    expect(component.scoreColor(3)).toBe('badge-error');
-  });
-
   it('roleLabel() uses You for practice session user messages', () => {
     expect(component.roleLabel('user', true)).toBe('You');
     expect(component.roleLabel('assistant', true)).toBe('AI twin');
     expect(component.roleLabel('user', false)).toBe('Recruiter');
+  });
+
+  it('closeDetailOnBackdrop() closes only when clicking the backdrop', () => {
+    const dashboard = TestBed.inject(DashboardFacade);
+    const backdrop = document.createElement('div');
+    const inner = document.createElement('div');
+    backdrop.appendChild(inner);
+
+    component.closeDetailOnBackdrop({
+      target: inner,
+      currentTarget: backdrop,
+    } as unknown as MouseEvent);
+    expect(dashboard.closeDetail).not.toHaveBeenCalled();
+
+    component.closeDetailOnBackdrop({
+      target: backdrop,
+      currentTarget: backdrop,
+    } as unknown as MouseEvent);
+    expect(dashboard.closeDetail).toHaveBeenCalled();
   });
 });

@@ -31,6 +31,7 @@ describe('ProfileStore', () => {
     | 'getProfile'
     | 'saveProfile'
     | 'setProfileVisibility'
+    | 'setPublicProfileEnabled'
     | 'ingest'
   >;
   let store: InstanceType<typeof ProfileStore>;
@@ -43,6 +44,10 @@ describe('ProfileStore', () => {
       setProfileVisibility: vi.fn().mockResolvedValue({
         ...sampleProfile,
         isPublished: false,
+      }),
+      setPublicProfileEnabled: vi.fn().mockResolvedValue({
+        ...sampleProfile,
+        isPublicProfileEnabled: false,
       }),
       ingest: vi.fn().mockResolvedValue({}),
     };
@@ -148,5 +153,17 @@ describe('ProfileStore', () => {
     );
     expect(store.isDiscoverableByRecruiters()).toBe(false);
     expect(store.successMessage()).toContain('hidden');
+  });
+
+  it('setPublicProfileEnabled() updates public link visibility via the service', async () => {
+    await store.loadProfile();
+    await store.setPublicProfileEnabled(false);
+
+    expect(profileService.setPublicProfileEnabled).toHaveBeenCalledWith(
+      'u1',
+      false,
+    );
+    expect(store.isPublicProfileEnabled()).toBe(false);
+    expect(store.successMessage()).toContain('disabled');
   });
 });

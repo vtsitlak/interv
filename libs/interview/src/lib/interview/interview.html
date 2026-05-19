@@ -11,7 +11,7 @@
 
   @if (!skipSetup() && !isSetupComplete()) {
     <div class="flex-1 flex items-center justify-center px-4">
-      <lib-interview-setup
+      <interv-interview-setup
         [profileId]="profileId()"
         [error]="facade.error()"
         [isConnecting]="facade.isConnecting()"
@@ -72,7 +72,7 @@
     </div>
 
     <div class="bg-base-100 border-t border-base-300 px-4 py-3">
-      <lib-interview-suggested-questions
+      <interv-interview-suggested-questions
         [questions]="suggestedQuestions()"
         [isLoading]="isLoadingSuggestedQuestions()"
         [canSendMessage]="facade.canSendMessage()"
@@ -81,7 +81,7 @@
         [maxMessages]="facade.maxMessages()"
         [usedKeys]="usedSuggestionKeys()"
         (questionSelected)="onSuggestionSelected($event)"
-      ></lib-interview-suggested-questions>
+      ></interv-interview-suggested-questions>
       <div class="max-w-2xl mx-auto">
         <div class="flex gap-3">
           <textarea

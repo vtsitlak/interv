@@ -8,7 +8,7 @@ import {
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 @Component({
-  selector: 'lib-header',
+  selector: 'interv-header',
   standalone: true,
   imports: [RouterLink, RouterLinkActive],
   changeDetection: ChangeDetectionStrategy.OnPush,

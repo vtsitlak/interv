@@ -20,7 +20,7 @@ interface FeedbackFormModel {
 }
 
 @Component({
-  selector: 'lib-interview-summary',
+  selector: 'interv-interview-summary',
   standalone: true,
   imports: [FormField, RouterLink, InterviewTranscriptComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
