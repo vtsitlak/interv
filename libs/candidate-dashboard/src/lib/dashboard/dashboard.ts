@@ -6,16 +6,23 @@ import {
   signal,
 } from '@angular/core';
 import { Router } from '@angular/router';
+import { ConfirmModalComponent } from '@interv/shared';
 import { AuthFacade } from '@interv/state-auth';
 import { DashboardFacade, type InterviewSummary } from '@interv/state-dashboard';
 import { ProfileFacade } from '@interv/state-profile';
-import { ProfileVisibilitySettingsComponent } from '../profile-visibility-settings/profile-visibility-settings';
+import { InterviewDetailModalComponent } from '../interview-detail-modal/interview-detail-modal';
 import { InterviewListComponent } from '../interview-list/interview-list';
+import { ProfileVisibilitySettingsComponent } from '../profile-visibility-settings/profile-visibility-settings';
 
 @Component({
   selector: 'interv-dashboard',
   standalone: true,
-  imports: [ProfileVisibilitySettingsComponent, InterviewListComponent],
+  imports: [
+    ProfileVisibilitySettingsComponent,
+    InterviewListComponent,
+    InterviewDetailModalComponent,
+    ConfirmModalComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
@@ -28,6 +35,11 @@ export class DashboardComponent implements OnInit {
   readonly profile = inject(ProfileFacade);
 
   readonly copySuccess = signal(false);
+  readonly isRemovingInterview = signal(false);
+  readonly showRemoveConfirm = signal(false);
+
+  readonly removeConfirmMessage =
+    'The interview data is kept, but it will no longer appear in your list or match score totals.';
 
   ngOnInit(): void {
     void this.dashboard.loadInterviews();
@@ -38,13 +50,35 @@ export class DashboardComponent implements OnInit {
     void this.dashboard.selectInterview(interview);
   }
 
+  loadMoreInterviews(): void {
+    void this.dashboard.loadMoreInterviews();
+  }
+
   closeDetail(): void {
     this.dashboard.closeDetail();
   }
 
-  closeDetailOnBackdrop(event: MouseEvent): void {
-    if (event.target === event.currentTarget) {
-      this.closeDetail();
+  openRemoveConfirm(): void {
+    if (this.dashboard.selectedInterview() && !this.isRemovingInterview()) {
+      this.showRemoveConfirm.set(true);
+    }
+  }
+
+  cancelRemoveConfirm(): void {
+    this.showRemoveConfirm.set(false);
+  }
+
+  async confirmRemoveInterview(): Promise<void> {
+    const interview = this.dashboard.selectedInterview();
+    if (!interview || this.isRemovingInterview()) {
+      return;
+    }
+    this.isRemovingInterview.set(true);
+    try {
+      await this.dashboard.hideInterview(interview.id);
+      this.showRemoveConfirm.set(false);
+    } finally {
+      this.isRemovingInterview.set(false);
     }
   }
 
@@ -75,46 +109,5 @@ export class DashboardComponent implements OnInit {
     } catch {
       /* clipboard unavailable */
     }
-  }
-
-  formatDate(date: Date): string {
-    return new Intl.DateTimeFormat('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    }).format(date);
-  }
-
-  formatTime(date: Date | null): string {
-    if (!date) {
-      return '';
-    }
-    return new Intl.DateTimeFormat('en-GB', {
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(date);
-  }
-
-  scoreColor(score: number | null): string {
-    if (score === null) {
-      return 'badge-ghost';
-    }
-    if (score >= 8) {
-      return 'badge-success';
-    }
-    if (score >= 5) {
-      return 'badge-warning';
-    }
-    return 'badge-error';
-  }
-
-  roleLabel(
-    role: 'user' | 'assistant',
-    isPracticeSession: boolean,
-  ): string {
-    if (isPracticeSession) {
-      return role === 'user' ? 'You' : 'AI twin';
-    }
-    return role === 'user' ? 'Recruiter' : 'AI twin';
   }
 }

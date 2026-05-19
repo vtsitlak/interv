@@ -2,6 +2,7 @@ import { DOCUMENT } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   OnInit,
   signal,
@@ -14,8 +15,15 @@ import {
   required,
 } from '@angular/forms/signals';
 import { Router } from '@angular/router';
-import type { ProfileLink, QAPair, WorkPreference } from '@interv/models';
-import { normalizeWorkPreferences, WORK_PREFERENCE_GROUPS } from '@interv/models';
+import type { ProfileLink, QAPair, WorkPreference } from '@interv/shared';
+import {
+  normalizeWorkPreferences,
+  PROFILE_FIELD_LIMITS,
+  ProfilePhotoComponent,
+  RemainingCharsComponent,
+  serializeProfileTrainForm,
+  WORK_PREFERENCE_GROUPS,
+} from '@interv/shared';
 import {
   canGenerateRoleSpecificPersonalQA,
   hasPersonalQAAnswers,
@@ -60,7 +68,7 @@ function normalizeLinks(
 @Component({
   selector: 'interv-profile-train',
   standalone: true,
-  imports: [FormField, FormsModule],
+  imports: [FormField, FormsModule, ProfilePhotoComponent, RemainingCharsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './profile-train.html',
   styleUrl: './profile-train.scss',
@@ -73,12 +81,20 @@ export class ProfileTrainComponent implements OnInit {
   private readonly profileService = inject(ProfileService);
 
   readonly workPreferenceGroups = WORK_PREFERENCE_GROUPS;
+  readonly fieldLimits = PROFILE_FIELD_LIMITS;
 
   readonly profileModel = signal<ProfileFormModel>({ ...EMPTY_MODEL });
+  private readonly savedSnapshot = signal<string | null>(null);
+  readonly isDirty = computed(() => {
+    const saved = this.savedSnapshot();
+    if (saved === null) {
+      return false;
+    }
+    return serializeProfileTrainForm(this.profileModel()) !== saved;
+  });
   readonly isLoadingPersonalQA = signal(false);
   readonly isUploadingPhoto = signal(false);
   readonly photoUploadError = signal<string | null>(null);
-  readonly photoLoadFailed = signal(false);
   readonly profileId = signal<string | null>(null);
 
   readonly profileForm = form(this.profileModel, (path) => {
@@ -121,7 +137,6 @@ export class ProfileTrainComponent implements OnInit {
         ? [...(p.personalQA ?? [])]
         : [];
 
-      this.photoLoadFailed.set(false);
       this.profileModel.set({
         name: p.name,
         title: p.title,
@@ -141,6 +156,11 @@ export class ProfileTrainComponent implements OnInit {
         await this.refreshPersonalQA();
       }
     }
+    this.markSavedSnapshot();
+  }
+
+  private markSavedSnapshot(): void {
+    this.savedSnapshot.set(serializeProfileTrainForm(this.profileModel()));
   }
 
   /** Regenerate tailored questions from the current job title and summary. */
@@ -176,26 +196,12 @@ export class ProfileTrainComponent implements OnInit {
     return this.profileModel().workPreferences.includes(id);
   }
 
-  hasProfilePhoto(): boolean {
-    return !!this.profileModel().photo.trim() && !this.photoLoadFailed();
-  }
-
   hasStoredPhoto(): boolean {
     return !!this.profileModel().photo.trim();
   }
 
-  profileInitial(): string {
-    const initial = this.profileModel().name.trim().charAt(0);
-    return initial ? initial.toUpperCase() : '?';
-  }
-
-  onPhotoError(): void {
-    this.photoLoadFailed.set(true);
-  }
-
   removePhoto(): void {
     this.photoUploadError.set(null);
-    this.photoLoadFailed.set(false);
     this.profileModel.update((m) => ({ ...m, photo: '' }));
   }
 
@@ -217,7 +223,6 @@ export class ProfileTrainComponent implements OnInit {
     this.isUploadingPhoto.set(true);
     try {
       const url = await this.profileService.uploadProfilePhoto(user.uid, file);
-      this.photoLoadFailed.set(false);
       this.profileModel.update((m) => ({ ...m, photo: url }));
     } catch (e: unknown) {
       this.photoUploadError.set(
@@ -306,6 +311,7 @@ export class ProfileTrainComponent implements OnInit {
     if (profile) {
       this.profileId.set(profile.id);
       await this.facade.ingestToRAG(profile.id, cvText, personalQA, links);
+      this.markSavedSnapshot();
       if (this.facade.successMessage()) {
         await this.router.navigate(['/candidate/my-profile']);
       }

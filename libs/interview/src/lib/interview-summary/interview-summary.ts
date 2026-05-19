@@ -1,12 +1,18 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   OnInit,
   signal,
 } from '@angular/core';
 import { form, FormField, required } from '@angular/forms/signals';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import {
+  FEEDBACK_FIELD_LIMITS,
+  RemainingCharsComponent,
+  serializeFeedbackForm,
+} from '@interv/shared';
 import {
   InterviewService,
   type ChatMessage,
@@ -22,7 +28,7 @@ interface FeedbackFormModel {
 @Component({
   selector: 'interv-interview-summary',
   standalone: true,
-  imports: [FormField, RouterLink, InterviewTranscriptComponent],
+  imports: [FormField, RouterLink, InterviewTranscriptComponent, RemainingCharsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './interview-summary.html',
   styleUrl: './interview-summary.scss',
@@ -46,6 +52,21 @@ export class InterviewSummaryComponent implements OnInit {
   readonly saveSuccess = signal(false);
 
   readonly feedbackModel = signal<FeedbackFormModel>({ score: 8, text: '' });
+  private readonly savedSnapshot = signal<string | null>(null);
+  readonly fieldLimits = FEEDBACK_FIELD_LIMITS;
+
+  readonly isDirty = computed(() => {
+    const saved = this.savedSnapshot();
+    if (saved === null) {
+      return false;
+    }
+    return (
+      serializeFeedbackForm({
+        ...this.feedbackModel(),
+        requestContact: false,
+      }) !== saved
+    );
+  });
 
   readonly feedbackForm = form(this.feedbackModel, (path) => {
     required(path.text, { message: 'Feedback is required' });
@@ -110,6 +131,7 @@ export class InterviewSummaryComponent implements OnInit {
           : current,
       );
       this.saveSuccess.set(true);
+      this.markSavedSnapshot();
     } catch (e: unknown) {
       this.error.set(e instanceof Error ? e.message : String(e));
     } finally {
@@ -145,6 +167,7 @@ export class InterviewSummaryComponent implements OnInit {
         score: review.feedbackScore ?? 8,
         text: review.feedbackText ?? '',
       });
+      this.markSavedSnapshot();
 
       this.isLoadingTranscript.set(true);
       const messages = await this.interviewService.getInterviewMessages(
@@ -158,5 +181,14 @@ export class InterviewSummaryComponent implements OnInit {
       this.isLoading.set(false);
       this.isLoadingTranscript.set(false);
     }
+  }
+
+  private markSavedSnapshot(): void {
+    this.savedSnapshot.set(
+      serializeFeedbackForm({
+        ...this.feedbackModel(),
+        requestContact: false,
+      }),
+    );
   }
 }

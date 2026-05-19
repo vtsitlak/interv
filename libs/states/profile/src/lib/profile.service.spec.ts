@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { Auth } from '@angular/fire/auth';
 import { Firestore } from '@angular/fire/firestore';
-import { API_URL } from '@interv/util';
+import { Storage } from '@angular/fire/storage';
+import { API_URL } from '@interv/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ProfileService, validateProfilePhotoFile } from './profile.service';
 
@@ -13,6 +14,7 @@ describe('ProfileService', () => {
       providers: [
         { provide: Auth, useValue: { currentUser: null } },
         { provide: Firestore, useValue: {} },
+        { provide: Storage, useValue: {} },
         { provide: API_URL, useValue: 'http://localhost:8000' },
       ],
     });
@@ -30,6 +32,7 @@ describe('ProfileService', () => {
       providers: [
         { provide: Auth, useValue: { currentUser: fakeUser } },
         { provide: Firestore, useValue: {} },
+        { provide: Storage, useValue: {} },
         { provide: API_URL, useValue: 'http://localhost:8000' },
       ],
     });

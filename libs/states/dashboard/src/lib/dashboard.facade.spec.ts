@@ -27,7 +27,10 @@ describe('DashboardFacade', () => {
     interviews: ReturnType<typeof vi.fn>;
     selectedInterview: ReturnType<typeof vi.fn>;
     transcript: ReturnType<typeof vi.fn>;
-    isLoading: ReturnType<typeof vi.fn>;
+      isLoading: ReturnType<typeof vi.fn>;
+      isLoadingMoreInterviews: ReturnType<typeof vi.fn>;
+      hasMoreInterviews: ReturnType<typeof vi.fn>;
+      loadMoreInterviews: ReturnType<typeof vi.fn>;
     isLoadingTranscript: ReturnType<typeof vi.fn>;
     error: ReturnType<typeof vi.fn>;
     totalInterviews: ReturnType<typeof vi.fn>;
@@ -44,6 +47,9 @@ describe('DashboardFacade', () => {
       selectedInterview: vi.fn().mockReturnValue(null),
       transcript: vi.fn().mockReturnValue([]),
       isLoading: vi.fn().mockReturnValue(false),
+      isLoadingMoreInterviews: vi.fn().mockReturnValue(false),
+      hasMoreInterviews: vi.fn().mockReturnValue(false),
+      loadMoreInterviews: vi.fn().mockResolvedValue(undefined),
       isLoadingTranscript: vi.fn().mockReturnValue(false),
       error: vi.fn().mockReturnValue(null),
       totalInterviews: vi.fn().mockReturnValue(0),

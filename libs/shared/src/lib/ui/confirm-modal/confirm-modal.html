@@ -1,0 +1,46 @@
+@if (open()) {
+  <div
+    class="modal modal-open"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="interv-confirm-modal-title"
+  >
+    <div class="modal-box max-w-md">
+      <h3 id="interv-confirm-modal-title" class="font-bold text-lg">
+        {{ title() }}
+      </h3>
+      <p class="py-4 text-base-content/70 text-sm leading-relaxed">
+        {{ message() }}
+      </p>
+      <div class="modal-action">
+        <button
+          type="button"
+          class="btn btn-ghost"
+          [disabled]="isConfirming()"
+          (click)="onCancel()"
+        >
+          {{ cancelLabel() }}
+        </button>
+        <button
+          type="button"
+          class="btn {{ confirmButtonClass() }}"
+          [disabled]="isConfirming()"
+          (click)="onConfirm()"
+        >
+          @if (isConfirming()) {
+            <span class="loading loading-spinner loading-xs"></span>
+          } @else {
+            {{ confirmLabel() }}
+          }
+        </button>
+      </div>
+    </div>
+    <button
+      type="button"
+      class="modal-backdrop"
+      aria-label="Cancel"
+      [disabled]="isConfirming()"
+      (click)="onCancel()"
+    ></button>
+  </div>
+}

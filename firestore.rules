@@ -61,6 +61,7 @@ service cloud.firestore {
 
         allow update: if profileIsPublic(profileId)
           || profileIsPublished(profileId)
+          || (request.auth != null && request.auth.uid == profileId)
           || (request.auth != null
             && resource != null
             && resource.data.get('recruiterUid', '') == request.auth.uid);

@@ -4,7 +4,7 @@ import {
   candidateGuard,
   recruiterGuard,
   recruiterProfileCompleteGuard,
-} from '@interv/util';
+} from './core';
 
 export const appRoutes: Routes = [
   {

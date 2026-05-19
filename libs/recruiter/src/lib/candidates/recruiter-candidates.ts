@@ -3,22 +3,20 @@ import {
   Component,
   inject,
   OnInit,
-  signal,
 } from '@angular/core';
-import type { CandidateSearchResult } from '@interv/state-recruiter';
 import { RouterLink } from '@angular/router';
+import { InfiniteScrollDirective, ProfilePhotoComponent } from '@interv/shared';
 import { RecruiterFacade } from '@interv/state-recruiter';
 
 @Component({
   selector: 'interv-recruiter-candidates',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, InfiniteScrollDirective, ProfilePhotoComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './recruiter-candidates.html',
 })
 export class RecruiterCandidatesComponent implements OnInit {
   readonly recruiter = inject(RecruiterFacade);
-  private readonly photoFailedIds = signal<ReadonlySet<string>>(new Set());
 
   ngOnInit(): void {
     void this.recruiter.searchCandidates();
@@ -40,22 +38,11 @@ export class RecruiterCandidatesComponent implements OnInit {
     }
   }
 
+  loadMoreCandidates(): void {
+    void this.recruiter.loadMoreCandidates();
+  }
+
   skillsPreview(skills: string[]): string {
     return skills.slice(0, 5).join(' · ');
-  }
-
-  hasProfilePhoto(candidate: CandidateSearchResult): boolean {
-    return (
-      !!candidate.photo?.trim() && !this.photoFailedIds().has(candidate.id)
-    );
-  }
-
-  profileInitial(name: string): string {
-    const initial = name.trim().charAt(0);
-    return initial ? initial.toUpperCase() : '?';
-  }
-
-  onPhotoError(candidateId: string): void {
-    this.photoFailedIds.update((ids) => new Set([...ids, candidateId]));
   }
 }

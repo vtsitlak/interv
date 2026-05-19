@@ -6,6 +6,10 @@ import {
   signal,
 } from '@angular/core';
 import { form, FormField, required } from '@angular/forms/signals';
+import {
+  RECRUITER_FIELD_LIMITS,
+  RemainingCharsComponent,
+} from '@interv/shared';
 import type { RecruiterInfo } from '@interv/state-interview';
 
 interface RecruiterFormModel {
@@ -17,7 +21,7 @@ interface RecruiterFormModel {
 @Component({
   selector: 'interv-interview-setup',
   standalone: true,
-  imports: [FormField],
+  imports: [FormField, RemainingCharsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './interview-setup.html',
   styleUrl: './interview-setup.scss',
@@ -30,6 +34,7 @@ export class InterviewSetupComponent {
   readonly isConnecting = input(false);
 
   readonly startInterview = output<RecruiterInfo>();
+  readonly fieldLimits = RECRUITER_FIELD_LIMITS;
 
   readonly recruiterModel = signal<RecruiterFormModel>({
     name: '',

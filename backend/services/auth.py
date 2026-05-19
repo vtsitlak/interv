@@ -52,6 +52,34 @@ def verify_profile_owner_token(profile_id: str, authorization: str | None) -> st
     return uid
 
 
+def verify_bearer_token(authorization: str | None) -> str:
+    """Verify Bearer Firebase ID token and return uid."""
+    if firebase_auth_disabled():
+        logger.warning('DISABLE_FIREBASE_AUTH is set — skipping token check')
+        raise HTTPException(
+            status_code=503,
+            detail='Account actions require authentication.',
+        )
+
+    if not authorization or not authorization.startswith('Bearer '):
+        raise HTTPException(status_code=401, detail='Authorization required')
+
+    token = authorization.removeprefix('Bearer ').strip()
+    if not token:
+        raise HTTPException(status_code=401, detail='Authorization required')
+
+    try:
+        decoded = auth.verify_id_token(token)
+    except Exception as exc:  # noqa: BLE001
+        logger.info('Invalid Firebase token: %s', exc)
+        raise HTTPException(status_code=401, detail='Invalid or expired token') from exc
+
+    uid = str(decoded.get('uid') or '')
+    if not uid:
+        raise HTTPException(status_code=401, detail='Invalid or expired token')
+    return uid
+
+
 def profile_owner_header(
     profile_id: str,
     authorization: Annotated[str | None, Header()] = None,

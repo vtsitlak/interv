@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Profile } from '@interv/models';
+import type { Profile } from '@interv/shared';
 import {
   buildGenericFallbackQuestions,
   buildSuggestedQuestionsFromProfile,
@@ -14,7 +14,7 @@ const sampleProfile = {
   photo: '',
   summary: 'Angular specialist with 8 years building SaaS products.',
   cvText: '...',
-  skills: ['Angular', 'TypeScript', 'Nx'],
+  skills: ['Angular'],
   personalQA: [
     {
       question: 'Are you open to relocation?',

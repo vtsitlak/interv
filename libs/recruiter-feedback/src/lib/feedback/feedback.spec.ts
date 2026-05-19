@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { AuthFacade } from '@interv/state-auth';
 import { InterviewService } from '@interv/state-interview';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { FeedbackComponent } from './feedback';
@@ -29,6 +30,12 @@ describe('FeedbackComponent', () => {
             submitFeedback: vi.fn().mockResolvedValue(undefined),
             getInterviewForReview: vi.fn().mockResolvedValue(null),
             getInterviewMessages: vi.fn().mockResolvedValue([]),
+          },
+        },
+        {
+          provide: AuthFacade,
+          useValue: {
+            user: () => ({ uid: 'r1', email: 'recruiter@example.com' }),
           },
         },
       ],

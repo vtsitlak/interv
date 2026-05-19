@@ -1,4 +1,5 @@
-<div class="min-h-screen bg-base-200 py-10 px-4">
+<div>
+  <div class="min-h-screen bg-base-200 py-10 px-4">
   <div class="max-w-4xl mx-auto">
     <div class="mb-8">
       <h1 class="text-3xl font-bold">Dashboard</h1>
@@ -107,7 +108,10 @@
         } @else {
           <interv-interview-list
             [interviews]="dashboard.interviews()"
+            [hasMore]="dashboard.hasMoreInterviews()"
+            [isLoadingMore]="dashboard.isLoadingMoreInterviews()"
             (interviewSelect)="selectInterview($event)"
+            (loadMore)="loadMoreInterviews()"
           />
         }
       </div>
@@ -115,167 +119,25 @@
   </div>
 
   @if (dashboard.selectedInterview(); as interview) {
-    <div
-      class="modal modal-open"
-      tabindex="0"
-      role="button"
-      aria-label="Close interview details"
-      (click)="closeDetailOnBackdrop($event)"
-      (keydown.escape)="closeDetail()"
-    >
-      <div class="modal-box max-w-2xl">
-        <button
-          type="button"
-          class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4"
-          (click)="closeDetail()"
-          aria-label="Close"
-        >
-          ✕
-        </button>
-
-        <h3 class="font-bold text-lg mb-1">
-          @if (interview.isPracticeSession) {
-            Practice session
-          } @else {
-            {{ interview.recruiterName }}
-          }
-        </h3>
-        <p class="text-sm text-base-content/60 mb-4">
-          @if (interview.isPracticeSession) {
-            Self-test · {{ formatDate(interview.createdAt) }}
-          } @else {
-            {{ interview.recruiterRole }} @ {{ interview.recruiterCompany }} ·
-            {{ formatDate(interview.createdAt) }}
-          }
-        </p>
-
-        <div class="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-4">
-          <p class="font-medium text-sm mb-3">Summary</p>
-          <dl
-            class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-base-content/70 mb-4"
-          >
-            <dt class="font-medium">Status</dt>
-            <dd>
-              @if (interview.status === 'complete') {
-                Completed
-              } @else {
-                In progress
-              }
-            </dd>
-            <dt class="font-medium">Questions asked</dt>
-            <dd>{{ interview.messageCount }}</dd>
-            @if (interview.completedAt) {
-              <dt class="font-medium">Completed</dt>
-              <dd>{{ formatDate(interview.completedAt) }}</dd>
-            }
-            @if (!interview.isPracticeSession) {
-              <dt class="font-medium">Recruiter</dt>
-              <dd class="col-span-2 sm:col-span-1">
-                {{ interview.recruiterName }} · {{ interview.recruiterRole }} @
-                {{ interview.recruiterCompany }}
-              </dd>
-            }
-          </dl>
-          @if (interview.aiSummary) {
-            <p class="text-sm text-base-content/80 leading-relaxed">
-              {{ interview.aiSummary }}
-            </p>
-          } @else if (interview.isPracticeSession) {
-            <p class="text-sm text-base-content/60 leading-relaxed">
-              AI summary is generated after you complete the practice session.
-            </p>
-          } @else {
-            <p class="text-sm text-base-content/60 leading-relaxed">
-              AI summary is generated after the recruiter finishes the interview
-              and leaves feedback.
-            </p>
-          }
-        </div>
-
-        @if (!interview.isPracticeSession) {
-          @if (interview.feedbackScore !== null) {
-            <div class="bg-base-200 rounded-xl p-4 mb-4">
-              <div class="flex items-center gap-3 mb-2">
-                <span class="font-medium text-sm">Match score</span>
-                <span class="badge {{ scoreColor(interview.feedbackScore) }}">
-                  {{ interview.feedbackScore }}/10
-                </span>
-              </div>
-              @if (interview.feedbackText) {
-                <p class="text-sm text-base-content/80 leading-relaxed">
-                  {{ interview.feedbackText }}
-                </p>
-              }
-            </div>
-          } @else {
-            <div class="alert alert-ghost mb-4 text-sm">
-              No feedback submitted yet
-            </div>
-          }
-
-          @if (
-            interview.requestContact && interview.recruiterContactEmail
-          ) {
-            <div
-              class="bg-secondary/10 border border-secondary/20 rounded-xl p-4 mb-4"
-            >
-              <p class="font-medium text-sm mb-1">Contact request</p>
-              <p class="text-sm text-base-content/70 mb-3">
-                This recruiter would like to get in touch with you about this
-                interview.
-              </p>
-              <a
-                [href]="'mailto:' + interview.recruiterContactEmail"
-                class="link link-secondary text-sm font-medium"
-              >
-                {{ interview.recruiterContactEmail }}
-              </a>
-            </div>
-          }
-        }
-
-        <div class="divider text-xs">Interview transcript</div>
-
-        @if (dashboard.isLoadingTranscript()) {
-          <div class="flex justify-center py-8">
-            <span class="loading loading-spinner loading-md"></span>
-          </div>
-        } @else if (dashboard.transcript().length === 0) {
-          <p class="text-sm text-base-content/50 text-center py-4">
-            No messages recorded for this interview.
-          </p>
-        } @else {
-          <div class="space-y-3 max-h-80 overflow-y-auto pr-1">
-            @for (message of dashboard.transcript(); track $index) {
-              <div
-                class="rounded-xl p-3 text-sm"
-                [class.bg-primary/10]="message.role === 'assistant'"
-                [class.bg-base-200]="message.role === 'user'"
-              >
-                <div class="flex items-center justify-between gap-2 mb-1">
-                  <span class="font-medium text-xs">{{
-                    roleLabel(message.role, interview.isPracticeSession)
-                  }}</span>
-                  @if (message.timestamp) {
-                    <span class="text-xs text-base-content/40">{{
-                      formatTime(message.timestamp)
-                    }}</span>
-                  }
-                </div>
-                <p class="text-base-content/80 leading-relaxed whitespace-pre-wrap">
-                  {{ message.content }}
-                </p>
-              </div>
-            }
-          </div>
-        }
-
-        <div class="modal-action">
-          <button type="button" class="btn btn-ghost" (click)="closeDetail()">
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
+    <interv-interview-detail-modal
+      [interview]="interview"
+      [transcript]="dashboard.transcript()"
+      [isLoadingTranscript]="dashboard.isLoadingTranscript()"
+      [isRemoving]="isRemovingInterview()"
+      (closed)="closeDetail()"
+      (removeRequested)="openRemoveConfirm()"
+    />
   }
+
+  <interv-confirm-modal
+    [open]="showRemoveConfirm()"
+    title="Remove interview?"
+    [message]="removeConfirmMessage"
+    confirmLabel="Remove"
+    cancelLabel="Keep"
+    [isConfirming]="isRemovingInterview()"
+    confirmButtonClass="btn-error"
+    (confirmed)="confirmRemoveInterview()"
+    (cancelled)="cancelRemoveConfirm()"
+  />
 </div>

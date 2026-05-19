@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { Auth } from '@angular/fire/auth';
 import {
+  arrayUnion,
   collection,
   doc,
   Firestore,
@@ -13,16 +14,23 @@ import {
   setDoc,
   Timestamp,
   where,
+  startAfter,
+  updateDoc,
 } from '@angular/fire/firestore';
-import type { Profile } from '@interv/models';
+import type { Profile } from '@interv/shared';
+import { INTERV_LIST_PAGE_SIZE, isHiddenFromAudience } from '@interv/shared';
 import type { RecruiterInfo } from '@interv/state-interview';
 import type {
+  CandidateSearchPage,
   CandidateSearchResult,
+  RecruiterInterviewPage,
+  RecruiterInterviewStats,
   RecruiterInterviewSummary,
   RecruiterProfile,
   RecruiterTranscriptMessage,
 } from './recruiter.models';
 import { isRecruiterProfileComplete } from './recruiter.models';
+import type { QueryDocumentSnapshot } from 'firebase/firestore';
 
 interface RecruiterDoc {
   name?: string;
@@ -40,6 +48,7 @@ interface InterviewDoc {
   feedback?: { score?: number; text?: string } | null;
   aiSummary?: string | null;
   messageCount?: number;
+  hidden?: unknown;
   messages?: { role: string; content: string; timestamp?: Timestamp }[];
   createdAt?: Timestamp;
   completedAt?: Timestamp | null;
@@ -144,18 +153,26 @@ export class RecruiterService {
     };
   }
 
-  async searchPublishedCandidates(
+  async searchCandidatesPage(
     searchText: string,
-  ): Promise<CandidateSearchResult[]> {
-    const q = query(
-      collection(this.firestore, 'profiles'),
+    pageSize = INTERV_LIST_PAGE_SIZE,
+    cursor: QueryDocumentSnapshot | null = null,
+    interviews: RecruiterInterviewSummary[] = [],
+  ): Promise<CandidateSearchPage> {
+    const constraints = [
       where('isPublished', '==', true),
-      limit(80),
+      orderBy('name'),
+      ...(cursor ? [startAfter(cursor)] : []),
+      limit(pageSize + 1),
+    ];
+    const snap = await getDocs(
+      query(collection(this.firestore, 'profiles'), ...constraints),
     );
-    const snap = await getDocs(q);
+    const hasMore = snap.docs.length > pageSize;
+    const pageDocs = hasMore ? snap.docs.slice(0, pageSize) : snap.docs;
     const needle = searchText.trim().toLowerCase();
 
-    const results = snap.docs
+    const candidates = pageDocs
       .map((docSnap) => {
         const data = docSnap.data() as Profile;
         return {
@@ -183,7 +200,18 @@ export class RecruiterService {
         return haystack.includes(needle);
       });
 
-    return results.sort((a, b) => a.name.localeCompare(b.name));
+    return {
+      items: this.enrichCandidatesWithInterviews(candidates, interviews),
+      nextCursor: pageDocs.length ? pageDocs[pageDocs.length - 1] : null,
+      hasMore,
+    };
+  }
+
+  async searchPublishedCandidates(
+    searchText: string,
+  ): Promise<CandidateSearchResult[]> {
+    const page = await this.searchCandidatesPage(searchText, 80, null);
+    return page.items;
   }
 
   indexInterviewsByCandidate(
@@ -191,6 +219,9 @@ export class RecruiterService {
   ): Record<string, RecruiterInterviewSummary> {
     const map: Record<string, RecruiterInterviewSummary> = {};
     for (const interview of interviews) {
+      if (interview.hiddenFromRecruiter) {
+        continue;
+      }
       const key = interview.candidateProfileId;
       if (!key) {
         continue;
@@ -214,40 +245,137 @@ export class RecruiterService {
     }));
   }
 
+  async getInterviewsPage(
+    pageSize = INTERV_LIST_PAGE_SIZE,
+    cursor: QueryDocumentSnapshot | null = null,
+  ): Promise<RecruiterInterviewPage> {
+    const recruiterUid = this.recruiterId();
+    if (!recruiterUid) {
+      return { items: [], nextCursor: null, hasMore: false };
+    }
+
+    const ref = collection(
+      this.firestore,
+      'recruiters',
+      recruiterUid,
+      'interviews',
+    );
+    const constraints = [
+      orderBy('createdAt', 'desc'),
+      ...(cursor ? [startAfter(cursor)] : []),
+      limit(pageSize + 1),
+    ];
+    const snap = await getDocs(query(ref, ...constraints));
+    const hasMore = snap.docs.length > pageSize;
+    const pageDocs = hasMore ? snap.docs.slice(0, pageSize) : snap.docs;
+
+    return {
+      items: pageDocs
+        .filter(
+          (docSnap) =>
+            !isHiddenFromAudience(
+              (docSnap.data() as InterviewDoc).hidden,
+              'recruiter',
+            ),
+        )
+        .map((docSnap) =>
+          this.mapRecruiterInterviewDoc(
+            docSnap.id,
+            docSnap.data() as InterviewDoc & { candidateProfileId?: string },
+          ),
+        ),
+      nextCursor: pageDocs.length ? pageDocs[pageDocs.length - 1] : null,
+      hasMore,
+    };
+  }
+
+  async getInterviewStats(): Promise<RecruiterInterviewStats> {
+    const interviews = (await this.getInterviews()).filter(
+      (interview) => !interview.hiddenFromRecruiter,
+    );
+    return {
+      total: interviews.length,
+      completed: interviews.filter((i) => i.status === 'complete').length,
+    };
+  }
+
   async getInterviews(): Promise<RecruiterInterviewSummary[]> {
     const recruiterUid = this.recruiterId();
     if (!recruiterUid) {
       return [];
     }
 
-    const q = query(
-      collection(this.firestore, 'recruiters', recruiterUid, 'interviews'),
-      orderBy('createdAt', 'desc'),
+    const snap = await getDocs(
+      query(
+        collection(this.firestore, 'recruiters', recruiterUid, 'interviews'),
+        orderBy('createdAt', 'desc'),
+      ),
     );
-    const snap = await getDocs(q);
 
-    return snap.docs.map((docSnap) => {
-      const data = docSnap.data() as InterviewDoc & {
-        candidateProfileId?: string;
-      };
-      const feedback = data.feedback ?? null;
-      const profileId =
-        data.candidateProfileId ?? data.profileId ?? '';
+    return snap.docs
+      .filter(
+        (docSnap) =>
+          !isHiddenFromAudience(
+            (docSnap.data() as InterviewDoc).hidden,
+            'recruiter',
+          ),
+      )
+      .map((docSnap) =>
+        this.mapRecruiterInterviewDoc(
+          docSnap.id,
+          docSnap.data() as InterviewDoc & { candidateProfileId?: string },
+        ),
+      );
+  }
 
-      return {
-        id: docSnap.id,
-        candidateProfileId: profileId,
-        candidateName: data.candidateName ?? 'Candidate',
-        candidateTitle: data.candidateTitle ?? '',
-        status: data.status ?? 'in_progress',
-        feedbackScore: this.parseFeedbackScore(feedback),
-        feedbackText: feedback?.text?.trim() ? feedback.text.trim() : null,
-        aiSummary: data.aiSummary ?? null,
-        messageCount: data.messageCount ?? 0,
-        createdAt: data.createdAt?.toDate() ?? new Date(),
-        completedAt: data.completedAt?.toDate() ?? null,
-      };
-    });
+  async hideInterviewForRecruiter(
+    candidateProfileId: string,
+    interviewId: string,
+  ): Promise<void> {
+    const recruiterUid = this.recruiterId();
+    if (!recruiterUid) {
+      throw new Error('You must be signed in to remove an interview.');
+    }
+
+    await updateDoc(
+      doc(
+        this.firestore,
+        'profiles',
+        candidateProfileId,
+        'interviews',
+        interviewId,
+      ),
+      { hidden: arrayUnion('recruiter') },
+    );
+
+    await setDoc(
+      doc(this.firestore, 'recruiters', recruiterUid, 'interviews', interviewId),
+      { hidden: arrayUnion('recruiter') },
+      { merge: true },
+    );
+  }
+
+  private mapRecruiterInterviewDoc(
+    id: string,
+    data: InterviewDoc & { candidateProfileId?: string },
+  ): RecruiterInterviewSummary {
+    const feedback = data.feedback ?? null;
+    const profileId = data.candidateProfileId ?? data.profileId ?? '';
+
+    return {
+      id,
+      candidateProfileId: profileId,
+      candidateName: data.candidateName ?? 'Candidate',
+      candidateTitle: data.candidateTitle ?? '',
+      status: data.status ?? 'in_progress',
+      feedbackScore: this.parseFeedbackScore(feedback),
+      feedbackText: feedback?.text?.trim() ? feedback.text.trim() : null,
+      aiSummary: data.aiSummary ?? null,
+      messageCount: data.messageCount ?? 0,
+      hiddenFromRecruiter: isHiddenFromAudience(data.hidden, 'recruiter'),
+      createdAt: data.createdAt?.toDate() ?? new Date(),
+      completedAt: data.completedAt?.toDate() ?? null,
+    };
   }
 
   private parseFeedbackScore(

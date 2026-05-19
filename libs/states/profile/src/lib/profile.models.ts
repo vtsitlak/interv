@@ -1,4 +1,4 @@
-import type { Profile } from '@interv/models';
+import type { Profile } from '@interv/shared';
 
 export interface ProfileState {
   profile: Profile | null;

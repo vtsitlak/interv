@@ -9,6 +9,7 @@ from typing import Annotated, Any, Optional
 from fastapi import APIRouter, Header, HTTPException, Query
 from firebase_admin import firestore
 
+from services.api_limits import MAX_SUMMARY_QUERY_CHARS, MAX_TITLE_QUERY_CHARS
 from services.auth import verify_profile_owner_token
 from services.personal_qa_questions import generate_personal_qa_questions
 from services.request_validation import validate_query_title_summary
@@ -52,8 +53,8 @@ async def suggested_questions(profile_id: str):
 @router.get('/{profile_id}/personal-qa-questions')
 async def personal_qa_questions(
     profile_id: str,
-    title: str | None = Query(default=None, max_length=200),
-    summary: str | None = Query(default=None, max_length=2000),
+    title: str | None = Query(default=None, max_length=MAX_TITLE_QUERY_CHARS),
+    summary: str | None = Query(default=None, max_length=MAX_SUMMARY_QUERY_CHARS),
     authorization: Annotated[str | None, Header()] = None,
 ):
     verify_profile_owner_token(profile_id, authorization)

@@ -21,6 +21,10 @@
             [formField]="recruiterForm.name"
             placeholder="Jane Smith"
           />
+          <interv-remaining-chars
+            [value]="recruiterModel().name"
+            [maxLength]="fieldLimits.name"
+          />
         </fieldset>
 
         <fieldset class="fieldset mt-3">
@@ -31,6 +35,10 @@
             class="input input-bordered w-full"
             [formField]="recruiterForm.role"
             placeholder="Technical Recruiter"
+          />
+          <interv-remaining-chars
+            [value]="recruiterModel().role"
+            [maxLength]="fieldLimits.role"
           />
         </fieldset>
 
@@ -43,12 +51,20 @@
             [formField]="recruiterForm.company"
             placeholder="Acme Corp"
           />
+          <interv-remaining-chars
+            [value]="recruiterModel().company"
+            [maxLength]="fieldLimits.company"
+          />
         </fieldset>
 
         <button
           type="button"
           class="btn btn-secondary w-full mt-6"
-          [disabled]="recruiter.profileSaving() || recruiterForm().invalid()"
+          [disabled]="
+            !isDirty() ||
+            recruiter.profileSaving() ||
+            recruiterForm().invalid()
+          "
           (click)="onSave()"
         >
           @if (recruiter.profileSaving()) {

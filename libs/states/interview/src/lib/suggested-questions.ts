@@ -1,5 +1,5 @@
-import type { Profile } from '@interv/models';
-import { formatWorkPreferencesList } from '@interv/models';
+import type { Profile } from '@interv/shared';
+import { formatWorkPreferencesList } from '@interv/shared';
 
 const META_PREFIX = /^ask\s+(about|how)\b/i;
 

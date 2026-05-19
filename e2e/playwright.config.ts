@@ -16,9 +16,14 @@ const baseURL = process.env['BASE_URL'] || 'http://localhost:4200';
  */
 export default defineConfig({
   ...nxE2EPreset(__filename, { testDir: './src' }),
+  timeout: 60_000,
+  expect: { timeout: 10_000 },
+  retries: process.env.CI ? 2 : 1,
+  workers: process.env.CI ? 2 : 4,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     baseURL,
+    navigationTimeout: 60_000,
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
   },

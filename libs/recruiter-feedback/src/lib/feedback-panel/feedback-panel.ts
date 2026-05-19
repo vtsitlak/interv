@@ -15,6 +15,11 @@ import {
   type ChatMessage,
 } from '@interv/state-interview';
 import { InterviewTranscriptComponent } from '@interv/interview';
+import {
+  FEEDBACK_FIELD_LIMITS,
+  RemainingCharsComponent,
+  serializeFeedbackForm,
+} from '@interv/shared';
 
 interface FeedbackFormModel {
   score: number;
@@ -25,7 +30,7 @@ interface FeedbackFormModel {
 @Component({
   selector: 'interv-interview-feedback-panel',
   standalone: true,
-  imports: [FormField, InterviewTranscriptComponent],
+  imports: [FormField, InterviewTranscriptComponent, RemainingCharsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './feedback-panel.html',
 })
@@ -51,6 +56,16 @@ export class InterviewFeedbackPanelComponent {
     score: 8,
     text: '',
     requestContact: false,
+  });
+  private readonly savedSnapshot = signal<string | null>(null);
+  readonly fieldLimits = FEEDBACK_FIELD_LIMITS;
+
+  readonly isDirty = computed(() => {
+    const saved = this.savedSnapshot();
+    if (saved === null) {
+      return false;
+    }
+    return serializeFeedbackForm(this.feedbackModel()) !== saved;
   });
 
   readonly feedbackForm = form(this.feedbackModel, (path) => {
@@ -127,6 +142,7 @@ export class InterviewFeedbackPanelComponent {
         text: text.trim(),
         requestContact,
       });
+      this.markSavedSnapshot();
     } catch (e: unknown) {
       this.error.set(e instanceof Error ? e.message : String(e));
     } finally {
@@ -186,10 +202,15 @@ export class InterviewFeedbackPanelComponent {
         this.feedbackModel.set({ score: 8, text: '', requestContact: false });
         this.hasExistingFeedback.set(false);
       }
+      this.markSavedSnapshot();
     } catch (e: unknown) {
       this.error.set(e instanceof Error ? e.message : String(e));
     } finally {
       this.isLoading.set(false);
     }
+  }
+
+  private markSavedSnapshot(): void {
+    this.savedSnapshot.set(serializeFeedbackForm(this.feedbackModel()));
   }
 }

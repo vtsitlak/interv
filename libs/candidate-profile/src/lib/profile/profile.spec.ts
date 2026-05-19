@@ -1,6 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { AuthFacade } from '@interv/state-auth';
 import { InterviewService } from '@interv/state-interview';
+import { ProfileService } from '@interv/state-profile';
+import { RecruiterFacade } from '@interv/state-recruiter';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProfileComponent } from './profile';
 
@@ -45,6 +48,20 @@ describe('ProfileComponent', () => {
             getLatestInterviewWithFeedback: vi.fn().mockResolvedValue(null),
           },
         },
+        {
+          provide: ProfileService,
+          useValue: {
+            currentUserOrNull: vi.fn().mockResolvedValue(null),
+          },
+        },
+        {
+          provide: RecruiterFacade,
+          useValue: {
+            loadProfile: vi.fn().mockResolvedValue(undefined),
+            profile: () => null,
+            isProfileComplete: () => true,
+          },
+        },
       ],
     }).compileComponents();
 
@@ -67,9 +84,70 @@ describe('ProfileComponent', () => {
     expect(component.profileOverview()).toContain('Core skills: Angular');
   });
 
-  it('hasProfilePhoto() is false for empty photo', () => {
-    expect(component.hasProfilePhoto('')).toBe(false);
-    expect(component.hasProfilePhoto('   ')).toBe(false);
-    expect(component.hasProfilePhoto('https://example.com/p.jpg')).toBe(true);
+  it('disables test interview on owner view when profile is incomplete', async () => {
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [ProfileComponent],
+      providers: [
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              paramMap: convertToParamMap({ profileId: 'p1' }),
+              queryParamMap: convertToParamMap({}),
+              data: { ownerMode: true },
+            },
+          },
+        },
+        {
+          provide: ProfileService,
+          useValue: {
+            currentUserOrNull: vi.fn().mockResolvedValue({ uid: 'p1' }),
+          },
+        },
+        {
+          provide: InterviewService,
+          useValue: {
+            getPublicProfile: vi.fn().mockResolvedValue({
+              id: 'p1',
+              name: 'Ada Lovelace',
+              title: 'Engineer',
+              photo: '',
+              summary: '',
+              cvText: '',
+              skills: [],
+              links: [],
+            }),
+          },
+        },
+        {
+          provide: RecruiterFacade,
+          useValue: {
+            loadProfile: vi.fn().mockResolvedValue(undefined),
+            profile: () => null,
+            isProfileComplete: () => false,
+          },
+        },
+      ],
+    }).compileComponents();
+
+    const ownerFixture = TestBed.createComponent(ProfileComponent);
+    ownerFixture.detectChanges();
+    await ownerFixture.whenStable();
+    await vi.waitFor(() => {
+      expect(ownerFixture.componentInstance.isLoading()).toBe(false);
+      expect(ownerFixture.componentInstance.profile()).not.toBeNull();
+    });
+    ownerFixture.detectChanges();
+
+    expect(ownerFixture.componentInstance.isOwnerView()).toBe(true);
+    expect(ownerFixture.componentInstance.canTestInterview()).toBe(false);
+    expect(
+      ownerFixture.nativeElement.querySelector('button.btn-disabled'),
+    ).toBeTruthy();
+    expect(
+      ownerFixture.nativeElement.querySelector('a[routerlink="/candidate/test-interview"]'),
+    ).toBeNull();
   });
 });

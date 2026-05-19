@@ -1,15 +1,21 @@
 import { inject, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
+import { ProfileFacade } from '@interv/state-profile';
 import { RecruiterFacade } from '@interv/state-recruiter';
 import type { AuthAudience } from './auth-audience';
+import { AccountService } from './account.service';
+import { AuthService } from './auth.service';
 import { AuthStore } from './auth.store';
 import type { ProfileUser } from './auth.models';
 
 @Injectable({ providedIn: 'root' })
 export class AuthFacade {
   private readonly store = inject(AuthStore);
+  private readonly authService = inject(AuthService);
+  private readonly accountService = inject(AccountService);
   private readonly router = inject(Router);
   private readonly recruiterFacade = inject(RecruiterFacade);
+  private readonly profileFacade = inject(ProfileFacade);
 
   readonly user = this.store.user;
   readonly role = this.store.role;
@@ -71,6 +77,20 @@ export class AuthFacade {
   async logout(): Promise<void> {
     await this.store.logout();
     this.recruiterFacade.reset();
+    await this.router.navigate(['/']);
+  }
+
+  async resetCandidateProfile(): Promise<void> {
+    await this.accountService.resetCandidateProfile();
+    await this.profileFacade.loadProfile();
+    await this.router.navigate(['/candidate/train-profile']);
+  }
+
+  async deleteAccount(): Promise<void> {
+    await this.accountService.deleteAccount();
+    this.recruiterFacade.reset();
+    await this.authService.logout();
+    await this.store.clearSession();
     await this.router.navigate(['/']);
   }
 

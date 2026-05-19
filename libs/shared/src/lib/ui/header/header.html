@@ -1,0 +1,125 @@
+<header class="border-b border-base-300 bg-base-100 shadow-sm">
+  <div class="navbar min-h-14 max-w-7xl mx-auto px-2 sm:px-4">
+    <div class="navbar-start">
+      <a
+        [routerLink]="homeLink()"
+        class="btn btn-ghost normal-case px-2 sm:px-3"
+        [attr.aria-label]="title()"
+      >
+        <interv-logo size="sm" [wordmark]="title()" />
+      </a>
+    </div>
+    <div class="navbar-end flex-wrap gap-1 sm:gap-2">
+      @if (isAuthenticated()) {
+        @if (isRecruiter()) {
+          <a
+            routerLink="/recruiter/dashboard"
+            routerLinkActive="btn-active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            class="btn btn-ghost btn-sm"
+          >
+            Dashboard
+          </a>
+          <a
+            routerLink="/recruiter/candidates"
+            routerLinkActive="btn-active"
+            class="btn btn-ghost btn-sm"
+          >
+            Candidates
+          </a>
+          <a
+            routerLink="/recruiter/profile"
+            routerLinkActive="btn-active"
+            class="btn btn-ghost btn-sm"
+          >
+            My profile
+          </a>
+        } @else {
+          <a
+            routerLink="/candidate/dashboard"
+            routerLinkActive="btn-active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            class="btn btn-ghost btn-sm"
+          >
+            Dashboard
+          </a>
+          <a
+            routerLink="/candidate/train-profile"
+            routerLinkActive="btn-active"
+            class="btn btn-ghost btn-sm"
+          >
+            Train profile
+          </a>
+          <a
+            routerLink="/candidate/my-profile"
+            routerLinkActive="btn-active"
+            class="btn btn-ghost btn-sm"
+          >
+            My profile
+          </a>
+          <span
+            class="tooltip tooltip-bottom"
+            [attr.data-tip]="
+              canTestInterview() ? null : profileTwinIncompleteMessage
+            "
+          >
+            @if (canTestInterview()) {
+              <a
+                routerLink="/candidate/test-interview"
+                routerLinkActive="btn-active"
+                class="btn btn-ghost btn-sm"
+              >
+                Test interview
+              </a>
+            } @else {
+              <span
+                class="btn btn-ghost btn-sm btn-disabled pointer-events-none"
+                aria-disabled="true"
+              >
+                Test interview
+              </span>
+            }
+          </span>
+        }
+        <div class="dropdown dropdown-end">
+          <button
+            type="button"
+            tabindex="0"
+            class="btn btn-ghost btn-sm"
+            aria-label="Account menu"
+          >
+            Account
+          </button>
+          <ul
+            tabindex="0"
+            class="dropdown-content menu bg-base-100 rounded-box z-[100] mt-2 w-52 p-2 shadow-lg border border-base-300"
+          >
+            @if (!isRecruiter()) {
+              <li>
+                <button type="button" (click)="onResetProfileClick()">
+                  Reset profile
+                </button>
+              </li>
+            }
+            <li>
+              <button
+                type="button"
+                class="text-error"
+                (click)="onDeleteAccountClick()"
+              >
+                Delete account
+              </button>
+            </li>
+          </ul>
+        </div>
+        <button
+          type="button"
+          class="btn btn-outline btn-sm"
+          (click)="onLogoutClick()"
+        >
+          Logout
+        </button>
+      }
+    </div>
+  </div>
+</header>

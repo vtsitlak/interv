@@ -19,7 +19,7 @@ import {
   AuthFacade,
   type AuthAudience,
 } from '@interv/state-auth';
-import { SI_GOOGLE_PATH } from '@interv/ui';
+import { SI_GOOGLE_PATH, LogoComponent } from '@interv/shared';
 
 interface RegisterFormModel {
   name: string;
@@ -30,7 +30,7 @@ interface RegisterFormModel {
 @Component({
   selector: 'interv-register',
   standalone: true,
-  imports: [FormField, RouterLink],
+  imports: [FormField, RouterLink, LogoComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './register.html',
   styleUrl: './register.scss',

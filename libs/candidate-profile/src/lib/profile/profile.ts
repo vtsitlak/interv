@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   OnInit,
   signal,
@@ -9,10 +10,13 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   buildProfileOverview,
   formatWorkPreferenceLabel,
+  isProfileComplete,
   normalizeWorkPreferences,
+  ProfilePhotoComponent,
+  PROFILE_TWIN_INCOMPLETE_MESSAGE,
   type Profile as ProfileModel,
   type WorkPreference,
-} from '@interv/models';
+} from '@interv/shared';
 import { ProfileService } from '@interv/state-profile';
 import { InterviewService } from '@interv/state-interview';
 import { RecruiterFacade } from '@interv/state-recruiter';
@@ -20,7 +24,7 @@ import { RecruiterFacade } from '@interv/state-recruiter';
 @Component({
   selector: 'interv-profile',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, ProfilePhotoComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './profile.html',
   styleUrl: './profile.scss',
@@ -39,7 +43,9 @@ export class ProfileComponent implements OnInit {
   readonly isLoading = signal(true);
   readonly error = signal<string | null>(null);
   readonly publicProfileDisabled = signal(false);
-  readonly photoLoadFailed = signal(false);
+
+  readonly profileTwinIncompleteMessage = PROFILE_TWIN_INCOMPLETE_MESSAGE;
+  readonly canTestInterview = computed(() => isProfileComplete(this.profile()));
 
   ngOnInit(): void {
     this.isOwnerView.set(this.route.snapshot.data['ownerMode'] === true);
@@ -52,19 +58,6 @@ export class ProfileComponent implements OnInit {
       this.profileId.set(routeProfileId);
     }
     void this.load();
-  }
-
-  hasProfilePhoto(photo: string | undefined): boolean {
-    return !!photo?.trim() && !this.photoLoadFailed();
-  }
-
-  profileInitial(name: string): string {
-    const initial = name.trim().charAt(0);
-    return initial ? initial.toUpperCase() : '?';
-  }
-
-  onPhotoError(): void {
-    this.photoLoadFailed.set(true);
   }
 
   linkedInUrl(): string | null {
@@ -130,7 +123,6 @@ export class ProfileComponent implements OnInit {
       ) {
         this.publicProfileDisabled.set(true);
       } else {
-        this.photoLoadFailed.set(false);
         this.profile.set(p);
       }
     } catch (e: unknown) {

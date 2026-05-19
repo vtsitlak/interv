@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { AccountService } from './account.service';
 import { AuthService } from './auth.service';
 import { AuthStore } from './auth.store';
 
@@ -37,6 +38,13 @@ describe('AuthStore', () => {
       providers: [
         AuthStore,
         { provide: AuthService, useValue: authService },
+        {
+          provide: AccountService,
+          useValue: {
+            getRoleOrDefault: vi.fn().mockResolvedValue('candidate'),
+            setRole: vi.fn().mockResolvedValue(undefined),
+          },
+        },
       ],
     });
 
@@ -102,8 +110,8 @@ describe('AuthStore', () => {
     expect(store.isAuthenticated()).toBe(false);
   });
 
-  it('setUser() updates the user signal directly', () => {
-    store.setUser({ uid: 'x', email: 'x@x', displayName: 'X' });
+  it('setUser() updates the user signal directly', async () => {
+    await store.setUser({ uid: 'x', email: 'x@x', displayName: 'X' });
 
     expect(store.user()?.uid).toBe('x');
   });

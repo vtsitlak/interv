@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import type { Profile, ProfileLink, QAPair } from '@interv/models';
+import type { Profile, ProfileLink, QAPair } from '@interv/shared';
 import {
   buildFullPersonalQAQuestions,
   buildPersonalQAQuestionsFromProfile,

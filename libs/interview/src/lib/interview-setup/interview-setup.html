@@ -17,6 +17,10 @@
         "
         placeholder="Jane Smith"
       />
+      <interv-remaining-chars
+        [value]="recruiterModel().name"
+        [maxLength]="fieldLimits.name"
+      />
       <div class="min-h-5">
         @if (recruiterForm.name().touched() && recruiterForm.name().invalid()) {
           @for (err of recruiterForm.name().errors(); track err.kind) {
@@ -37,6 +41,10 @@
           recruiterForm.role().touched() && recruiterForm.role().invalid()
         "
         placeholder="Technical Recruiter"
+      />
+      <interv-remaining-chars
+        [value]="recruiterModel().role"
+        [maxLength]="fieldLimits.role"
       />
       <div class="min-h-5">
         @if (recruiterForm.role().touched() && recruiterForm.role().invalid()) {
@@ -59,6 +67,10 @@
           recruiterForm.company().invalid()
         "
         placeholder="Acme Corp"
+      />
+      <interv-remaining-chars
+        [value]="recruiterModel().company"
+        [maxLength]="fieldLimits.company"
       />
       <div class="min-h-5">
         @if (

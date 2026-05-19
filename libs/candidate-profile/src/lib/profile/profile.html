@@ -22,20 +22,11 @@
       <div class="card bg-base-100 shadow-xl mb-6">
         <div class="card-body">
           <div class="flex flex-col sm:flex-row gap-6 items-start">
-            @if (hasProfilePhoto(p.photo)) {
-              <img
-                [src]="p.photo.trim()"
-                [alt]="p.name"
-                class="w-24 h-24 rounded-2xl object-cover shrink-0"
-                (error)="onPhotoError()"
-              />
-            } @else {
-              <div
-                class="w-24 h-24 rounded-2xl bg-primary/10 flex items-center justify-center text-3xl font-bold text-primary shrink-0"
-              >
-                {{ profileInitial(p.name) }}
-              </div>
-            }
+            <interv-profile-photo
+              [photo]="p.photo"
+              [name]="p.name"
+              size="lg"
+            />
             <div class="flex-1 min-w-0">
               <h1 class="text-3xl font-bold">{{ p.name }}</h1>
               <p class="text-lg text-base-content/70 mt-1">{{ p.title }}</p>
@@ -54,9 +45,28 @@
                 </p>
               }
               @if (isOwnerView()) {
-                <a routerLink="/candidate/test-interview" class="btn btn-primary mt-6">
-                  Test interview →
-                </a>
+                @if (canTestInterview()) {
+                  <a routerLink="/candidate/test-interview" class="btn btn-primary mt-6">
+                    Test interview →
+                  </a>
+                } @else {
+                  <div class="mt-6 space-y-3">
+                    <button
+                      type="button"
+                      class="btn btn-primary btn-disabled"
+                      disabled
+                    >
+                      Test interview →
+                    </button>
+                    <p class="text-sm text-warning flex items-center gap-1">
+                      <span aria-hidden="true">⚠</span>
+                      {{ profileTwinIncompleteMessage }}
+                    </p>
+                    <a routerLink="/candidate/train-profile" class="btn btn-outline btn-sm">
+                      Train profile
+                    </a>
+                  </div>
+                }
               } @else if (recruiterView()) {
                 @if (recruiterFacade.interviewForCandidate(profileId()); as prior) {
                   <div class="flex flex-wrap gap-3 mt-6 items-center">
