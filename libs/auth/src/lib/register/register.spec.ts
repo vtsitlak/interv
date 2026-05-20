@@ -42,7 +42,7 @@ describe('RegisterComponent', () => {
       email: 'ada@example.com',
       password: 'secret123',
     });
-    component.onRegister();
+    component.onRegister(new Event('submit'));
 
     expect(register).toHaveBeenCalledWith(
       'Ada',
@@ -54,9 +54,16 @@ describe('RegisterComponent', () => {
 
   it('onRegister does not call facade.register when invalid', () => {
     component.registerModel.set({ name: '', email: '', password: 'x' });
-    component.onRegister();
+    component.onRegister(new Event('submit'));
 
     expect(register).not.toHaveBeenCalled();
+  });
+
+  it('onRegister calls preventDefault when a submit event is passed', () => {
+    const event = new Event('submit');
+    const preventDefault = vi.spyOn(event, 'preventDefault');
+    component.onRegister(event);
+    expect(preventDefault).toHaveBeenCalled();
   });
 
   it('Google sign-in button includes Simple Icons Google path', () => {

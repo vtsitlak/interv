@@ -1,4 +1,12 @@
-export * from './lib/auth.models';
+export {
+  firebaseAuthErrorCode,
+  firebaseErrorMessage,
+  userHasPasswordProvider,
+  type AuthState,
+  type LoginCredentials,
+  type NewUser,
+  type ProfileUser,
+} from './lib/auth.models';
 export {
   AUTH_AUDIENCE_COPY,
   type AuthAudience,

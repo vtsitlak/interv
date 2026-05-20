@@ -4,8 +4,10 @@
     role="dialog"
     aria-modal="true"
     aria-labelledby="interv-confirm-modal-title"
+    (click)="onBackdropClick($event)"
+    (keydown.escape)="onCancel()"
   >
-    <div class="modal-box max-w-md">
+    <div class="modal-box max-w-md" (click)="$event.stopPropagation()">
       <h3 id="interv-confirm-modal-title" class="font-bold text-lg">
         {{ title() }}
       </h3>
@@ -35,12 +37,5 @@
         </button>
       </div>
     </div>
-    <button
-      type="button"
-      class="modal-backdrop"
-      aria-label="Cancel"
-      [disabled]="isConfirming()"
-      (click)="onCancel()"
-    ></button>
   </div>
 }

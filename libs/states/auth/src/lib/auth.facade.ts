@@ -80,10 +80,30 @@ export class AuthFacade {
     await this.router.navigate(['/']);
   }
 
+  hasPasswordProvider(): boolean {
+    return this.authService.hasPasswordProvider();
+  }
+
+  async changePassword(
+    currentPassword: string | null,
+    newPassword: string,
+  ): Promise<boolean> {
+    const email = this.store.user()?.email;
+    if (!email) {
+      this.store.setError('Add an email to your account before setting a password.');
+      return false;
+    }
+    await this.store.changePassword(
+      email,
+      newPassword,
+      currentPassword?.trim() || undefined,
+    );
+    return !this.store.error();
+  }
+
   async resetCandidateProfile(): Promise<void> {
     await this.accountService.resetCandidateProfile();
     await this.profileFacade.loadProfile();
-    await this.router.navigate(['/candidate/train-profile']);
   }
 
   async deleteAccount(): Promise<void> {

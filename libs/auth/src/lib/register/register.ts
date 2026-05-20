@@ -70,7 +70,8 @@ export class RegisterComponent {
     });
   });
 
-  onRegister(): void {
+  onRegister(event: Event): void {
+    event.preventDefault();
     if (this.registerForm().invalid()) {
       return;
     }

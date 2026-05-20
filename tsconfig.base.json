@@ -16,6 +16,7 @@
     "paths": {
       "@interv/shared": ["./libs/shared/src/index.ts"],
       "@interv/feature-auth": ["./libs/auth/src/index.ts"],
+      "@interv/account": ["./libs/account/src/index.ts"],
       "@interv/home": ["./libs/home/src/index.ts"],
       "@interv/candidate-profile": [
         "./libs/candidate-profile/src/lib/profile/profile.ts"

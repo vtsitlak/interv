@@ -14,7 +14,7 @@
         <div class="alert alert-error text-sm">{{ facade.error() }}</div>
       }
 
-      <form (ngSubmit)="onRegister()">
+      <form novalidate method="post" (submit)="onRegister($event)">
         <fieldset class="fieldset">
           <label class="fieldset-label" for="register-name">Full name</label>
           <input

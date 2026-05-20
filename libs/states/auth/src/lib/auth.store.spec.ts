@@ -20,6 +20,7 @@ describe('AuthStore', () => {
     | 'loginWithGoogleRedirect'
     | 'getRedirectResult'
     | 'logout'
+    | 'changePassword'
   >;
   let store: InstanceType<typeof AuthStore>;
 
@@ -32,6 +33,7 @@ describe('AuthStore', () => {
       loginWithGoogleRedirect: vi.fn().mockResolvedValue(undefined),
       getRedirectResult: vi.fn().mockResolvedValue(null),
       logout: vi.fn().mockResolvedValue(undefined),
+      changePassword: vi.fn().mockResolvedValue(undefined),
     };
 
     TestBed.configureTestingModule({
@@ -79,6 +81,18 @@ describe('AuthStore', () => {
     expect(store.loading()).toBe(false);
   });
 
+  it('login() maps Firebase auth codes to friendly messages', async () => {
+    vi.mocked(authService.loginWithEmail).mockRejectedValueOnce(
+      Object.assign(new Error('Firebase: Error'), {
+        code: 'auth/invalid-credential',
+      }),
+    );
+
+    await store.login('e@test.com', 'pwd');
+
+    expect(store.error()).toContain('Google');
+  });
+
   it('register() applies the display name and stores the user', async () => {
     await store.register('Ada', 'a@b.com', 'secret');
 
@@ -98,6 +112,18 @@ describe('AuthStore', () => {
     await store.loginWithGoogle();
 
     expect(authService.loginWithGoogleRedirect).toHaveBeenCalled();
+    expect(store.error()).toBeNull();
+  });
+
+  it('changePassword() clears error on success without toggling global loading', async () => {
+    await store.changePassword('e@test.com', 'newpass', 'oldpass');
+
+    expect(authService.changePassword).toHaveBeenCalledWith(
+      'e@test.com',
+      'newpass',
+      'oldpass',
+    );
+    expect(store.loading()).toBe(false);
     expect(store.error()).toBeNull();
   });
 

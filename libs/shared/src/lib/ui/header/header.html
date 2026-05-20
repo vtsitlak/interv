@@ -81,37 +81,13 @@
             }
           </span>
         }
-        <div class="dropdown dropdown-end">
-          <button
-            type="button"
-            tabindex="0"
-            class="btn btn-ghost btn-sm"
-            aria-label="Account menu"
-          >
-            Account
-          </button>
-          <ul
-            tabindex="0"
-            class="dropdown-content menu bg-base-100 rounded-box z-[100] mt-2 w-52 p-2 shadow-lg border border-base-300"
-          >
-            @if (!isRecruiter()) {
-              <li>
-                <button type="button" (click)="onResetProfileClick()">
-                  Reset profile
-                </button>
-              </li>
-            }
-            <li>
-              <button
-                type="button"
-                class="text-error"
-                (click)="onDeleteAccountClick()"
-              >
-                Delete account
-              </button>
-            </li>
-          </ul>
-        </div>
+        <a
+          [routerLink]="accountLink()"
+          routerLinkActive="btn-active"
+          class="btn btn-ghost btn-sm"
+        >
+          Account
+        </a>
         <button
           type="button"
           class="btn btn-outline btn-sm"

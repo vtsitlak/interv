@@ -40,16 +40,23 @@ describe('LoginComponent', () => {
 
   it('onLogin invokes facade.login with candidate audience by default', () => {
     component.loginModel.set({ email: 'a@b.com', password: 'secret123' });
-    component.onLogin();
+    component.onLogin(new Event('submit'));
 
     expect(login).toHaveBeenCalledWith('a@b.com', 'secret123', 'candidate');
+  });
+
+  it('onLogin calls preventDefault when a submit event is passed', () => {
+    const event = new Event('submit');
+    const preventDefault = vi.spyOn(event, 'preventDefault');
+    component.onLogin(event);
+    expect(preventDefault).toHaveBeenCalled();
   });
 
   it('onLogin passes recruiter audience when input is set', () => {
     fixture.componentRef.setInput('audience', 'recruiter');
     fixture.detectChanges();
     component.loginModel.set({ email: 'a@b.com', password: 'secret123' });
-    component.onLogin();
+    component.onLogin(new Event('submit'));
 
     expect(login).toHaveBeenCalledWith('a@b.com', 'secret123', 'recruiter');
   });

@@ -201,6 +201,21 @@ export const AuthStore = signalStore(
         return applyRoleForAudience(uid, audience);
       },
 
+      async changePassword(
+        email: string,
+        newPassword: string,
+        currentPassword?: string,
+      ): Promise<void> {
+        patchState(store, { error: null });
+        try {
+          await authService.changePassword(email, newPassword, currentPassword);
+        } catch (e: unknown) {
+          patchState(store, {
+            error: firebaseErrorMessage(e),
+          });
+        }
+      },
+
       async logout(): Promise<void> {
         await authService.logout();
         patchState(store, { user: null, role: null });

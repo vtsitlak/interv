@@ -28,6 +28,12 @@ export const appRoutes: Routes = [
         data: { authAudience: 'recruiter' },
       },
       {
+        path: 'account',
+        canActivate: [authGuard, recruiterGuard],
+        loadComponent: () =>
+          import('@interv/account').then(m => m.AccountComponent),
+      },
+      {
         path: 'profile',
         canActivate: [authGuard, recruiterGuard],
         loadComponent: () =>
@@ -81,6 +87,12 @@ export const appRoutes: Routes = [
   {
     path: 'candidate',
     children: [
+      {
+        path: 'account',
+        canActivate: [authGuard, candidateGuard],
+        loadComponent: () =>
+          import('@interv/account').then(m => m.AccountComponent),
+      },
       {
         path: 'dashboard',
         canActivate: [authGuard, candidateGuard],

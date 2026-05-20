@@ -36,4 +36,11 @@ export class ConfirmModalComponent {
     }
     this.cancelled.emit();
   }
+
+  onBackdropClick(event: MouseEvent): void {
+    if (event.target !== event.currentTarget) {
+      return;
+    }
+    this.onCancel();
+  }
 }
