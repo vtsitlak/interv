@@ -7,7 +7,6 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import {
   applyEach,
   form,
@@ -68,7 +67,7 @@ function normalizeLinks(
 @Component({
   selector: 'interv-profile-train',
   standalone: true,
-  imports: [FormField, FormsModule, ProfilePhotoComponent, RemainingCharsComponent],
+  imports: [FormField, ProfilePhotoComponent, RemainingCharsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './profile-train.html',
   styleUrl: './profile-train.scss',
@@ -276,8 +275,8 @@ export class ProfileTrainComponent implements OnInit {
     }));
   }
 
-  async onSave(event?: Event): Promise<void> {
-    event?.preventDefault();
+  async onSave(event: Event): Promise<void> {
+    event.preventDefault();
     if (this.profileForm().invalid()) {
       this.facade.reportInvalidForm();
       return;

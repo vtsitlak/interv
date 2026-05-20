@@ -13,7 +13,7 @@
       <span class="loading loading-spinner loading-md"></span>
     </div>
   } @else {
-    <form class="mt-5 space-y-5" (submit)="onSubmit($event)">
+    <form class="mt-5 space-y-5" novalidate method="post" (submit)="onSubmit($event)">
       <fieldset class="fieldset">
         <label class="fieldset-label" for="panel-feedback-score">
           Match score (1–10) *

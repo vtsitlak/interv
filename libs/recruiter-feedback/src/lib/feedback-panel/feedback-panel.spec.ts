@@ -52,7 +52,7 @@ describe('InterviewFeedbackPanelComponent', () => {
       requestContact: false,
     });
 
-    await component.onSubmit();
+    await component.onSubmit(new Event('submit'));
 
     expect(submitFeedback).toHaveBeenCalledWith(
       'p1',
@@ -63,6 +63,13 @@ describe('InterviewFeedbackPanelComponent', () => {
     );
   });
 
+  it('onSubmit calls preventDefault when a submit event is passed', async () => {
+    const event = new Event('submit');
+    const preventDefault = vi.spyOn(event, 'preventDefault');
+    await fixture.componentInstance.onSubmit(event);
+    expect(preventDefault).toHaveBeenCalled();
+  });
+
   it('includes recruiter email when contact is requested', async () => {
     const component = fixture.componentInstance;
     component.feedbackModel.set({
@@ -71,7 +78,7 @@ describe('InterviewFeedbackPanelComponent', () => {
       requestContact: true,
     });
 
-    await component.onSubmit();
+    await component.onSubmit(new Event('submit'));
 
     expect(submitFeedback).toHaveBeenCalledWith(
       'p1',

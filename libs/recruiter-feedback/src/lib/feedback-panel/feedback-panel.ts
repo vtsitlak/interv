@@ -103,8 +103,8 @@ export class InterviewFeedbackPanelComponent {
     }));
   }
 
-  async onSubmit(event?: Event): Promise<void> {
-    event?.preventDefault();
+  async onSubmit(event: Event): Promise<void> {
+    event.preventDefault();
     const profileId = this.profileId();
     const interviewId = this.interviewId();
     if (!profileId || !interviewId || this.feedbackForm().invalid()) {
