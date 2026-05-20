@@ -102,8 +102,8 @@ export class InterviewSummaryComponent implements OnInit {
     }).format(date);
   }
 
-  async onSaveFeedback(event?: Event): Promise<void> {
-    event?.preventDefault();
+  async onSaveFeedback(event: Event): Promise<void> {
+    event.preventDefault();
     if (!this.profileId || !this.interviewId || this.feedbackForm().invalid()) {
       return;
     }

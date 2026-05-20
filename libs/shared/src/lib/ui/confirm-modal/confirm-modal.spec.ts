@@ -30,8 +30,8 @@ describe('ConfirmModalComponent', () => {
     fixture.componentRef.setInput('open', true);
     fixture.detectChanges();
 
-    const dialog = fixture.nativeElement.querySelector('.modal');
-    expect(dialog).toBeTruthy();
+    const modal = fixture.nativeElement.querySelector('.modal');
+    expect(modal).toBeTruthy();
 
     component.onConfirm();
     expect(confirmed).toHaveBeenCalled();
@@ -41,6 +41,20 @@ describe('ConfirmModalComponent', () => {
     const cancelled = vi.spyOn(component.cancelled, 'emit');
 
     component.onCancel();
+
+    expect(cancelled).toHaveBeenCalled();
+  });
+
+  it('emits cancelled when backdrop is clicked', () => {
+    const cancelled = vi.spyOn(component.cancelled, 'emit');
+    fixture.componentRef.setInput('open', true);
+    fixture.detectChanges();
+
+    const modal = fixture.nativeElement.querySelector('.modal') as HTMLElement;
+    component.onBackdropClick({
+      target: modal,
+      currentTarget: modal,
+    } as MouseEvent);
 
     expect(cancelled).toHaveBeenCalled();
   });

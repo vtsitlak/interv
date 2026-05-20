@@ -88,10 +88,19 @@ service-account*.json
 gha-creds-*.json
 application_default_credentials.json
 
-# Environment variables
+# Environment variables (never commit secrets)
 .env
 .env.*
+.env.local
+.env.*.local
+
+# Keep committed templates only
 !.env.example
+!**/.env.example
+
+# Explicit paths (local overrides)
+/e2e/.env
+/backend/.env
 
 # Python (backend)
 backend/venv/

@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 
 @source '../libs/auth/**/*.{html,ts}';
+@source '../libs/account/**/*.{html,ts}';
 @source '../libs/home/**/*.{html,ts}';
 @source '../libs/recruiter/**/*.{html,ts}';
 @source '../libs/candidate-profile/**/*.{html,ts}';

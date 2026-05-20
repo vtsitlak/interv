@@ -1,5 +1,9 @@
 import type { User } from 'firebase/auth';
 
+export function userHasPasswordProvider(user: User | null | undefined): boolean {
+  return user?.providerData.some((p) => p.providerId === 'password') ?? false;
+}
+
 export interface ProfileUser {
   uid: string;
   email: string | null;
@@ -53,8 +57,41 @@ export function toProfileUser(user: User | null): ProfileUser | null {
   };
 }
 
+const FIREBASE_AUTH_MESSAGES: Record<string, string> = {
+  'auth/invalid-credential':
+    'Invalid email or password. If you signed up with Google, use Continue with Google.',
+  'auth/invalid-login-credentials':
+    'Invalid email or password. If you signed up with Google, use Continue with Google.',
+  'auth/user-not-found':
+    'No account found with this email. Check the address or create an account.',
+  'auth/wrong-password': 'Incorrect password. Try again or reset your password.',
+  'auth/invalid-email': 'Please enter a valid email address.',
+  'auth/email-already-in-use':
+    'An account already exists with this email. Sign in instead, or use Continue with Google if you registered with Google.',
+  'auth/account-exists-with-different-credential':
+    'This email is already linked to Google. Use Continue with Google to sign in.',
+  'auth/weak-password': 'Password is too weak. Use at least 6 characters.',
+  'auth/too-many-requests':
+    'Too many attempts. Wait a moment and try again.',
+  'auth/requires-recent-login':
+    'For security, sign out and sign in again, then try changing your password.',
+  'auth/missing-password': 'Enter your current password.',
+  'auth/credential-already-in-use':
+    'This email is already linked to another sign-in method.',
+  'auth/provider-already-linked': 'A password is already set for this account.',
+  'auth/popup-closed-by-user': 'Sign-in was cancelled. Try again when you are ready.',
+  'auth/cancelled-popup-request': 'Sign-in was cancelled. Try again when you are ready.',
+};
+
 export function firebaseErrorMessage(e: unknown): string {
-  return e instanceof Error ? e.message : String(e);
+  const code = firebaseAuthErrorCode(e);
+  if (code && FIREBASE_AUTH_MESSAGES[code]) {
+    return FIREBASE_AUTH_MESSAGES[code];
+  }
+  if (e instanceof Error && e.message.trim()) {
+    return e.message;
+  }
+  return 'Something went wrong. Please try again.';
 }
 
 export function firebaseAuthErrorCode(e: unknown): string | undefined {

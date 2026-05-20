@@ -1,0 +1,139 @@
+<div class="min-h-screen bg-base-200 py-10 px-4">
+  <div class="max-w-lg mx-auto">
+    <a
+      [routerLink]="isRecruiter() ? '/recruiter/dashboard' : '/candidate/dashboard'"
+      class="link link-hover text-sm mb-4 inline-block"
+    >
+      ← Back to dashboard
+    </a>
+
+    <h1 class="text-3xl font-bold mb-1">Account</h1>
+    <p class="text-base-content/60 mb-8">
+      Manage your sign-in, profile data, and account.
+    </p>
+
+    @if (accountEmail()) {
+      <p class="text-sm text-base-content/70 mb-6">
+        Signed in as <span class="font-medium">{{ accountEmail() }}</span>
+      </p>
+    }
+
+    <div class="card bg-base-100 shadow mb-6">
+      <div class="card-body">
+        <h2 class="card-title text-lg">Password</h2>
+        @if (!hasPasswordProvider()) {
+          <p class="text-sm text-base-content/60">
+            You signed up with Google and do not have a password yet. Leave
+            current password empty and set a new password to also sign in with
+            email.
+          </p>
+        } @else {
+          <p class="text-sm text-base-content/60">
+            Change your password or keep using Google sign-in.
+          </p>
+        }
+
+        @if (passwordSuccess()) {
+          <div class="alert alert-success text-sm mt-4">{{ passwordSuccess() }}</div>
+        }
+        @if (passwordError()) {
+          <div class="alert alert-error text-sm mt-4">{{ passwordError() }}</div>
+        }
+
+        <form class="mt-4" novalidate method="post" (submit)="onChangePassword($event)">
+          <fieldset class="fieldset">
+            <label class="fieldset-label" for="account-current-password">
+              Current password
+            </label>
+            <input
+              id="account-current-password"
+              type="password"
+              [formField]="passwordForm.currentPassword"
+              autocomplete="current-password"
+              class="input input-bordered w-full"
+              [placeholder]="
+                hasPasswordProvider() ? '••••••••' : 'Leave empty if you use Google only'
+              "
+            />
+          </fieldset>
+
+          <fieldset class="fieldset mt-3">
+            <label class="fieldset-label" for="account-new-password">New password</label>
+            <input
+              id="account-new-password"
+              type="password"
+              [formField]="passwordForm.newPassword"
+              autocomplete="new-password"
+              class="input input-bordered w-full"
+              placeholder="At least 6 characters"
+            />
+          </fieldset>
+
+          <button
+            type="submit"
+            class="btn btn-primary w-full mt-5"
+            [disabled]="isPasswordSubmitting() || passwordForm().invalid()"
+          >
+            @if (isPasswordSubmitting()) {
+              <span class="loading loading-spinner loading-sm"></span>
+            } @else {
+              {{ hasPasswordProvider() ? 'Change password' : 'Add password' }}
+            }
+          </button>
+        </form>
+      </div>
+    </div>
+
+    @if (!isRecruiter()) {
+      <div class="card bg-base-100 shadow mb-6">
+        <div class="card-body">
+          <h2 class="card-title text-lg">Reset profile</h2>
+          <p class="text-sm text-base-content/60">
+            Remove profile fields, interviews, and AI training data. Your login
+            stays active so you can train a new profile.
+          </p>
+          <button
+            type="button"
+            class="btn btn-outline btn-warning w-full mt-4"
+            (click)="openResetProfileConfirm()"
+          >
+            Reset profile
+          </button>
+        </div>
+      </div>
+    }
+
+    <div class="card bg-base-100 shadow border border-error/20">
+      <div class="card-body">
+        <h2 class="card-title text-lg text-error">Delete account</h2>
+        <p class="text-sm text-base-content/60">
+          Permanently delete your account, profile, interviews, and all stored
+          data linked to this user.
+        </p>
+        <button
+          type="button"
+          class="btn btn-error w-full mt-4"
+          (click)="openDeleteAccountConfirm()"
+        >
+          Delete account
+        </button>
+      </div>
+    </div>
+
+    @if (accountActionError()) {
+      <div class="alert alert-error mt-6 text-sm">{{ accountActionError() }}</div>
+    }
+  </div>
+</div>
+
+<interv-confirm-modal
+  [open]="accountConfirmAction() !== null"
+  [title]="accountConfirmTitle()"
+  [message]="accountConfirmMessage()"
+  [confirmLabel]="accountConfirmLabel()"
+  cancelLabel="Cancel"
+  [isConfirming]="isAccountActionLoading()"
+  confirmButtonClass="btn-error"
+  (confirmed)="confirmAccountAction()"
+  (cancelled)="cancelAccountConfirm()"
+/>

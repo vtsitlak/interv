@@ -65,7 +65,7 @@
             <div class="alert alert-success text-sm mt-4">Feedback saved.</div>
           }
 
-          <form class="mt-4 space-y-4" (submit)="onSaveFeedback($event)">
+          <form class="mt-4 space-y-4" novalidate method="post" (submit)="onSaveFeedback($event)">
             <fieldset class="fieldset">
               <label class="fieldset-label" for="summary-score"
                 >Match score (1–10)</label

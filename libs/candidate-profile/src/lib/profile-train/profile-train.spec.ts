@@ -126,7 +126,7 @@ describe('ProfileTrainComponent', () => {
       personalQA: [{ question: 'Q', answer: 'A' }],
     });
 
-    await component.onSave();
+    await component.onSave(new Event('submit'));
 
     expect(navigate).toHaveBeenCalledWith(['/candidate/my-profile']);
   });
@@ -147,7 +147,7 @@ describe('ProfileTrainComponent', () => {
       personalQA: [{ question: 'Q', answer: 'A' }],
     });
 
-    await component.onSave();
+    await component.onSave(new Event('submit'));
 
     expect(saveProfile).toHaveBeenCalled();
     expect(ingestToRAG).toHaveBeenCalledWith(
@@ -171,7 +171,7 @@ describe('ProfileTrainComponent', () => {
       personalQA: [],
     });
 
-    await component.onSave();
+    await component.onSave(new Event('submit'));
 
     expect(saveProfile).not.toHaveBeenCalled();
     expect(reportInvalidForm).toHaveBeenCalled();

@@ -1,15 +1,18 @@
-import { test, expect } from './test-helpers';
+import { test } from './test-helpers';
+import { expectProtectedRouteRedirectsHome } from './auth-helpers';
 
 test.describe('Protected route redirects (signed out)', () => {
+  test.describe.configure({ mode: 'serial' });
+
   test('candidate app routes redirect to home', async ({ page }) => {
     for (const path of [
       '/candidate/dashboard',
       '/candidate/train-profile',
       '/candidate/my-profile',
       '/candidate/test-interview',
+      '/candidate/account',
     ]) {
-      await page.goto(path);
-      await expect(page).toHaveURL('/');
+      await expectProtectedRouteRedirectsHome(page, path);
     }
   });
 
@@ -18,26 +21,18 @@ test.describe('Protected route redirects (signed out)', () => {
       '/recruiter/dashboard',
       '/recruiter/profile',
       '/recruiter/candidates',
+      '/recruiter/account',
       '/recruiter/candidates/e2e-missing-profile-id',
       '/recruiter/candidates/e2e-missing-profile-id/interview',
       '/recruiter/candidates/e2e-missing-profile-id/feedback',
     ]) {
-      await page.goto(path);
-      await expect(page).toHaveURL('/');
+      await expectProtectedRouteRedirectsHome(page, path);
     }
   });
 
-  test('legacy shortcuts redirect appropriately', async ({ page }) => {
-    await page.goto('/dashboard');
-    await expect(page).toHaveURL('/');
-
-    await page.goto('/profile');
-    await expect(page).toHaveURL('/');
-
-    await page.goto('/my-profile');
-    await expect(page).toHaveURL('/');
-
-    await page.goto('/test-interview');
-    await expect(page).toHaveURL('/');
+  test('legacy shortcuts redirect to home', async ({ page }) => {
+    for (const path of ['/dashboard', '/profile', '/my-profile', '/test-interview']) {
+      await expectProtectedRouteRedirectsHome(page, path);
+    }
   });
 });

@@ -29,8 +29,6 @@ export class HeaderComponent {
   readonly profileTwinIncompleteMessage = PROFILE_TWIN_INCOMPLETE_MESSAGE;
 
   readonly logoutRequested = output<void>();
-  readonly resetProfileRequested = output<void>();
-  readonly deleteAccountRequested = output<void>();
 
   readonly homeLink = computed(() => {
     if (!this.isAuthenticated()) {
@@ -41,15 +39,11 @@ export class HeaderComponent {
       : '/candidate/dashboard';
   });
 
+  readonly accountLink = computed(() =>
+    this.isRecruiter() ? '/recruiter/account' : '/candidate/account',
+  );
+
   onLogoutClick(): void {
     this.logoutRequested.emit();
-  }
-
-  onResetProfileClick(): void {
-    this.resetProfileRequested.emit();
-  }
-
-  onDeleteAccountClick(): void {
-    this.deleteAccountRequested.emit();
   }
 }

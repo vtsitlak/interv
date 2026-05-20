@@ -21,7 +21,7 @@
         <span class="loading loading-spinner loading-lg"></span>
       </div>
     } @else {
-      <form novalidate (ngSubmit)="onSave($event)">
+      <form novalidate method="post" (submit)="onSave($event)">
         <div class="card bg-base-100 shadow mb-6">
           <div class="card-body">
             <h2 class="card-title">Basic information</h2>

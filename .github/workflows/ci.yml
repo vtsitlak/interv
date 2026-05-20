@@ -1,0 +1,98 @@
+# Lint, unit tests, and Playwright e2e (same pattern as silver monorepo).
+#
+# GitHub repo → Settings → Secrets and variables → Actions:
+#   E2E_CANDIDATE_EMAIL, E2E_CANDIDATE_PASSWORD
+#   E2E_RECRUITER_EMAIL, E2E_RECRUITER_PASSWORD
+#   FIREBASE_SERVICE_ACCOUNT_KEY (JSON string for backend API in e2e webServer)
+#   GEMINI_API_KEY (optional for ingest/chat e2e; page smoke tests do not require it)
+#
+# Use GitHub secrets for CI — not Railway. Railway env vars only apply when the app
+# runs on Railway; Playwright here starts local frontend + backend via webServer.
+
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npx nx run-many -t lint --all
+
+      - name: Unit tests
+        run: npx nx run-many -t test --all
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: main
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          python -m venv venv
+          ./venv/bin/pip install -r requirements.txt
+
+      - name: Write backend .env for e2e
+        env:
+          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          cd backend
+          {
+            echo "FIREBASE_SERVICE_ACCOUNT_KEY=${FIREBASE_SERVICE_ACCOUNT_KEY}"
+            if [ -n "${GEMINI_API_KEY}" ]; then
+              echo "GEMINI_API_KEY=${GEMINI_API_KEY}"
+            fi
+          } > .env
+
+      - name: Run Playwright e2e
+        run: npx nx e2e e2e -- --project=chromium-public --project=chromium-auth
+        env:
+          CI: true
+          E2E_CANDIDATE_EMAIL: ${{ secrets.E2E_CANDIDATE_EMAIL }}
+          E2E_CANDIDATE_PASSWORD: ${{ secrets.E2E_CANDIDATE_PASSWORD }}
+          E2E_RECRUITER_EMAIL: ${{ secrets.E2E_RECRUITER_EMAIL }}
+          E2E_RECRUITER_PASSWORD: ${{ secrets.E2E_RECRUITER_PASSWORD }}

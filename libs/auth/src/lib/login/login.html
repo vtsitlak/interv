@@ -14,7 +14,7 @@
         <div class="alert alert-error text-sm">{{ facade.error() }}</div>
       }
 
-      <form (ngSubmit)="onLogin()">
+      <form novalidate method="post" (submit)="onLogin($event)">
         <fieldset class="fieldset">
           <label class="fieldset-label" for="login-email">Email</label>
           <input

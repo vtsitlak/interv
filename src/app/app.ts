@@ -1,13 +1,11 @@
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, effect, inject, untracked } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { ConfirmModalComponent, HeaderComponent } from '@interv/shared';
+import { HeaderComponent } from '@interv/shared';
 import { AuthFacade, AuthSyncService } from '@interv/state-auth';
 import { ProfileFacade } from '@interv/state-profile';
 
-type AccountConfirmAction = 'reset' | 'delete';
-
 @Component({
-  imports: [RouterOutlet, HeaderComponent, ConfirmModalComponent],
+  imports: [RouterOutlet, HeaderComponent],
   selector: 'app-root',
   templateUrl: './app.html',
   styleUrl: './app.scss',
@@ -19,83 +17,22 @@ export class App {
   /** Ensures Firebase Auth stays synced with {@link AuthStore} for the app lifetime. */
   private readonly authSync = inject(AuthSyncService);
 
-  readonly accountConfirmAction = signal<AccountConfirmAction | null>(null);
-  readonly isAccountActionLoading = signal(false);
-  readonly accountActionError = signal<string | null>(null);
-
-  readonly resetConfirmMessage =
-    'This removes all profile fields, interviews, and AI training data from your account. Your login is kept so you can train a new profile.';
-  readonly deleteConfirmMessage =
-    'This permanently deletes your account, profile data, and interviews. This cannot be undone.';
-
   constructor() {
     void this.authFacade.tryHandleRedirectResult();
 
     effect(() => {
-      if (this.authFacade.isAuthenticated() && this.authFacade.isCandidate()) {
-        void this.profileFacade.loadProfile();
+      const uid = this.authFacade.user()?.uid;
+      const isCandidate = this.authFacade.isCandidate();
+      if (!uid || !isCandidate) {
+        return;
       }
+      untracked(() => {
+        void this.profileFacade.loadProfile();
+      });
     });
   }
 
   protected async onLogout(): Promise<void> {
     await this.authFacade.logout();
-  }
-
-  protected openResetProfileConfirm(): void {
-    this.accountActionError.set(null);
-    this.accountConfirmAction.set('reset');
-  }
-
-  protected openDeleteAccountConfirm(): void {
-    this.accountActionError.set(null);
-    this.accountConfirmAction.set('delete');
-  }
-
-  protected cancelAccountConfirm(): void {
-    if (this.isAccountActionLoading()) {
-      return;
-    }
-    this.accountConfirmAction.set(null);
-  }
-
-  protected async confirmAccountAction(): Promise<void> {
-    const action = this.accountConfirmAction();
-    if (!action || this.isAccountActionLoading()) {
-      return;
-    }
-
-    this.isAccountActionLoading.set(true);
-    this.accountActionError.set(null);
-    try {
-      if (action === 'reset') {
-        await this.authFacade.resetCandidateProfile();
-      } else {
-        await this.authFacade.deleteAccount();
-      }
-      this.accountConfirmAction.set(null);
-    } catch (e: unknown) {
-      this.accountActionError.set(
-        e instanceof Error ? e.message : 'Something went wrong.',
-      );
-    } finally {
-      this.isAccountActionLoading.set(false);
-    }
-  }
-
-  protected accountConfirmTitle(): string {
-    return this.accountConfirmAction() === 'reset'
-      ? 'Reset profile?'
-      : 'Delete account?';
-  }
-
-  protected accountConfirmMessage(): string {
-    return this.accountConfirmAction() === 'reset'
-      ? this.resetConfirmMessage
-      : this.deleteConfirmMessage;
-  }
-
-  protected accountConfirmLabel(): string {
-    return this.accountConfirmAction() === 'reset' ? 'Reset profile' : 'Delete account';
   }
 }

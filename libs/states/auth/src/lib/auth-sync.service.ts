@@ -17,7 +17,16 @@ export class AuthSyncService {
     authState(this.auth)
       .pipe(takeUntilDestroyed())
       .subscribe((firebaseUser) => {
-        void this.store.setUser(toProfileUser(firebaseUser));
+        const next = toProfileUser(firebaseUser);
+        const current = this.store.user();
+        if (
+          next?.uid === current?.uid &&
+          next?.email === current?.email &&
+          next?.displayName === current?.displayName
+        ) {
+          return;
+        }
+        void this.store.setUser(next);
       });
   }
 }

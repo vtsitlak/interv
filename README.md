@@ -12,8 +12,8 @@
 
 | Role | Capabilities |
 |------|----------------|
-| **Candidate** | Sign in, build a profile, **train** the AI twin (ingest + RAG), share a public profile link, run a **test interview**, manage visibility, review interviews and match scores on a dashboard |
-| **Recruiter** | Sign in, complete a recruiter profile, search published candidates, start/restart interviews, leave feedback and optional contact details |
+| **Candidate** | Sign in, build a profile, **train** the AI twin (ingest + RAG), share a public profile link, run a **test interview**, manage visibility, review interviews and match scores on a dashboard, manage **Account** (password, reset profile, delete account) |
+| **Recruiter** | Sign in, complete a recruiter profile, search published candidates, start/restart interviews, leave feedback and optional contact details, manage **Account** (password, delete account) |
 | **Visitor** | Open a candidate’s public link and start an interview (when the candidate has enabled their public profile) |
 
 The product goal is **calendar-free screening**: the twin answers in the candidate’s voice using retrieved context, while humans review transcripts and scores afterward.
@@ -127,6 +127,27 @@ After training, the same pages enable test interview, public link copy, visibili
 
 ---
 
+## Account settings
+
+Signed-in users open **Account** from the header (link, not a dropdown). Routes:
+
+- `/candidate/account` — candidate account page  
+- `/recruiter/account` — recruiter account page  
+
+Implemented in `@interv/account` (`libs/account`).
+
+| Section | Candidate | Recruiter |
+|---------|-----------|-----------|
+| **Password** | Add password (Google-only) or change password (email sign-in) | Same |
+| **Reset profile** | Clears profile fields, interviews, and RAG data; keeps login | — |
+| **Delete account** | Removes profile, interviews, Firestore user doc, and Firebase Auth user | Same |
+
+Password linking uses Firebase `linkWithCredential` for Google-only accounts and reauthentication + `updatePassword` when a password already exists. Delete/reset call the FastAPI `accounts` API (`backend/routers/accounts.py`).
+
+Login and register show **inline error alerts** for wrong credentials, duplicate email, and Google-only accounts. Forms use `(submit)` with `preventDefault()` so credentials are not sent in the URL.
+
+---
+
 ## Tech stack
 
 | Layer | Technologies |
@@ -148,35 +169,38 @@ Nx workspace with path aliases in `tsconfig.base.json`:
 
 ```
 interv/
-├── src/                    # Shell app (routes, app component, environments)
+├── src/                    # Shell app (routes, guards, environments)
 ├── public/                 # Static assets (favicon.svg)
 ├── libs/
-│   ├── shared/             # UI (header, logo, modals), models, constants
+│   ├── shared/             # UI (header, logo, confirm modal), models, constants
 │   ├── home/               # Marketing landing
 │   ├── auth/               # Login / register (candidate + recruiter)
+│   ├── account/            # Account page (password, reset profile, delete)
 │   ├── candidate-profile/  # Train profile, public/owner profile views
 │   ├── candidate-dashboard/# Dashboard, interview list & detail
 │   ├── interview/          # Interview UI, setup, summary, transcript
 │   ├── recruiter/          # Recruiter dashboard, candidates, profile
 │   ├── recruiter-feedback/ # Feedback panel
 │   └── states/             # Signal stores + services
-│       ├── auth/        # Auth store, AuthSyncService, account API
+│       ├── auth/           # AuthStore, AuthFacade, AuthSyncService, AccountService
 │       ├── profile/        # Profile load/save, ingestToRAG
 │       ├── interview/      # WebSocket interview facade
 │       ├── dashboard/
 │       └── recruiter/
 ├── backend/                # FastAPI AI + interview API
+├── e2e/                    # Playwright tests + e2e/.env (gitignored)
 ├── docs/screenshots/       # README images
 ├── firestore.rules
-└── e2e/                    # Playwright tests
+└── .github/workflows/      # ci.yml (lint, test, e2e), deploy-firebase-hosting.yml
 ```
 
 **Routing** (see `src/app/app.routes.ts`):
 
 - `/` — home  
 - `/login`, `/register` — candidate auth  
-- `/recruiter/*` — recruiter auth and app  
-- `/candidate/dashboard`, `/candidate/train-profile`, `/candidate/my-profile`, `/candidate/test-interview`  
+- `/recruiter/login`, `/recruiter/register` — recruiter auth  
+- `/recruiter/account`, `/recruiter/profile`, `/recruiter/dashboard`, `/recruiter/candidates`, …  
+- `/candidate/account`, `/candidate/dashboard`, `/candidate/train-profile`, `/candidate/my-profile`, `/candidate/test-interview`  
 - `/candidate/:profileId` — public profile + interview entry  
 
 ---
@@ -200,8 +224,18 @@ python -m venv venv
 # macOS/Linux: source venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
-# Edit .env — set GEMINI_API_KEY and FIREBASE_SERVICE_ACCOUNT_KEY
+# Edit backend/.env — GEMINI_API_KEY, FIREBASE_SERVICE_ACCOUNT_KEY
 ```
+
+**Environment files** (all gitignored except `*.env.example`):
+
+| File | Purpose |
+|------|---------|
+| `backend/.env` | API keys, Firebase Admin SDK, rate limits |
+| `e2e/.env` | Playwright test users (`E2E_CANDIDATE_*`, `E2E_RECRUITER_*`) — copy from `e2e/.env.example` |
+| `.env` (repo root) | Optional local overrides only if you use them |
+
+Never commit real credentials. See `.gitignore` and GitHub Actions secrets for CI.
 
 ### Run frontend + API together
 
@@ -228,12 +262,55 @@ npm run deploy:firebase
 
 Deploy Firestore rules when they change: `npm run deploy:firestore:rules`.
 
+### E2E tests (Playwright)
+
+Same pattern as the **silver** monorepo: credentials live in **environment variables**, never in the repo or URLs.
+
+**Local setup**
+
+```sh
+cp e2e/.env.example e2e/.env
+# Add dedicated Firebase Auth test users (candidate + recruiter)
+npm run e2e:install-browsers   # first time only
+npm run e2e
+```
+
+`e2e/.env` is gitignored. Playwright loads it via `e2e/src/auth-helpers.ts`.
+
+Create **separate** Firebase users: candidate via `/register`, recruiter via `/recruiter/register`. Using a candidate account for recruiter e2e will fail with a clear sign-in error.
+
+**GitHub Actions (CI)**
+
+Add **repository secrets** (Settings → Secrets and variables → Actions):
+
+| Secret | Purpose |
+|--------|---------|
+| `E2E_CANDIDATE_EMAIL` / `E2E_CANDIDATE_PASSWORD` | Candidate login for protected-page tests |
+| `E2E_RECRUITER_EMAIL` / `E2E_RECRUITER_PASSWORD` | Recruiter login |
+| `FIREBASE_SERVICE_ACCOUNT_KEY` | Backend Admin SDK JSON (same as local `backend/.env`) |
+| `GEMINI_API_KEY` | Optional; only needed if e2e covers train/chat |
+
+Do **not** put these on Railway unless you run Playwright against a Railway-deployed URL. CI starts local app + API via `e2e/playwright.config.ts` `webServer`.
+
+Workflows:
+
+- `.github/workflows/ci.yml` — lint, unit tests, Playwright e2e (Chromium) on push/PR  
+- `.github/workflows/deploy-firebase-hosting.yml` — production hosting deploy (`FIREBASE_TOKEN`)
+
+**E2E coverage**
+
+| Spec | Auth required |
+|------|----------------|
+| `public-pages.spec.ts`, `public-routes.spec.ts`, `auth-redirects.spec.ts` | No |
+| `authenticated-candidate.spec.ts`, `authenticated-recruiter.spec.ts` | Yes (`e2e/.env`) |
+
 ### Useful Nx commands
 
 ```sh
 npx nx build interv
 npx nx test shared
 npx nx graph
+npx nx e2e e2e
 ```
 
 ---
