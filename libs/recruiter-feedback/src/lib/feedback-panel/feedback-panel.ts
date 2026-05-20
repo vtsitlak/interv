@@ -176,6 +176,13 @@ export class InterviewFeedbackPanelComponent {
     this.showTranscript.set(false);
   }
 
+  onTranscriptBackdropClick(event: MouseEvent): void {
+    if (event.target !== event.currentTarget) {
+      return;
+    }
+    this.closeTranscript();
+  }
+
   private async loadExisting(
     profileId: string,
     interviewId: string,
