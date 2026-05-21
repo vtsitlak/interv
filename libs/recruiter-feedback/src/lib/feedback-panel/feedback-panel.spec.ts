@@ -91,4 +91,53 @@ describe('InterviewFeedbackPanelComponent', () => {
       },
     );
   });
+
+  it('submits guest recruiter email when signed out and contact is requested', async () => {
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [InterviewFeedbackPanelComponent],
+      providers: [
+        {
+          provide: AuthFacade,
+          useValue: { user: () => null },
+        },
+        {
+          provide: InterviewService,
+          useValue: {
+            submitFeedback,
+            getInterviewForReview,
+            getInterviewMessages: vi.fn().mockResolvedValue([]),
+          },
+        },
+      ],
+    }).compileComponents();
+
+    const guestFixture = TestBed.createComponent(InterviewFeedbackPanelComponent);
+    guestFixture.componentRef.setInput('profileId', 'p1');
+    guestFixture.componentRef.setInput('interviewId', 'int1');
+    guestFixture.detectChanges();
+    await guestFixture.whenStable();
+
+    const component = guestFixture.componentInstance;
+    component.feedbackModel.set({
+      score: 8,
+      text: 'Good interview',
+      requestContact: true,
+    });
+    component.guestContactEmail.set('guest@company.com');
+    guestFixture.detectChanges();
+
+    await component.onSubmit(new Event('submit'));
+
+    expect(submitFeedback).toHaveBeenCalledWith(
+      'p1',
+      'int1',
+      8,
+      'Good interview',
+      {
+        requestContact: true,
+        recruiterEmail: 'guest@company.com',
+      },
+    );
+  });
 });
