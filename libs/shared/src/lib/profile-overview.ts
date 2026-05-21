@@ -3,7 +3,13 @@ import { formatWorkPreferencesList } from './models/work-preferences';
 
 type ProfileOverviewInput = Pick<
   Profile,
-  'name' | 'title' | 'summary' | 'linkedIn' | 'workPreferences' | 'personalQA'
+  | 'name'
+  | 'title'
+  | 'summary'
+  | 'careerOverview'
+  | 'linkedIn'
+  | 'workPreferences'
+  | 'personalQA'
 > & {
   skills?: string[];
 };
@@ -12,8 +18,13 @@ function formatQaHighlight(qa: QAPair): string {
   return `On “${qa.question.trim()}”, they share: ${qa.answer.trim()}`;
 }
 
-/** Readable overview composed from public profile fields. */
+/** Readable overview for the profile page (prefers AI career overview from training). */
 export function buildProfileOverview(profile: ProfileOverviewInput): string {
+  const generated = profile.careerOverview?.trim();
+  if (generated) {
+    return generated;
+  }
+
   const paragraphs: string[] = [];
 
   const name = profile.name?.trim();
@@ -27,13 +38,6 @@ export function buildProfileOverview(profile: ProfileOverviewInput): string {
   const bio = profile.summary?.trim();
   if (bio) {
     paragraphs.push(bio);
-  }
-
-  const skills = (profile.skills ?? [])
-    .map((s: string) => s.trim())
-    .filter(Boolean);
-  if (skills.length > 0) {
-    paragraphs.push(`Core skills: ${skills.slice(0, 12).join(', ')}.`);
   }
 
   const linkedIn = profile.linkedIn?.trim();

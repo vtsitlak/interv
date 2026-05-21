@@ -39,9 +39,9 @@
                   }
                 </div>
               }
-              @if (p.summary.trim()) {
+              @if (careerSummary()) {
                 <p class="text-base-content/80 mt-4 leading-relaxed">
-                  {{ p.summary }}
+                  {{ careerSummary() }}
                 </p>
               }
               @if (isOwnerView()) {
@@ -145,7 +145,7 @@
           <div class="card-body">
             <h2 class="card-title text-lg">Skills</h2>
             <p class="text-sm text-base-content/60 mb-3">
-              Extracted from their CV
+              Extracted from their trained profile
             </p>
             <div class="flex flex-wrap gap-2">
               @for (skill of skills(); track skill) {

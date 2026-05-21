@@ -81,7 +81,30 @@ describe('ProfileComponent', () => {
 
   it('builds profile overview from loaded profile', () => {
     expect(component.profileOverview()).toContain('Ada Lovelace is a Engineer.');
-    expect(component.profileOverview()).toContain('Core skills: Angular');
+    expect(component.profileOverview()).toContain('Hello');
+  });
+
+  it('careerSummary prefers AI career overview when trained', async () => {
+    const interviewService = TestBed.inject(InterviewService);
+    vi.mocked(interviewService.getPublicProfile).mockResolvedValueOnce({
+      id: 'p1',
+      name: 'Ada Lovelace',
+      title: 'Engineer',
+      photo: '',
+      summary: 'Manual summary from train form.',
+      careerOverview: 'Ada has spent a decade shipping web platforms.',
+      skills: ['Angular'],
+      linkedIn: '',
+      links: [],
+    } as never);
+    await component.ngOnInit();
+    await fixture.whenStable();
+    expect(component.careerSummary()).toBe(
+      'Ada has spent a decade shipping web platforms.',
+    );
+    expect(component.profileOverview()).toBe(
+      'Ada has spent a decade shipping web platforms.',
+    );
   });
 
   it('disables test interview on owner view when profile is incomplete', async () => {

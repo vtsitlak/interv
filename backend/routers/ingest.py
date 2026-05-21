@@ -14,6 +14,7 @@ from services.api_limits import (
     MAX_QA_QUESTION_CHARS,
 )
 from services.auth import verify_profile_owner_token
+from services.career_overview import generate_career_overview
 from services.link_scraper import is_linkedin, scrape_all_links
 from services.rag import ingest_profile
 from services.request_validation import validate_ingest_payload
@@ -42,6 +43,38 @@ class IngestRequest(BaseModel):
     cvText: str = Field(..., max_length=MAX_CV_CHARS)
     personalQA: List[QAPair]
     links: List[ProfileLink] = Field(default_factory=list)
+
+
+def _load_profile_doc(profile_id: str) -> dict:
+    doc = firestore.client().collection('profiles').document(profile_id).get()
+    if not doc.exists:
+        return {}
+    return doc.to_dict() or {}
+
+
+def _links_for_ingest(
+    link_dicts: list[dict], scraped: list[dict]
+) -> list[dict[str, str]]:
+    """Include scraped URLs plus description-only links (no fetch)."""
+    scraped_urls = {
+        str(item.get('link') or '').strip() for item in scraped
+    }
+    merged = list(scraped)
+    for link in link_dicts:
+        href = str(link.get('link') or '').strip()
+        if not href or href in scraped_urls:
+            continue
+        description = str(link.get('description') or '').strip()
+        if not description or is_linkedin(href):
+            continue
+        merged.append(
+            {
+                'description': description,
+                'link': href,
+                'text': description,
+            }
+        )
+    return merged
 
 
 def _skipped_reason(link_dicts: list[dict], scraped_count: int) -> Optional[str]:
@@ -78,23 +111,56 @@ async def ingest_profile_route(
     )
 
     try:
+        profile_doc = await asyncio.to_thread(_load_profile_doc, profile_id)
+        name = str(profile_doc.get('name') or '')
+        title = str(profile_doc.get('title') or '')
+        summary = str(profile_doc.get('summary') or '')
+
         scraped = await scrape_all_links(link_dicts)
+        links_for_rag = _links_for_ingest(link_dicts, scraped)
         skipped = len(link_dicts) - len(scraped)
 
-        count = ingest_profile(profile_id, cv_text, qa_dicts, scraped)
+        count = ingest_profile(profile_id, cv_text, qa_dicts, links_for_rag)
 
+        skills: list[str] = []
+        career_overview = ''
         try:
-            skills = await extract_skills_from_cv(cv_text)
-            if skills:
+            skills = await extract_skills_from_cv(
+                cv_text,
+                title=title,
+                summary=summary,
+                personal_qa=qa_dicts,
+                links=link_dicts,
+            )
+            career_overview = await generate_career_overview(
+                name=name,
+                title=title,
+                summary=summary,
+                cv_text=cv_text,
+                personal_qa=qa_dicts,
+                links=link_dicts,
+                scraped_links=scraped,
+                skills=skills,
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                'Profile enrichment failed for %s: %s', profile_id, exc
+            )
 
-                def _save_skills() -> None:
+        if skills or career_overview:
+
+            def _save_profile_enrichment() -> None:
+                payload: dict = {}
+                if skills:
+                    payload['skills'] = skills
+                if career_overview:
+                    payload['careerOverview'] = career_overview
+                if payload:
                     firestore.client().collection('profiles').document(
                         profile_id
-                    ).set({'skills': skills}, merge=True)
+                    ).set(payload, merge=True)
 
-                await asyncio.to_thread(_save_skills)
-        except Exception as exc:  # noqa: BLE001
-            logger.warning('Skill extraction failed for %s', profile_id)
+            await asyncio.to_thread(_save_profile_enrichment)
 
         await record_ingest(profile_id)
 

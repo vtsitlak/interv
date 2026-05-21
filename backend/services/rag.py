@@ -74,9 +74,17 @@ def ingest_profile(
     for i, link in enumerate(link_items):
         description = str(
             link.get("description") or link.get("label") or link.get("link") or "link"
-        )
+        ).strip()
         href = str(link.get("link") or link.get("url") or "")
-        link_text = str(link.get("text") or "")
+        scraped = str(link.get("text") or "").strip()
+        link_body_parts: list[str] = []
+        if description:
+            link_body_parts.append(f"Candidate note about this link: {description}")
+        if scraped:
+            link_body_parts.append(scraped)
+        link_text = "\n\n".join(link_body_parts)
+        if not link_text.strip():
+            continue
         for j, chunk in enumerate(chunk_text(link_text)):
             documents.append(
                 {
