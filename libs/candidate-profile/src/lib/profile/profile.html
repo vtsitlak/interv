@@ -176,19 +176,14 @@
         <div class="card bg-base-100 shadow">
           <div class="card-body">
             <h2 class="card-title text-lg">Links</h2>
-            <ul class="space-y-3 mt-2">
+            <ul class="space-y-2 mt-2">
               @for (link of p.links; track link.link) {
                 <li>
-                  @if (link.description.trim()) {
-                    <p class="text-sm text-base-content/70">
-                      {{ link.description }}
-                    </p>
-                  }
                   <a
                     [href]="link.link"
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="link link-primary"
+                    class="link link-primary break-all"
                   >
                     {{ link.link }}
                   </a>

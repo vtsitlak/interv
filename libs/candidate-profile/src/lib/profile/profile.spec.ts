@@ -83,6 +83,12 @@ describe('ProfileComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Hello');
   });
 
+  it('shows link URLs without link descriptions on the profile', () => {
+    const text = fixture.nativeElement.textContent ?? '';
+    expect(text).toContain('https://github.com/ada');
+    expect(text).not.toContain('My GitHub profile');
+  });
+
   it('shows CV overview in profile overview section when trained', async () => {
     const interviewService = TestBed.inject(InterviewService);
     vi.mocked(interviewService.getPublicProfile).mockResolvedValueOnce({
