@@ -16,6 +16,7 @@ _EMPTY_CANDIDATE_PROFILE: dict[str, Any] = {
     'title': '',
     'photo': '',
     'summary': '',
+    'careerOverview': '',
     'cvText': '',
     'linkedIn': '',
     'workPreferences': [],

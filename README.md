@@ -32,13 +32,12 @@ When a candidate clicks **Save & train AI** on [Train profile](https://getinterv
 2. The app calls `POST /ingest/{profileId}` on the **FastAPI** backend (authenticated as the profile owner).
 3. The backend:
    - Validates and trims payloads (`backend/services/request_validation.py`, `api_limits.py`).
-   - Optionally **scrapes** GitHub/website links (`link_scraper.py`); LinkedIn URLs are stored but not scraped.
-   - Uses **Gemini** (`GEMINI_PROFILE_MODEL`, default `gemini-3.1-pro-preview`) to **extract skills** from CV text.
-   - **Chunks** CV, Q&A answers, and scraped link text (`backend/services/rag.py`).
-   - **Upserts** embeddings into a per-profile **Chroma** collection (`vector_store.py`).
-   - Writes ingest metadata and `ragEnabled` on the profile document.
+   - **Scrapes** GitHub/website URLs where possible (`link_scraper.py`); each link’s **description note** is always included in training (even when a URL cannot be fetched). LinkedIn URLs are not scraped.
+   - Uses **Gemini** (`GEMINI_PROFILE_MODEL`) to **extract 8–15 skills** from CV, summary, Q&A, and link notes, and to generate a **career overview** paragraph for the public profile.
+   - **Chunks** CV, Q&A answers, and link content (notes + scraped text) into **Chroma** (`backend/services/rag.py`).
+   - Saves `skills`, `careerOverview`, and `ragEnabled` on the profile document.
 
-The train screen shows a privacy notice: CV, Q&A, and scraped link content are sent to **Google’s Gemini API** to power the twin.
+The train screen shows a privacy notice: CV, Q&A, link notes, and scraped page content are sent to **Google’s Gemini API** to power the twin and profile copy.
 
 ### 2. Interview (chat)
 
@@ -152,7 +151,7 @@ Login and register show **inline error alerts** for wrong credentials, duplicate
 
 | Layer | Technologies |
 |-------|----------------|
-| **Frontend** | Angular 21 (standalone, signals, `@if` / `@for`), Nx monorepo, Tailwind CSS 4, DaisyUI |
+| **Frontend** | Angular 21 (standalone, signals, `@if` / `@for`), Nx workspace, Tailwind CSS 4, DaisyUI |
 | **State** | NgRx Signal Stores (`@ngrx/signals`) — facades per domain |
 | **Auth & data** | Firebase Auth, Firestore, Storage |
 | **API** | Python **FastAPI**, Uvicorn |
@@ -264,7 +263,7 @@ Deploy Firestore rules when they change: `npm run deploy:firestore:rules`.
 
 ### E2E tests (Playwright)
 
-Same pattern as the **silver** monorepo: credentials live in **environment variables**, never in the repo or URLs.
+E2E credentials must live in **environment variables** (`e2e/.env` locally, GitHub Actions secrets in CI), never in the repo or URLs.
 
 **Local setup**
 

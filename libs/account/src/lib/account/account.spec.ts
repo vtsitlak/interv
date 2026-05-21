@@ -1,14 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthFacade } from '@interv/state-auth';
 import { AccountComponent } from './account';
+
+jest.mock('@interv/state-auth', () => ({
+  AuthFacade: class {},
+}));
 
 describe('AccountComponent', () => {
   let fixture: ComponentFixture<AccountComponent>;
   let component: AccountComponent;
-  const changePassword = vi.fn().mockResolvedValue(true);
-  const hasPasswordProvider = vi.fn().mockReturnValue(false);
+  const changePassword = jest.fn().mockResolvedValue(true);
+  const hasPasswordProvider = jest.fn().mockReturnValue(false);
 
   beforeEach(async () => {
     changePassword.mockClear();
@@ -25,11 +28,11 @@ describe('AccountComponent', () => {
             isRecruiter: () => false,
             loading: () => false,
             error: () => null,
-            clearError: vi.fn(),
+            clearError: jest.fn(),
             hasPasswordProvider,
             changePassword,
-            resetCandidateProfile: vi.fn(),
-            deleteAccount: vi.fn(),
+            resetCandidateProfile: jest.fn(),
+            deleteAccount: jest.fn(),
           },
         },
       ],
@@ -44,18 +47,37 @@ describe('AccountComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('onChangePassword calls preventDefault and facade.changePassword', async () => {
-    component.passwordModel.set({
-      currentPassword: '',
-      newPassword: 'secret123',
-    });
+  it('onChangePassword calls preventDefault on submit', async () => {
     const event = new Event('submit');
-    const preventDefault = vi.spyOn(event, 'preventDefault');
+    const preventDefault = jest.spyOn(event, 'preventDefault');
 
     await component.onChangePassword(event);
 
     expect(preventDefault).toHaveBeenCalled();
+  });
+
+  it('onChangePassword calls facade.changePassword when the form is valid', async () => {
+    component.passwordModel.set({
+      currentPassword: '',
+      newPassword: 'secret123',
+    });
+    fixture.detectChanges();
+
+    await component.onChangePassword(new Event('submit'));
+
     expect(changePassword).toHaveBeenCalledWith(null, 'secret123');
+  });
+
+  it('onChangePassword does not call facade.changePassword when the form is invalid', async () => {
+    component.passwordModel.set({
+      currentPassword: '',
+      newPassword: 'x',
+    });
+    fixture.detectChanges();
+
+    await component.onChangePassword(new Event('submit'));
+
+    expect(changePassword).not.toHaveBeenCalled();
   });
 
   it('shows reset profile section for candidates', () => {

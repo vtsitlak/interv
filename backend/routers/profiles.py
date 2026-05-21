@@ -100,7 +100,16 @@ async def extract_skills(
 
         cv_text = profile.get('cvText') or ''
         title = profile.get('title') or ''
-        skills = await extract_skills_from_cv(cv_text, title)
+        summary = profile.get('summary') or ''
+        personal_qa = profile.get('personalQA') or []
+        links = profile.get('links') or []
+        skills = await extract_skills_from_cv(
+            cv_text,
+            title=title,
+            summary=summary,
+            personal_qa=personal_qa,
+            links=links,
+        )
 
         def _save() -> None:
             firestore.client().collection('profiles').document(profile_id).update(

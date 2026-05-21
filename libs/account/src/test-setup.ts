@@ -1,5 +1,10 @@
-import '@angular/compiler';
-import '@analogjs/vitest-angular/setup-snapshots';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { setupZonelessTestEnv } from 'jest-preset-angular/setup-env/zoneless';
 
-setupTestBed();
+if (typeof globalThis.fetch === 'undefined') {
+  globalThis.fetch = jest.fn() as typeof fetch;
+}
+
+setupZonelessTestEnv({
+  errorOnUnknownElements: true,
+  errorOnUnknownProperties: true,
+});

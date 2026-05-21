@@ -24,6 +24,8 @@ export interface Profile {
   links: ProfileLink[];
   personalQA: QAPair[];
   skills?: string[];
+  /** AI-generated career summary shown on the public profile (set on train/ingest). */
+  careerOverview?: string;
   /** Visible in recruiter search when true. */
   isPublished: boolean;
   /** Public link (/candidate/:id) and anonymous interviews when true. */
