@@ -33,8 +33,11 @@
   }
 
   @if (!skipSetup() && !isSetupComplete()) {
-    <div class="flex-1 flex items-center justify-center px-4">
+    <div
+      class="flex-1 min-h-0 flex items-start sm:items-center justify-center px-4 py-6 overflow-y-auto"
+    >
       <interv-interview-setup
+        class="w-full shrink-0"
         [profileId]="profileId()"
         [error]="facade.error()"
         [isConnecting]="facade.isConnecting()"
@@ -159,7 +162,7 @@
           }
         </div>
 
-        <h3 class="font-bold text-xl mb-2">
+        <h3 id="interv-end-interview-title" class="font-bold text-lg sm:text-xl mb-2">
           @if (facade.isComplete()) {
             That's a wrap!
           } @else {
@@ -167,7 +170,7 @@
           }
         </h3>
 
-        <p class="text-base-content/60 text-sm mb-6">
+        <p class="text-base-content/60 text-sm mb-4 sm:mb-6 leading-relaxed">
           @if (skipSetup()) {
             @if (facade.isComplete()) {
               You've completed all {{ facade.maxMessages() }} questions. End the
@@ -184,11 +187,19 @@
           }
         </p>
 
-        <div class="flex flex-col sm:flex-row gap-3 justify-center">
-          <button type="button" class="btn btn-ghost" (click)="onCancelEnd()">
+        <div class="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:justify-center">
+          <button
+            type="button"
+            class="btn btn-ghost w-full sm:w-auto"
+            (click)="onCancelEnd()"
+          >
             Continue interview
           </button>
-          <button type="button" class="btn btn-primary" (click)="onConfirmEnd()">
+          <button
+            type="button"
+            class="btn btn-primary w-full sm:w-auto"
+            (click)="onConfirmEnd()"
+          >
             @if (skipSetup()) {
               Confirm end interview
             } @else {
