@@ -1,5 +1,9 @@
 import { Routes } from '@angular/router';
 import {
+  InterviewComponent,
+  InterviewSummaryComponent,
+} from '@interv/interview';
+import {
   authGuard,
   candidateGuard,
   recruiterGuard,
@@ -61,8 +65,7 @@ export const appRoutes: Routes = [
       {
         path: 'candidates/:profileId/interview',
         canActivate: [authGuard, recruiterGuard, recruiterProfileCompleteGuard],
-        loadComponent: () =>
-          import('@interv/interview').then(m => m.InterviewComponent),
+        component: InterviewComponent,
         data: { skipRecruiterSetup: true },
       },
       {
@@ -117,8 +120,7 @@ export const appRoutes: Routes = [
       {
         path: 'test-interview',
         canActivate: [authGuard, candidateGuard],
-        loadComponent: () =>
-          import('@interv/interview').then(m => m.InterviewComponent),
+        component: InterviewComponent,
         data: { testMode: true },
       },
       {
@@ -128,13 +130,11 @@ export const appRoutes: Routes = [
       },
       {
         path: ':profileId/interview/:interviewId/summary',
-        loadComponent: () =>
-          import('@interv/interview').then(m => m.InterviewSummaryComponent),
+        component: InterviewSummaryComponent,
       },
       {
         path: ':profileId/interview',
-        loadComponent: () =>
-          import('@interv/interview').then(m => m.InterviewComponent),
+        component: InterviewComponent,
       },
       {
         path: ':profileId/feedback',

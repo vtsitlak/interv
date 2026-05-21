@@ -11,6 +11,7 @@ import {
 } from '@angular/fire/firestore';
 import { API_URL, WS_URL } from '@interv/shared';
 import { appRoutes } from './app.routes';
+import { provideChunkLoadRecovery } from './chunk-load-recovery';
 import { environment } from '../environments/environment';
 
 function provideFirestoreInstance(injector: Injector) {
@@ -28,6 +29,7 @@ function provideFirestoreInstance(injector: Injector) {
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(appRoutes),
+    provideChunkLoadRecovery(),
     { provide: API_URL, useValue: environment.apiUrl },
     { provide: WS_URL, useValue: environment.wsUrl },
     provideFirebaseApp(() => initializeApp(environment.firebaseConfig)),
