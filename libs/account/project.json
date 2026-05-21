@@ -7,10 +7,11 @@
   "tags": [],
   "targets": {
     "test": {
-      "executor": "@nx/vitest:test",
-      "outputs": ["{options.reportsDirectory}"],
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "reportsDirectory": "coverage/libs/account"
+        "jestConfig": "libs/account/jest.config.cts",
+        "tsConfig": "libs/account/tsconfig.spec.json"
       }
     },
     "lint": {
