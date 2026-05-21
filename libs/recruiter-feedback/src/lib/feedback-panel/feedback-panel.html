@@ -58,7 +58,6 @@
             type="checkbox"
             class="checkbox checkbox-secondary mt-1"
             [checked]="feedbackModel().requestContact"
-            [disabled]="!recruiterEmail()"
             (change)="toggleRequestContact($event)"
           />
           <span class="min-w-0">
@@ -66,16 +65,37 @@
               Share your email with the candidate to get in touch
             </span>
             <p class="text-xs text-base-content/60 mt-1 leading-relaxed">
-              @if (recruiterEmail(); as email) {
+              @if (accountEmail(); as email) {
                 We will share <span class="font-medium">{{ email }}</span> on
                 this interview so the candidate can reach you directly.
+              } @else if (feedbackModel().requestContact) {
+                We will share the email you enter below on this interview so
+                the candidate can reach you directly.
               } @else {
-                Sign in with an account that has an email address to enable this
-                option.
+                Check this box to share your email with the candidate after the
+                interview.
               }
             </p>
           </span>
         </label>
+        @if (!hasAccountEmail() && feedbackModel().requestContact) {
+          <div class="mt-3 pl-9">
+            <label class="fieldset-label" for="panel-guest-recruiter-email">
+              Your email *
+            </label>
+            <input
+              id="panel-guest-recruiter-email"
+              type="email"
+              autocomplete="email"
+              inputmode="email"
+              class="input input-bordered w-full"
+              placeholder="you@company.com"
+              [value]="guestContactEmail()"
+              [maxLength]="fieldLimits.contactEmail"
+              (input)="onGuestEmailInput($event)"
+            />
+          </div>
+        }
       </fieldset>
 
       <div class="flex flex-col sm:flex-row gap-2">

@@ -65,14 +65,25 @@ export class InterviewFeedbackPanelComponent {
     if (saved === null) {
       return false;
     }
-    return serializeFeedbackForm(this.feedbackModel()) !== saved;
+    return this.serializePanelState() !== saved;
   });
 
   readonly feedbackForm = form(this.feedbackModel, (path) => {
     required(path.text, { message: 'Feedback is required' });
   });
 
-  readonly recruiterEmail = computed(() => this.auth.user()?.email?.trim() ?? null);
+  readonly accountEmail = computed(() => this.auth.user()?.email?.trim() ?? null);
+  readonly hasAccountEmail = computed(() => !!this.accountEmail());
+  readonly guestContactEmail = signal('');
+
+  readonly effectiveContactEmail = computed(() => {
+    const account = this.accountEmail();
+    if (account) {
+      return account;
+    }
+    const guest = this.guestContactEmail().trim();
+    return guest || null;
+  });
 
   readonly isSubmitting = signal(false);
   readonly isLoading = signal(false);
@@ -101,6 +112,14 @@ export class InterviewFeedbackPanelComponent {
       ...model,
       requestContact: checked,
     }));
+    if (!checked && !this.hasAccountEmail()) {
+      this.guestContactEmail.set('');
+    }
+  }
+
+  onGuestEmailInput(event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    this.guestContactEmail.set(value);
   }
 
   async onSubmit(event: Event): Promise<void> {
@@ -113,12 +132,19 @@ export class InterviewFeedbackPanelComponent {
 
     const { score, text, requestContact } = this.feedbackModel();
     const clampedScore = Math.min(10, Math.max(1, Math.round(score)));
-    const email = this.recruiterEmail();
+    const email = this.effectiveContactEmail();
 
     if (requestContact && !email) {
       this.error.set(
-        'Add an email to your account before sharing contact details with candidates.',
+        this.hasAccountEmail()
+          ? 'Add an email to your account before sharing contact details with candidates.'
+          : 'Enter your email so the candidate can reach you.',
       );
+      return;
+    }
+
+    if (requestContact && email && !this.isValidEmail(email)) {
+      this.error.set('Enter a valid email address.');
       return;
     }
 
@@ -204,9 +230,19 @@ export class InterviewFeedbackPanelComponent {
           text: review.feedbackText,
           requestContact: review.requestContact,
         });
+        if (
+          review.requestContact &&
+          review.recruiterContactEmail &&
+          !this.hasAccountEmail()
+        ) {
+          this.guestContactEmail.set(review.recruiterContactEmail);
+        } else {
+          this.guestContactEmail.set('');
+        }
         this.hasExistingFeedback.set(true);
       } else {
         this.feedbackModel.set({ score: 8, text: '', requestContact: false });
+        this.guestContactEmail.set('');
         this.hasExistingFeedback.set(false);
       }
       this.markSavedSnapshot();
@@ -218,6 +254,17 @@ export class InterviewFeedbackPanelComponent {
   }
 
   private markSavedSnapshot(): void {
-    this.savedSnapshot.set(serializeFeedbackForm(this.feedbackModel()));
+    this.savedSnapshot.set(this.serializePanelState());
+  }
+
+  private serializePanelState(): string {
+    return JSON.stringify({
+      form: JSON.parse(serializeFeedbackForm(this.feedbackModel())),
+      guestContactEmail: this.guestContactEmail().trim(),
+    });
+  }
+
+  private isValidEmail(email: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   }
 }

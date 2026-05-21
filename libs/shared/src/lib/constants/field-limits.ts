@@ -18,4 +18,5 @@ export const RECRUITER_FIELD_LIMITS = {
 
 export const FEEDBACK_FIELD_LIMITS = {
   text: 2000,
+  contactEmail: 120,
 } as const;
