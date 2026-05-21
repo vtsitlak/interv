@@ -152,7 +152,7 @@ Login and register show **inline error alerts** for wrong credentials, duplicate
 
 | Layer | Technologies |
 |-------|----------------|
-| **Frontend** | Angular 21 (standalone, signals, `@if` / `@for`), Nx monorepo, Tailwind CSS 4, DaisyUI |
+| **Frontend** | Angular 21 (standalone, signals, `@if` / `@for`), Nx workspace, Tailwind CSS 4, DaisyUI |
 | **State** | NgRx Signal Stores (`@ngrx/signals`) — facades per domain |
 | **Auth & data** | Firebase Auth, Firestore, Storage |
 | **API** | Python **FastAPI**, Uvicorn |
@@ -264,7 +264,7 @@ Deploy Firestore rules when they change: `npm run deploy:firestore:rules`.
 
 ### E2E tests (Playwright)
 
-Same pattern as the **silver** monorepo: credentials live in **environment variables**, never in the repo or URLs.
+E2E credentials must live in **environment variables** (`e2e/.env` locally, GitHub Actions secrets in CI), never in the repo or URLs.
 
 **Local setup**
 

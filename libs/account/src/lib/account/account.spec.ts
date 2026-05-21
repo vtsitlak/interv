@@ -38,24 +38,46 @@ describe('AccountComponent', () => {
     fixture = TestBed.createComponent(AccountComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+    await fixture.whenStable();
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
   });
 
-  it('onChangePassword calls preventDefault and facade.changePassword', async () => {
-    component.passwordModel.set({
-      currentPassword: '',
-      newPassword: 'secret123',
-    });
+  it('onChangePassword calls preventDefault on submit', async () => {
     const event = new Event('submit');
     const preventDefault = vi.spyOn(event, 'preventDefault');
 
     await component.onChangePassword(event);
 
     expect(preventDefault).toHaveBeenCalled();
+  });
+
+  it('onChangePassword calls facade.changePassword when the form is valid', async () => {
+    component.passwordModel.set({
+      currentPassword: '',
+      newPassword: 'secret123',
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    await component.onChangePassword(new Event('submit'));
+
     expect(changePassword).toHaveBeenCalledWith(null, 'secret123');
+  });
+
+  it('onChangePassword does not call facade.changePassword when the form is invalid', async () => {
+    component.passwordModel.set({
+      currentPassword: '',
+      newPassword: 'x',
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    await component.onChangePassword(new Event('submit'));
+
+    expect(changePassword).not.toHaveBeenCalled();
   });
 
   it('shows reset profile section for candidates', () => {

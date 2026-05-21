@@ -28,11 +28,13 @@ describe('App', () => {
         {
           provide: AuthFacade,
           useValue: {
+            user: () => null,
             isAuthenticated: () => false,
             isRecruiter: () => false,
             isCandidate: () => false,
             tryHandleRedirectResult: jest.fn().mockResolvedValue(undefined),
             setUser: jest.fn().mockResolvedValue(undefined),
+            logout: jest.fn().mockResolvedValue(undefined),
           },
         },
         {

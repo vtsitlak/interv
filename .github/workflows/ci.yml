@@ -1,4 +1,4 @@
-# Lint, unit tests, and Playwright e2e (same pattern as silver monorepo).
+# CI: lint, unit tests, and Playwright e2e.
 #
 # GitHub repo → Settings → Secrets and variables → Actions:
 #   E2E_CANDIDATE_EMAIL, E2E_CANDIDATE_PASSWORD
