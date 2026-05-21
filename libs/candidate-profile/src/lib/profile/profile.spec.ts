@@ -79,19 +79,18 @@ describe('ProfileComponent', () => {
     expect(component.linkedInUrl()).toBe('https://www.linkedin.com/in/ada');
   });
 
-  it('builds profile overview from loaded profile', () => {
-    expect(component.profileOverview()).toContain('Ada Lovelace is a Engineer.');
-    expect(component.profileOverview()).toContain('Hello');
+  it('shows train-form summary under the role', () => {
+    expect(fixture.nativeElement.textContent).toContain('Hello');
   });
 
-  it('careerSummary prefers AI career overview when trained', async () => {
+  it('shows CV overview in profile overview section when trained', async () => {
     const interviewService = TestBed.inject(InterviewService);
     vi.mocked(interviewService.getPublicProfile).mockResolvedValueOnce({
       id: 'p1',
       name: 'Ada Lovelace',
       title: 'Engineer',
       photo: '',
-      summary: 'Manual summary from train form.',
+      summary: 'My short pitch from the summary field.',
       careerOverview: 'Ada has spent a decade shipping web platforms.',
       skills: ['Angular'],
       linkedIn: '',
@@ -99,12 +98,31 @@ describe('ProfileComponent', () => {
     } as never);
     await component.ngOnInit();
     await fixture.whenStable();
-    expect(component.careerSummary()).toBe(
-      'Ada has spent a decade shipping web platforms.',
+    expect(fixture.nativeElement.textContent).toContain(
+      'My short pitch from the summary field.',
     );
     expect(component.profileOverview()).toBe(
       'Ada has spent a decade shipping web platforms.',
     );
+  });
+
+  it('hides invalid career overview placeholder text', async () => {
+    const interviewService = TestBed.inject(InterviewService);
+    vi.mocked(interviewService.getPublicProfile).mockResolvedValueOnce({
+      id: 'p1',
+      name: 'Ada Lovelace',
+      title: 'Engineer',
+      photo: '',
+      summary: 'My summary field text.',
+      careerOverview: 'Sentence 1: Introduction, core identity, and experience level',
+      skills: [],
+      linkedIn: '',
+      links: [],
+    } as never);
+    await component.ngOnInit();
+    await fixture.whenStable();
+    expect(component.profileOverview()).toContain('Save and train your profile');
+    expect(component.profileOverview()).not.toContain('Sentence 1');
   });
 
   it('disables test interview on owner view when profile is incomplete', async () => {

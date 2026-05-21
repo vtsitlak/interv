@@ -1,65 +1,33 @@
-import type { Profile, QAPair } from './models/profile';
-import { formatWorkPreferencesList } from './models/work-preferences';
+import type { Profile } from './models/profile';
 
 type ProfileOverviewInput = Pick<
   Profile,
-  | 'name'
-  | 'title'
-  | 'summary'
-  | 'careerOverview'
-  | 'linkedIn'
-  | 'workPreferences'
-  | 'personalQA'
-> & {
-  skills?: string[];
-};
+  'careerOverview'
+>;
 
-function formatQaHighlight(qa: QAPair): string {
-  return `On “${qa.question.trim()}”, they share: ${qa.answer.trim()}`;
+const TRAIN_TO_GENERATE_MESSAGE =
+  'Save and train your profile to generate a work experience overview from your CV.';
+
+/** Detect outline-style AI output that should not be shown on the profile page. */
+export function isInvalidProfileOverview(text: string | undefined | null): boolean {
+  const stripped = (text ?? '').trim();
+  if (!stripped) {
+    return true;
+  }
+  if (/^(sentence|paragraph|section|part)\s*\d+\s*[:.)-]/im.test(stripped)) {
+    return true;
+  }
+  if (/introduction,\s*core identity/i.test(stripped)) {
+    return true;
+  }
+  return false;
 }
 
-/** Readable overview for the profile page (prefers AI career overview from training). */
+/** CV-generated work experience overview for the Profile overview section only. */
 export function buildProfileOverview(profile: ProfileOverviewInput): string {
   const generated = profile.careerOverview?.trim();
-  if (generated) {
+  if (generated && !isInvalidProfileOverview(generated)) {
     return generated;
   }
-
-  const paragraphs: string[] = [];
-
-  const name = profile.name?.trim();
-  const title = profile.title?.trim();
-  if (name && title) {
-    paragraphs.push(`${name} is a ${title}.`);
-  } else if (name) {
-    paragraphs.push(name);
-  }
-
-  const bio = profile.summary?.trim();
-  if (bio) {
-    paragraphs.push(bio);
-  }
-
-  const linkedIn = profile.linkedIn?.trim();
-  if (linkedIn) {
-    paragraphs.push('LinkedIn profile is listed on their public page.');
-  }
-
-  const workPrefs = formatWorkPreferencesList(profile.workPreferences);
-  if (workPrefs) {
-    paragraphs.push(`Work preferences: ${workPrefs}.`);
-  }
-
-  const qa = (profile.personalQA ?? []).filter(
-    (pair: QAPair) => pair.question?.trim() && pair.answer?.trim(),
-  );
-  if (qa.length > 0) {
-    paragraphs.push(formatQaHighlight(qa[0]));
-  }
-
-  if (paragraphs.length === 0) {
-    return 'This candidate has not added profile details yet.';
-  }
-
-  return paragraphs.join('\n\n');
+  return TRAIN_TO_GENERATE_MESSAGE;
 }

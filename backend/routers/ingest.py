@@ -135,12 +135,8 @@ async def ingest_profile_route(
             career_overview = await generate_career_overview(
                 name=name,
                 title=title,
-                summary=summary,
                 cv_text=cv_text,
                 personal_qa=qa_dicts,
-                links=link_dicts,
-                scraped_links=scraped,
-                skills=skills,
             )
         except Exception as exc:  # noqa: BLE001
             logger.warning(

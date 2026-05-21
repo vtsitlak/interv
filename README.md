@@ -33,9 +33,9 @@ When a candidate clicks **Save & train AI** on [Train profile](https://getinterv
 3. The backend:
    - Validates and trims payloads (`backend/services/request_validation.py`, `api_limits.py`).
    - **Scrapes** GitHub/website URLs where possible (`link_scraper.py`); each link’s **description note** is always included in training (even when a URL cannot be fetched). LinkedIn URLs are not scraped.
-   - Uses **Gemini** (`GEMINI_PROFILE_MODEL`) to **extract 8–15 skills** from CV, summary, Q&A, and link notes, and to generate a **career overview** paragraph for the public profile.
+   - Uses **Gemini** (`GEMINI_PROFILE_MODEL`) to **extract 8–15 skills** from CV, summary, Q&A, and link notes, and to generate a **Profile overview** (1–2 paragraphs of work experience from the CV).
    - **Chunks** CV, Q&A answers, and link content (notes + scraped text) into **Chroma** (`backend/services/rag.py`).
-   - Saves `skills`, `careerOverview`, and `ragEnabled` on the profile document.
+   - Saves `skills`, `careerOverview` (CV-based overview only), and `ragEnabled` on the profile document. The **Summary** field you enter on Train profile is shown under your role on the public page as-is.
 
 The train screen shows a privacy notice: CV, Q&A, link notes, and scraped page content are sent to **Google’s Gemini API** to power the twin and profile copy.
 

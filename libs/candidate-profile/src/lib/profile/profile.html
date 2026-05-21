@@ -39,9 +39,9 @@
                   }
                 </div>
               }
-              @if (careerSummary()) {
+              @if (p.summary.trim()) {
                 <p class="text-base-content/80 mt-4 leading-relaxed">
-                  {{ careerSummary() }}
+                  {{ p.summary }}
                 </p>
               }
               @if (isOwnerView()) {
