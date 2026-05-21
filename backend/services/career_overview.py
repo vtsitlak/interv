@@ -1,86 +1,84 @@
-"""Generate a public-facing career summary from trained profile content."""
+"""Generate a CV-based work experience overview for the public profile page."""
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from services.gemini import generate_text
 
+_OUTLINE_PATTERN = re.compile(
+    r'^(sentence|paragraph|section|part)\s*\d+\s*[:.)-]',
+    re.IGNORECASE | re.MULTILINE,
+)
 
-def _qa_snippet(personal_qa: list[dict[str, Any]], limit: int = 4) -> str:
+
+def is_invalid_profile_overview(text: str) -> bool:
+    """Detect outline-style model output instead of real prose."""
+    stripped = text.strip()
+    if not stripped:
+        return True
+    if _OUTLINE_PATTERN.search(stripped):
+        return True
+    if re.search(r'introduction,\s*core identity', stripped, re.IGNORECASE):
+        return True
+    return False
+
+
+def _qa_snippet(personal_qa: list[dict[str, Any]], limit: int = 3) -> str:
     lines: list[str] = []
     for qa in personal_qa[:limit]:
-        question = str(qa.get('question') or '').strip()
         answer = str(qa.get('answer') or '').strip()
-        if question and answer:
-            lines.append(f'Q: {question}\nA: {answer[:400]}')
+        if answer:
+            lines.append(answer[:350])
     return '\n\n'.join(lines)
-
-
-def _links_snippet(links: list[dict[str, Any]], scraped: list[dict[str, Any]]) -> str:
-    lines: list[str] = []
-    scraped_by_url = {
-        str(item.get('link') or ''): str(item.get('text') or '')[:600]
-        for item in scraped
-    }
-    for link in links[:6]:
-        href = str(link.get('link') or '').strip()
-        if not href:
-            continue
-        description = str(link.get('description') or '').strip()
-        scraped_text = scraped_by_url.get(href, '')
-        parts = [p for p in [description, scraped_text[:400] if scraped_text else ''] if p]
-        if parts:
-            lines.append(f'{href}: ' + ' | '.join(parts))
-    return '\n'.join(lines)
 
 
 async def generate_career_overview(
     *,
     name: str,
     title: str,
-    summary: str,
     cv_text: str,
-    personal_qa: list[dict[str, Any]],
-    links: list[dict[str, Any]],
-    scraped_links: list[dict[str, Any]],
-    skills: list[str],
+    personal_qa: list[dict[str, Any]] | None = None,
 ) -> str:
-    """Write a 3–5 sentence third-person career overview for the profile page."""
-    cv = cv_text.strip()[:5000]
-    if not cv and not summary.strip() and not personal_qa:
+    """Write 1–2 paragraphs of work-experience overview from the CV (third person)."""
+    cv = cv_text.strip()[:8000]
+    if not cv:
         return ''
 
+    first_name = name.strip().split()[0] if name.strip() else 'They'
+    role = title.strip() or 'professional'
+
     system = (
-        'You write concise professional profile copy for a hiring product. '
-        'Return only the overview paragraph(s), no headings or bullet lists.'
+        'You write public profile copy for a hiring platform. '
+        'Output only finished prose paragraphs. Never use headings, bullets, '
+        'numbered lists, or meta labels such as "Sentence 1" or "Paragraph 2".'
     )
-    skills_line = ', '.join(skills[:15]) if skills else '(not extracted yet)'
-    prompt = f"""Write a 3–5 sentence career overview for this candidate's public profile.
-Use third person (e.g. "They", "{name.split()[0] if name.strip() else 'They'}").
-Summarize career direction, strengths, and what they bring to a role — grounded only in the data below.
-Do not invent employers, dates, or credentials not supported by the source material.
+    qa_block = _qa_snippet(personal_qa or [])
+    prompt = f"""Write 1–2 short paragraphs summarizing this person's work experience and career background for their public profile.
 
-Name: {name.strip() or '(not provided)'}
-Role / title: {title.strip() or '(not provided)'}
-Candidate summary (their own words): {summary.strip()[:800] or '(not provided)'}
+Rules:
+- Base the overview primarily on the CV text below.
+- Write in third person (use "{first_name}" or "they").
+- Use complete sentences in normal paragraph form only.
+- Mention concrete skills, roles, and experience from the CV when present.
+- Do not invent employers, dates, or credentials that are not in the CV.
+- Do not output an outline, plan, or template — only the final overview text.
 
-CV excerpt:
-{cv or '(empty)'}
+Role / title: {role}
 
-Personal Q&A:
-{_qa_snippet(personal_qa) or '(none)'}
+CV:
+{cv}
+{f"Additional context from their answers:{chr(10)}{qa_block}" if qa_block else ""}
 
-Links (description and scraped notes):
-{_links_snippet(links, scraped_links) or '(none)'}
-
-Extracted skills: {skills_line}
-
-Career overview:"""
+Work experience overview:"""
 
     raw = await generate_text(
         prompt,
         system_instruction=system,
-        max_output_tokens=400,
+        max_output_tokens=500,
     )
-    return raw.strip()[:2000]
+    overview = raw.strip()[:2000]
+    if is_invalid_profile_overview(overview):
+        return ''
+    return overview

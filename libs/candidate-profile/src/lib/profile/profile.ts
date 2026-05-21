@@ -77,19 +77,6 @@ export class ProfileComponent implements OnInit {
     return formatWorkPreferenceLabel(id);
   }
 
-  /** Paragraph under the role and in Profile overview (AI-generated after train). */
-  careerSummary(): string {
-    const p = this.profile();
-    if (!p) {
-      return '';
-    }
-    const generated = p.careerOverview?.trim();
-    if (generated) {
-      return generated;
-    }
-    return p.summary?.trim() ?? '';
-  }
-
   profileOverview(): string {
     const p = this.profile();
     if (!p) {

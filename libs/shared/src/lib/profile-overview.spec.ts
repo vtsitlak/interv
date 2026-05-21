@@ -1,48 +1,45 @@
 import { describe, expect, it } from 'vitest';
-import { buildProfileOverview } from './profile-overview';
+import {
+  buildProfileOverview,
+  isInvalidProfileOverview,
+} from './profile-overview';
+
+describe('isInvalidProfileOverview', () => {
+  it('flags outline-style placeholder text', () => {
+    expect(
+      isInvalidProfileOverview(
+        'Sentence 1: Introduction, core identity, and experience level',
+      ),
+    ).toBe(true);
+  });
+
+  it('accepts normal prose', () => {
+    expect(
+      isInvalidProfileOverview(
+        'Alex is a senior front-end developer with eight years building Angular applications for enterprise clients.',
+      ),
+    ).toBe(false);
+  });
+});
 
 describe('buildProfileOverview', () => {
-  it('prefers AI career overview when present', () => {
+  it('shows CV-generated overview when valid', () => {
     const text = buildProfileOverview({
-      name: 'Ada Lovelace',
-      title: 'Software Engineer',
-      summary: 'Short manual summary.',
       careerOverview:
-        'Ada is a full-stack engineer with eight years building SaaS products.',
-      skills: ['Angular', 'TypeScript'],
-      linkedIn: 'https://www.linkedin.com/in/ada',
-      personalQA: [],
+        'Alex has spent eight years delivering Angular and TypeScript products for SaaS teams.',
     });
-
-    expect(text).toContain('eight years building SaaS');
-    expect(text).not.toContain('Core skills');
-    expect(text).not.toContain('Short manual summary');
+    expect(text).toContain('eight years');
   });
 
-  it('falls back to composed text when career overview is missing', () => {
+  it('hides invalid stored overview and prompts to train', () => {
     const text = buildProfileOverview({
-      name: 'Ada Lovelace',
-      title: 'Software Engineer',
-      summary: 'Builds reliable web apps.',
-      skills: ['Angular', 'TypeScript'],
-      linkedIn: 'https://www.linkedin.com/in/ada',
-      personalQA: [],
+      careerOverview: 'Sentence 1: Introduction, core identity, and experience level',
     });
-
-    expect(text).toContain('Ada Lovelace is a Software Engineer.');
-    expect(text).toContain('Builds reliable web apps.');
-    expect(text).not.toContain('Core skills');
+    expect(text).toContain('Save and train your profile');
+    expect(text).not.toContain('Sentence 1');
   });
 
-  it('returns fallback when profile is empty', () => {
-    expect(
-      buildProfileOverview({
-        name: '',
-        title: '',
-        summary: '',
-        skills: [],
-        personalQA: [],
-      }),
-    ).toContain('not added profile details');
+  it('prompts to train when overview is missing', () => {
+    expect(buildProfileOverview({})).toContain('Save and train your profile');
   });
 });
