@@ -18,7 +18,11 @@ import {
   updateDoc,
 } from '@angular/fire/firestore';
 import type { Profile } from '@interv/shared';
-import { INTERV_LIST_PAGE_SIZE, isHiddenFromAudience } from '@interv/shared';
+import {
+  currentFirebaseUserOrNull,
+  INTERV_LIST_PAGE_SIZE,
+  isHiddenFromAudience,
+} from '@interv/shared';
 import type { RecruiterInfo } from '@interv/state-interview';
 import type {
   CandidateSearchPage,
@@ -59,12 +63,13 @@ export class RecruiterService {
   private readonly firestore = inject(Firestore);
   private readonly auth = inject(Auth);
 
-  private recruiterId(): string | null {
-    return this.auth.currentUser?.uid ?? null;
+  private async recruiterId(): Promise<string | null> {
+    const user = await currentFirebaseUserOrNull(this.auth);
+    return user?.uid ?? null;
   }
 
   async getProfile(uid?: string): Promise<RecruiterProfile | null> {
-    const id = uid ?? this.recruiterId();
+    const id = uid ?? (await this.recruiterId());
     if (!id) {
       return null;
     }
@@ -93,7 +98,7 @@ export class RecruiterService {
   }
 
   async saveProfile(info: RecruiterInfo): Promise<RecruiterProfile> {
-    const id = this.recruiterId();
+    const id = await this.recruiterId();
     if (!id) {
       throw new Error('You must be signed in to save your recruiter profile.');
     }
@@ -249,7 +254,7 @@ export class RecruiterService {
     pageSize = INTERV_LIST_PAGE_SIZE,
     cursor: QueryDocumentSnapshot | null = null,
   ): Promise<RecruiterInterviewPage> {
-    const recruiterUid = this.recruiterId();
+    const recruiterUid = await this.recruiterId();
     if (!recruiterUid) {
       return { items: [], nextCursor: null, hasMore: false };
     }
@@ -300,7 +305,7 @@ export class RecruiterService {
   }
 
   async getInterviews(): Promise<RecruiterInterviewSummary[]> {
-    const recruiterUid = this.recruiterId();
+    const recruiterUid = await this.recruiterId();
     if (!recruiterUid) {
       return [];
     }
@@ -332,7 +337,7 @@ export class RecruiterService {
     candidateProfileId: string,
     interviewId: string,
   ): Promise<void> {
-    const recruiterUid = this.recruiterId();
+    const recruiterUid = await this.recruiterId();
     if (!recruiterUid) {
       throw new Error('You must be signed in to remove an interview.');
     }
