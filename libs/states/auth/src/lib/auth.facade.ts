@@ -26,8 +26,8 @@ export class AuthFacade {
   readonly isCandidate = this.store.isCandidate;
 
   async tryHandleRedirectResult(): Promise<void> {
-    await this.store.tryHandleRedirectResult();
-    if (this.store.user()) {
+    const signedInViaRedirect = await this.store.tryHandleRedirectResult();
+    if (signedInViaRedirect && this.store.user()) {
       await this.navigateAfterAuth();
     }
   }

@@ -106,4 +106,31 @@ describe('AuthFacade', () => {
     expect(storeMock.logout).toHaveBeenCalled();
     expect(navigate).toHaveBeenCalledWith(['/']);
   });
+
+  it('tryHandleRedirectResult() does not navigate when session was not restored from redirect', async () => {
+    storeMock.user.mockReturnValue({
+      uid: 'u1',
+      email: 'a@b.com',
+      displayName: 'Rec',
+    });
+    storeMock.tryHandleRedirectResult.mockResolvedValue(false);
+
+    await facade.tryHandleRedirectResult();
+
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('tryHandleRedirectResult() navigates after Google redirect sign-in', async () => {
+    storeMock.user.mockReturnValue({
+      uid: 'u1',
+      email: 'a@b.com',
+      displayName: 'Rec',
+    });
+    storeMock.isRecruiter.mockReturnValue(true);
+    storeMock.tryHandleRedirectResult.mockResolvedValue(true);
+
+    await facade.tryHandleRedirectResult();
+
+    expect(navigate).toHaveBeenCalledWith(['/recruiter/profile']);
+  });
 });

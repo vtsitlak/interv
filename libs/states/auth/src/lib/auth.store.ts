@@ -91,20 +91,21 @@ export const AuthStore = signalStore(
     };
 
     return {
-      async tryHandleRedirectResult(): Promise<void> {
+      async tryHandleRedirectResult(): Promise<boolean> {
         try {
           const cred = await authService.getRedirectResult();
           const user = toProfileUser(cred?.user ?? null);
           if (!user) {
-            return;
+            return false;
           }
           patchState(store, { loading: true, error: null });
-          await finalizeGoogleSignIn(user);
+          return await finalizeGoogleSignIn(user);
         } catch (e: unknown) {
           patchState(store, {
             error: firebaseErrorMessage(e),
             loading: false,
           });
+          return false;
         }
       },
 
