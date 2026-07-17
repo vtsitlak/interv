@@ -151,14 +151,14 @@ Login and register show **inline error alerts** for wrong credentials, duplicate
 
 | Layer | Technologies |
 |-------|----------------|
-| **Frontend** | Angular 21 (standalone, signals, `@if` / `@for`), Nx workspace, Tailwind CSS 4, DaisyUI |
+| **Frontend** | Angular 22 (standalone, signals, `@if` / `@for`), Nx 23 workspace, TypeScript 6, Tailwind CSS 4, DaisyUI |
 | **State** | NgRx Signal Stores (`@ngrx/signals`) — facades per domain |
-| **Auth & data** | Firebase Auth, Firestore, Storage |
+| **Auth & data** | Firebase Auth, Firestore, Storage (`@angular/fire`) |
 | **API** | Python **FastAPI**, Uvicorn |
 | **AI** | **Google Gemini** (GenAI SDK), **Chroma** vector store, custom RAG |
 | **Realtime** | WebSockets (interview streaming) |
 | **Hosting** | Firebase Hosting (demo: `getinterv.web.app`) |
-| **Tests** | Vitest (libs), Playwright (e2e) |
+| **Tests** | Vitest (libs), Jest (app), Playwright (e2e) |
 
 ---
 
@@ -208,7 +208,7 @@ interv/
 
 ### Requirements
 
-- Node.js `^20.19` / `^22.12` / `>=24` (see `package.json`)
+- Node.js `^22.22.3` or `>=24.15.0` (Angular 22 requirement; see `package.json` `engines`)
 - Python 3.11+ for the backend
 - Firebase project (Auth, Firestore, Storage) matching `src/environments/environment.ts`
 - `GEMINI_API_KEY` and Firebase service account for the API
@@ -225,6 +225,8 @@ pip install -r requirements.txt
 cp .env.example .env
 # Edit backend/.env — GEMINI_API_KEY, FIREBASE_SERVICE_ACCOUNT_KEY
 ```
+
+`npm install` uses `.npmrc` (`legacy-peer-deps=true`) so `@angular/fire` and `@ngrx/signals` resolve cleanly against Angular 22 until those packages publish matching peer ranges.
 
 **Environment files** (all gitignored except `*.env.example`):
 

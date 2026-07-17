@@ -35,7 +35,12 @@
       "@interv/state-dashboard": ["./libs/states/dashboard/src/index.ts"],
       "@interv/state-recruiter": ["./libs/states/recruiter/src/index.ts"],
       "@interv/recruiter": ["./libs/recruiter/src/index.ts"]
-    }
+    },
+    "strict": false,
+    "noUncheckedSideEffectImports": false,
+    "types": ["*"],
+    "esModuleInterop": false,
+    "ignoreDeprecations": "6.0"
   },
   "exclude": ["node_modules", "tmp"]
 }
