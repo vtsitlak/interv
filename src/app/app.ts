@@ -1,4 +1,4 @@
-import { Component, effect, inject, untracked } from '@angular/core';
+import { Component, effect, inject, untracked, ChangeDetectionStrategy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { HeaderComponent } from '@interv/shared';
 import { AuthFacade, AuthSyncService } from '@interv/state-auth';
@@ -8,6 +8,7 @@ import { ProfileFacade } from '@interv/state-profile';
   imports: [RouterOutlet, HeaderComponent],
   selector: 'app-root',
   templateUrl: './app.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './app.scss',
 })
 export class App {

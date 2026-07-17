@@ -128,3 +128,5 @@ logs/
 *.swp
 *.swo
 *~
+
+.nx/migrate-runs
