@@ -157,7 +157,7 @@ Login and register show **inline error alerts** for wrong credentials, duplicate
 | **API** | Python **FastAPI**, Uvicorn |
 | **AI** | **Google Gemini** (GenAI SDK), **Chroma** vector store, custom RAG |
 | **Realtime** | WebSockets (interview streaming) |
-| **Hosting** | Firebase Hosting (demo: `getinterv.web.app`) |
+| **Hosting** | Firebase Hosting (demo: `getinterv.web.app`); API on **Google Cloud Run** |
 | **Tests** | Vitest (libs), Jest (app), Playwright (e2e) |
 
 ---
@@ -263,6 +263,34 @@ npm run deploy:firebase
 
 Deploy Firestore rules when they change: `npm run deploy:firestore:rules`.
 
+### Production API (Cloud Run)
+
+The live API is the Cloud Run service `interv-api` in project `interv-c6366`, region `us-central1`:
+
+- HTTPS: `https://interv-api-30333030614.us-central1.run.app`
+- WebSocket: `wss://interv-api-30333030614.us-central1.run.app`
+
+`src/environments/environment.prod.ts` sets `apiUrl` and `wsUrl` to that host. Firebase Hosting still serves the Angular app. CORS in `backend/main.py` already allows `https://getinterv.web.app`.
+
+Cloud Run environment variables (set on the service, not committed):
+
+| Variable | Production value |
+|----------|------------------|
+| `GEMINI_API_KEY` | Required |
+| `FIREBASE_SERVICE_ACCOUNT_KEY` | Service-account JSON string (`json.loads` in the API) |
+| `SKIP_RAG` | `true` — the container disk is ephemeral, so Chroma does not survive a new instance |
+| `GEMINI_CHAT_MODEL` | `gemini-3-flash-preview` |
+| `GEMINI_PROFILE_MODEL` | `gemini-3.1-pro-preview` |
+
+`backend/.gcloudignore` keeps `backend/.env` out of the image. Redeploy from the backend directory:
+
+```sh
+cd backend
+gcloud run deploy interv-api --source . --region us-central1 --project interv-c6366
+```
+
+The service allows unauthenticated invocations, uses 1 GiB memory, a 60-minute request timeout, and a minimum of 0 instances. After a backend deploy, confirm `GET /health` returns `"geminiConfigured": true` and `"skipRag": true`.
+
 ### E2E tests (Playwright)
 
 E2E credentials must live in **environment variables** (`e2e/.env` locally, GitHub Actions secrets in CI), never in the repo or URLs.
@@ -291,7 +319,7 @@ Add **repository secrets** (Settings → Secrets and variables → Actions):
 | `FIREBASE_SERVICE_ACCOUNT_KEY` | Backend Admin SDK JSON (same as local `backend/.env`) |
 | `GEMINI_API_KEY` | Optional; only needed if e2e covers train/chat |
 
-Do **not** put these on Railway unless you run Playwright against a Railway-deployed URL. CI starts local app + API via `e2e/playwright.config.ts` `webServer`.
+Do **not** put these on Cloud Run unless you run Playwright against the deployed API. CI starts a local app and API via `e2e/playwright.config.ts` `webServer`.
 
 Workflows:
 
@@ -335,7 +363,7 @@ Guards still call `setUser()` before activating a protected route so role is loa
 
 ## Configuration notes
 
-- **Frontend API URL:** `src/environments/environment.ts` (dev) and `environment.prod.ts` (production build).
+- **Frontend API URL:** `src/environments/environment.ts` (local `ws://127.0.0.1:8000`) and `environment.prod.ts` (Cloud Run `wss://interv-api-30333030614.us-central1.run.app`).
 - **CORS:** `backend/main.py` allows `https://getinterv.web.app` by default; add origins via `BACKEND_CORS_ORIGINS`.
 - **Rate limits:** Ingest cooldown, per-hour caps for Q&A generation and suggested questions — `backend/.env.example`.
 - **Field limits:** Shared constants in `libs/shared/.../field-limits.ts` and mirrored in `backend/services/api_limits.py`.
