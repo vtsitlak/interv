@@ -1,12 +1,12 @@
 module.exports = {
   displayName: 'interv',
-  preset: './jest.preset.js',
+  preset: '../../jest.preset.js',
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
   moduleNameMapper: {
     '^@angular/fire/auth$': '<rootDir>/src/testing/angular-fire-auth.mock.ts',
   },
-  coverageDirectory: './coverage/interv',
+  coverageDirectory: '../../coverage/interv',
   transform: {
     '^.+\\.(ts|mjs|js|html)$': [
       'jest-preset-angular',

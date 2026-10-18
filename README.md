@@ -168,8 +168,8 @@ Nx workspace with path aliases in `tsconfig.base.json`:
 
 ```
 interv/
-├── src/                    # Shell app (routes, guards, environments)
-├── public/                 # Static assets (favicon.svg)
+├── apps/
+│   └── interv/             # Angular shell (routes, guards, environments, public assets)
 ├── libs/
 │   ├── shared/             # UI (header, logo, confirm modal), models, constants
 │   ├── home/               # Marketing landing
@@ -186,14 +186,14 @@ interv/
 │       ├── interview/      # WebSocket interview facade
 │       ├── dashboard/
 │       └── recruiter/
-├── backend/                # FastAPI AI + interview API
+├── backend/                # FastAPI AI + interview API (Cloud Run)
 ├── e2e/                    # Playwright tests + e2e/.env (gitignored)
 ├── docs/screenshots/       # README images
 ├── firestore.rules
 └── .github/workflows/      # ci.yml (lint, test, e2e), deploy-firebase-hosting.yml
 ```
 
-**Routing** (see `src/app/app.routes.ts`):
+**Routing** (see `apps/interv/src/app/app.routes.ts`):
 
 - `/` — home  
 - `/login`, `/register` — candidate auth  
@@ -210,7 +210,7 @@ interv/
 
 - Node.js `^22.22.3` or `>=24.15.0` (Angular 22 requirement; see `package.json` `engines`)
 - Python 3.11+ for the backend
-- Firebase project (Auth, Firestore, Storage) matching `src/environments/environment.ts`
+- Firebase project (Auth, Firestore, Storage) matching `apps/interv/src/environments/environment.ts`
 - `GEMINI_API_KEY` and Firebase service account for the API
 
 ### Install
@@ -270,7 +270,7 @@ The live API is the Cloud Run service `interv-api` in project `interv-c6366`, re
 - HTTPS: `https://interv-api-30333030614.us-central1.run.app`
 - WebSocket: `wss://interv-api-30333030614.us-central1.run.app`
 
-`src/environments/environment.prod.ts` sets `apiUrl` and `wsUrl` to that host. Firebase Hosting still serves the Angular app. CORS in `backend/main.py` already allows `https://getinterv.web.app`.
+`apps/interv/src/environments/environment.prod.ts` sets `apiUrl` and `wsUrl` to that host. Firebase Hosting still serves the Angular app (`dist/interv/browser`). CORS in `backend/main.py` already allows `https://getinterv.web.app`.
 
 Cloud Run environment variables (set on the service, not committed):
 
@@ -363,7 +363,7 @@ Guards still call `setUser()` before activating a protected route so role is loa
 
 ## Configuration notes
 
-- **Frontend API URL:** `src/environments/environment.ts` (local `ws://127.0.0.1:8000`) and `environment.prod.ts` (Cloud Run `wss://interv-api-30333030614.us-central1.run.app`).
+- **Frontend API URL:** `apps/interv/src/environments/environment.ts` (local `ws://127.0.0.1:8000`) and `environment.prod.ts` (Cloud Run `wss://interv-api-30333030614.us-central1.run.app`).
 - **Public profile URLs:** Candidates set a unique `username` on Train profile. Share links use `/candidate/{username}`. Legacy `/candidate/{uid}` links still resolve and redirect to the username when one is set. Firestore profile docs stay keyed by Firebase uid; `usernames/{username}` maps handles → uid.
 - **CORS:** `backend/main.py` allows `https://getinterv.web.app` by default; add origins via `BACKEND_CORS_ORIGINS`.
 - **Rate limits:** Ingest cooldown, per-hour caps for Q&A generation and suggested questions — `backend/.env.example`.

@@ -380,7 +380,7 @@ export class ProfileService {
       });
     } catch {
       throw new Error(
-        `Cannot reach the API at ${this.apiUrl}. Start the backend (npm run start:backend or npm run start:all) and confirm apiUrl in src/environments/environment.ts.`,
+        `Cannot reach the API at ${this.apiUrl}. Start the backend (npm run start:backend or npm run start:all) and confirm apiUrl in apps/interv/src/environments/environment.ts.`,
       );
     }
     if (!response.ok) {
