@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 _EMPTY_CANDIDATE_PROFILE: dict[str, Any] = {
     'name': '',
+    'username': firestore.DELETE_FIELD,
     'title': '',
     'photo': '',
     'summary': '',
@@ -23,6 +24,7 @@ _EMPTY_CANDIDATE_PROFILE: dict[str, Any] = {
     'links': [],
     'personalQA': [],
     'skills': [],
+    'showFullNameOnPublicProfile': True,
     'isPublished': True,
     'isPublicProfileEnabled': True,
 }
@@ -43,6 +45,13 @@ def _delete_collection(ref, batch_size: int = 400) -> None:
         batch.commit()
 
 
+def _delete_username_aliases(profile_id: str) -> None:
+    """Remove all public username docs that point at this profile uid."""
+    query = _db().collection('usernames').where('uid', '==', profile_id)
+    for snap in query.stream():
+        snap.reference.delete()
+
+
 def _delete_candidate_interviews(profile_id: str) -> None:
     interviews = _db().collection('profiles').document(profile_id).collection(
         'interviews'
@@ -61,6 +70,7 @@ def reset_candidate_profile(profile_id: str) -> None:
     """Remove interviews and RAG data; clear profile fields."""
     _delete_candidate_interviews(profile_id)
     delete_collection(profile_id)
+    _delete_username_aliases(profile_id)
 
     profile_ref = _db().collection('profiles').document(profile_id)
     if profile_ref.get().exists:
@@ -80,6 +90,7 @@ def delete_candidate_account(profile_id: str) -> None:
     """Remove candidate profile, interviews, and RAG data."""
     _delete_candidate_interviews(profile_id)
     delete_collection(profile_id)
+    _delete_username_aliases(profile_id)
     _delete_collection(
         _db().collection('profiles').document(profile_id).collection('interviews')
     )

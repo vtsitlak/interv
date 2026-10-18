@@ -18,6 +18,7 @@ import {
   type ChatMessage,
   type InterviewReview,
 } from '@interv/state-interview';
+import { ProfileService } from '@interv/state-profile';
 import { InterviewTranscriptComponent } from '../interview-transcript/interview-transcript';
 
 interface FeedbackFormModel {
@@ -36,9 +37,11 @@ interface FeedbackFormModel {
 export class InterviewSummaryComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly interviewService = inject(InterviewService);
+  private readonly profileService = inject(ProfileService);
 
-  readonly profileId =
-    this.route.snapshot.paramMap.get('profileId') ?? '';
+  readonly profileId = signal(
+    this.route.snapshot.paramMap.get('profileId') ?? '',
+  );
   readonly interviewId =
     this.route.snapshot.paramMap.get('interviewId') ?? '';
 
@@ -104,7 +107,8 @@ export class InterviewSummaryComponent implements OnInit {
 
   async onSaveFeedback(event: Event): Promise<void> {
     event.preventDefault();
-    if (!this.profileId || !this.interviewId || this.feedbackForm().invalid()) {
+    const profileId = this.profileId();
+    if (!profileId || !this.interviewId || this.feedbackForm().invalid()) {
       return;
     }
 
@@ -116,7 +120,7 @@ export class InterviewSummaryComponent implements OnInit {
 
     try {
       await this.interviewService.submitFeedback(
-        this.profileId,
+        profileId,
         this.interviewId,
         clampedScore,
         text.trim(),
@@ -140,19 +144,22 @@ export class InterviewSummaryComponent implements OnInit {
   }
 
   private async load(): Promise<void> {
-    if (!this.profileId || !this.interviewId) {
+    const routeHandle = this.profileId();
+    if (!routeHandle || !this.interviewId) {
       this.error.set('Interview not found.');
       this.isLoading.set(false);
       return;
     }
 
     try {
+      const uid =
+        (await this.profileService.resolveProfileUid(routeHandle)) ??
+        routeHandle;
+      this.profileId.set(uid);
+
       const [profile, review] = await Promise.all([
-        this.interviewService.getPublicProfile(this.profileId),
-        this.interviewService.getInterviewForReview(
-          this.profileId,
-          this.interviewId,
-        ),
+        this.interviewService.getPublicProfile(uid),
+        this.interviewService.getInterviewForReview(uid, this.interviewId),
       ]);
 
       this.candidateName.set(profile?.name?.trim() ?? 'Candidate');
@@ -171,7 +178,7 @@ export class InterviewSummaryComponent implements OnInit {
 
       this.isLoadingTranscript.set(true);
       const messages = await this.interviewService.getInterviewMessages(
-        this.profileId,
+        uid,
         this.interviewId,
       );
       this.transcript.set(messages);

@@ -15,7 +15,7 @@ import {
   PRACTICE_RECRUITER_INFO,
   type RecruiterInfo,
 } from '@interv/state-interview';
-import { ProfileFacade } from '@interv/state-profile';
+import { ProfileFacade, ProfileService } from '@interv/state-profile';
 import { RecruiterFacade } from '@interv/state-recruiter';
 import {
   PROFILE_TWIN_INCOMPLETE_HINT,
@@ -37,6 +37,7 @@ export class InterviewComponent implements OnInit, OnDestroy {
   private readonly interviewService = inject(InterviewService);
   private readonly authFacade = inject(AuthFacade);
   private readonly profileFacade = inject(ProfileFacade);
+  private readonly profileService = inject(ProfileService);
   private readonly recruiterFacade = inject(RecruiterFacade);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -60,12 +61,10 @@ export class InterviewComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.facade.disconnect();
+    void this.bootstrap();
+  }
 
-    const routeProfileId = this.route.snapshot.paramMap.get('profileId') ?? '';
-    if (routeProfileId) {
-      this.profileId.set(routeProfileId);
-    }
-
+  private async bootstrap(): Promise<void> {
     const testMode = this.routeDataFlag('testMode');
     const skipRecruiterSetup =
       this.routeDataFlag('skipRecruiterSetup') || this.authFacade.isRecruiter();
@@ -78,12 +77,35 @@ export class InterviewComponent implements OnInit, OnDestroy {
       if (uid) {
         this.profileId.set(uid);
       }
-      void this.initializePracticeInterview();
+      await this.initializePracticeInterview();
+      return;
+    }
+
+    const routeHandle = this.route.snapshot.paramMap.get('profileId') ?? '';
+    if (!routeHandle) {
+      return;
+    }
+
+    const resolved = await this.profileService.resolvePublicProfile(routeHandle);
+    if (!resolved) {
+      return;
+    }
+    this.profileId.set(resolved.uid);
+
+    if (
+      resolved.shouldRedirectToUsername &&
+      resolved.canonicalUsername &&
+      !skipRecruiterSetup
+    ) {
+      await this.router.navigate(
+        ['/candidate', resolved.canonicalUsername, 'interview'],
+        { replaceUrl: true, queryParamsHandling: 'preserve' },
+      );
       return;
     }
 
     if (skipRecruiterSetup) {
-      void this.startAuthenticatedRecruiterInterview();
+      await this.startAuthenticatedRecruiterInterview();
     }
   }
 

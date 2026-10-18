@@ -32,6 +32,17 @@ export {
   PROFILE_TWIN_INCOMPLETE_MESSAGE,
 } from './lib/util/profile-complete';
 export {
+  isReservedUsername,
+  isValidUsernameFormat,
+  normalizeUsername,
+  publicSharePathForUsername,
+  RESERVED_USERNAMES,
+  USERNAME_MAX_LENGTH,
+  USERNAME_MIN_LENGTH,
+  USERNAME_PATTERN,
+  usernameFormatError,
+} from './lib/util/username';
+export {
   serializeFeedbackForm,
   serializeProfileTrainForm,
   serializeRecruiterForm,

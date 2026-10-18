@@ -24,7 +24,7 @@ export const PROFILE_SAVED_MESSAGE =
   'Profile saved. Your CV and answers were sent to train your AI.';
 
 export const INVALID_FORM_MESSAGE =
-  'Please fill in full name, job title, summary, and CV text (all required).';
+  'Please fill in username, full name, job title, summary, and CV text (all required).';
 
 export const NOT_SIGNED_IN_LOAD_MESSAGE =
   'You must be signed in to load your profile.';

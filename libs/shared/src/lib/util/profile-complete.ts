@@ -8,11 +8,17 @@ export const PROFILE_TWIN_INCOMPLETE_HINT =
 
 type ProfileCompletenessFields = Pick<
   Profile,
-  'name' | 'title' | 'summary' | 'cvText'
+  'name' | 'username' | 'title' | 'summary' | 'cvText'
 >;
 
 export function isProfileComplete(
   profile: ProfileCompletenessFields | null | undefined,
 ): boolean {
-  return !!(profile?.name && profile?.title && profile?.summary && profile?.cvText);
+  return !!(
+    profile?.name &&
+    profile?.username &&
+    profile?.title &&
+    profile?.summary &&
+    profile?.cvText
+  );
 }

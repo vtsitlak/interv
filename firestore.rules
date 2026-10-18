@@ -27,6 +27,25 @@ service cloud.firestore {
       }
     }
 
+    /**
+     * Public handle → uid map. Doc id is the normalized username.
+     * Create-only for the owning uid; deletes allowed for the owner (account cleanup).
+     * Old handles are kept as aliases when a user renames.
+     */
+    match /usernames/{username} {
+      allow read: if true;
+
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.username == username
+        && username.matches('^[a-z0-9]([a-z0-9-]{0,28}[a-z0-9])?$');
+
+      allow update: if false;
+
+      allow delete: if request.auth != null
+        && resource.data.uid == request.auth.uid;
+    }
+
     match /profiles/{profileId} {
       allow read: if request.auth != null && request.auth.uid == profileId
         || (resource != null && resource.data.get('isPublicProfileEnabled', true) == true)

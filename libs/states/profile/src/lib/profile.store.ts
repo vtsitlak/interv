@@ -30,7 +30,16 @@ export const ProfileStore = signalStore(
     ),
     shareUrl: computed(() => {
       const p = profile();
-      return p ? `/candidate/${p.id}` : null;
+      if (!p) {
+        return null;
+      }
+      if (p.shareUrl?.trim()) {
+        return p.shareUrl;
+      }
+      if (p.username?.trim()) {
+        return `/candidate/${p.username.trim().toLowerCase()}`;
+      }
+      return `/candidate/${p.id}`;
     }),
   })),
   withMethods((store) => {
@@ -95,6 +104,28 @@ export const ProfileStore = signalStore(
             successMessage: null,
           });
         }
+      },
+
+      /**
+       * Persist username on blur without the train/save spinner or success toast.
+       * Throws so the Train form can show the error next to the field.
+       */
+      async claimUsername(
+        username: string,
+        showFullNameOnPublicProfile: boolean,
+      ): Promise<Profile> {
+        const user = await profileService.currentUserOrNull();
+        if (!user) {
+          throw new Error(NOT_SIGNED_IN_SAVE_MESSAGE);
+        }
+        const profile = await profileService.claimUsername(
+          user.uid,
+          username,
+          store.profile(),
+          showFullNameOnPublicProfile,
+        );
+        patchState(store, { profile, error: null });
+        return profile;
       },
 
       async ingestToRAG(

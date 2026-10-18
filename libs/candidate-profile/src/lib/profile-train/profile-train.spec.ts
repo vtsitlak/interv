@@ -9,17 +9,29 @@ describe('ProfileTrainComponent', () => {
   let component: ProfileTrainComponent;
   const loadProfile = vi.fn().mockResolvedValue(undefined);
   const saveProfile = vi.fn().mockResolvedValue(undefined);
+  const claimUsername = vi.fn().mockResolvedValue({
+    id: 'u1',
+    username: 'new-handle',
+    shareUrl: '/candidate/new-handle',
+  });
   const ingestToRAG = vi.fn().mockResolvedValue(undefined);
   const reportInvalidForm = vi.fn();
   const buildPersonalQA = vi.fn().mockResolvedValue([
     { question: 'As a T, what motivates you?', answer: '' },
   ]);
   let successMessage: string | null = null;
+  let profileUsername = 'n-dev';
 
   beforeEach(async () => {
     successMessage = null;
+    profileUsername = 'n-dev';
     loadProfile.mockClear();
     saveProfile.mockReset().mockResolvedValue(undefined);
+    claimUsername.mockReset().mockResolvedValue({
+      id: 'u1',
+      username: 'new-handle',
+      shareUrl: '/candidate/new-handle',
+    });
     ingestToRAG.mockReset().mockResolvedValue(undefined);
     reportInvalidForm.mockClear();
     buildPersonalQA.mockClear();
@@ -32,7 +44,14 @@ describe('ProfileTrainComponent', () => {
           provide: ProfileService,
           useValue: {
             currentUserOrNull: vi.fn().mockResolvedValue({ uid: 'u1' }),
-            uploadProfilePhoto: vi.fn().mockResolvedValue('https://cdn.example/photo.jpg'),
+            uploadProfilePhoto: vi
+              .fn()
+              .mockResolvedValue('https://cdn.example/photo.jpg'),
+            checkUsernameAvailability: vi.fn().mockResolvedValue({
+              available: true,
+              normalized: 'new-handle',
+              message: null,
+            }),
           },
         },
         {
@@ -47,6 +66,8 @@ describe('ProfileTrainComponent', () => {
               id: 'u1',
               userId: 'u1',
               name: 'N',
+              username: profileUsername,
+              showFullNameOnPublicProfile: true,
               title: 'T',
               photo: '',
               summary: 'S',
@@ -54,10 +75,11 @@ describe('ProfileTrainComponent', () => {
               links: [],
               personalQA: [{ question: 'Q', answer: 'A' }],
               isPublished: true,
-              shareUrl: '/candidate/u1',
+              shareUrl: `/candidate/${profileUsername}`,
             }),
             loadProfile,
             saveProfile,
+            claimUsername,
             ingestToRAG,
             reportInvalidForm,
             buildPersonalQA,
@@ -87,6 +109,8 @@ describe('ProfileTrainComponent', () => {
   it('onSave calls preventDefault when a submit event is passed', async () => {
     component.profileModel.set({
       name: 'Name',
+      username: 'name-dev',
+      showFullNameOnPublicProfile: true,
       title: 'Title',
       photo: '',
       summary: 'Summary',
@@ -116,6 +140,8 @@ describe('ProfileTrainComponent', () => {
 
     component.profileModel.set({
       name: 'Name',
+      username: 'name-dev',
+      showFullNameOnPublicProfile: true,
       title: 'Title',
       photo: '',
       summary: 'Summary',
@@ -137,6 +163,8 @@ describe('ProfileTrainComponent', () => {
 
     component.profileModel.set({
       name: 'Name',
+      username: 'name-dev',
+      showFullNameOnPublicProfile: true,
       title: 'Title',
       photo: '',
       summary: 'Summary',
@@ -161,6 +189,8 @@ describe('ProfileTrainComponent', () => {
   it('onSave does nothing when form invalid', async () => {
     component.profileModel.set({
       name: '',
+      username: '',
+      showFullNameOnPublicProfile: true,
       title: '',
       photo: '',
       summary: '',
@@ -242,5 +272,32 @@ describe('ProfileTrainComponent', () => {
     const qa = component.profileModel().personalQA;
     expect(qa.length).toBe(1);
     expect(qa[0].question).toBe('Q2');
+  });
+
+  it('onUsernameBlur claims and saves a new available username', async () => {
+    profileUsername = 'n-dev';
+    component.profileModel.update((m) => ({ ...m, username: 'new-handle' }));
+
+    await component.onUsernameBlur();
+
+    expect(claimUsername).toHaveBeenCalledWith('new-handle', true);
+    expect(component.usernameAvailable()).toBe(true);
+    expect(component.usernameCheckMessage()).toBe('Username saved');
+  });
+
+  it('onUsernameBlur skips claim when username is already saved', async () => {
+    profileUsername = 'n-dev';
+    component.profileModel.update((m) => ({ ...m, username: 'n-dev' }));
+    const profileService = TestBed.inject(ProfileService);
+    vi.mocked(profileService.checkUsernameAvailability).mockResolvedValueOnce({
+      available: true,
+      normalized: 'n-dev',
+      message: null,
+    });
+
+    await component.onUsernameBlur();
+
+    expect(claimUsername).not.toHaveBeenCalled();
+    expect(component.usernameCheckMessage()).toBe('Username saved');
   });
 });

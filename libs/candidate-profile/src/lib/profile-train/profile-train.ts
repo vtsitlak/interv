@@ -11,16 +11,25 @@ import {
   applyEach,
   form,
   FormField,
+  maxLength,
+  minLength,
+  pattern,
   required,
+  validate,
 } from '@angular/forms/signals';
 import { Router } from '@angular/router';
 import type { ProfileLink, QAPair, WorkPreference } from '@interv/shared';
 import {
+  isReservedUsername,
+  normalizeUsername,
   normalizeWorkPreferences,
   PROFILE_FIELD_LIMITS,
   ProfilePhotoComponent,
   RemainingCharsComponent,
   serializeProfileTrainForm,
+  USERNAME_MAX_LENGTH,
+  USERNAME_MIN_LENGTH,
+  USERNAME_PATTERN,
   WORK_PREFERENCE_GROUPS,
 } from '@interv/shared';
 import {
@@ -32,6 +41,8 @@ import {
 
 interface ProfileFormModel {
   name: string;
+  username: string;
+  showFullNameOnPublicProfile: boolean;
   title: string;
   photo: string;
   summary: string;
@@ -44,6 +55,8 @@ interface ProfileFormModel {
 
 const EMPTY_MODEL: ProfileFormModel = {
   name: '',
+  username: '',
+  showFullNameOnPublicProfile: true,
   title: '',
   photo: '',
   summary: '',
@@ -95,9 +108,37 @@ export class ProfileTrainComponent implements OnInit {
   readonly isUploadingPhoto = signal(false);
   readonly photoUploadError = signal<string | null>(null);
   readonly profileId = signal<string | null>(null);
+  readonly usernameCheckMessage = signal<string | null>(null);
+  readonly usernameAvailable = signal<boolean | null>(null);
+  readonly isCheckingUsername = signal(false);
+  readonly sharePathPreview = computed(() => {
+    const username = normalizeUsername(this.profileModel().username);
+    return username ? `/candidate/${username}` : '/candidate/your-username';
+  });
 
   readonly profileForm = form(this.profileModel, (path) => {
     required(path.name, { message: 'Full name is required' });
+    required(path.username, { message: 'Username is required' });
+    minLength(path.username, USERNAME_MIN_LENGTH, {
+      message: `Username must be at least ${USERNAME_MIN_LENGTH} characters`,
+    });
+    maxLength(path.username, USERNAME_MAX_LENGTH, {
+      message: `Username must be at most ${USERNAME_MAX_LENGTH} characters`,
+    });
+    pattern(path.username, USERNAME_PATTERN, {
+      message:
+        'Use only lowercase letters, numbers, and hyphens (no spaces or symbols)',
+    });
+    validate(path.username, ({ value }) => {
+      const normalized = normalizeUsername(value());
+      if (normalized && isReservedUsername(normalized)) {
+        return {
+          kind: 'usernameReserved',
+          message: 'That username is reserved. Choose another.',
+        };
+      }
+      return undefined;
+    });
     required(path.title, { message: 'Job title is required' });
     required(path.summary, { message: 'Summary is required' });
     required(path.cvText, { message: 'CV text is required' });
@@ -138,6 +179,8 @@ export class ProfileTrainComponent implements OnInit {
 
       this.profileModel.set({
         name: p.name,
+        username: p.username ?? '',
+        showFullNameOnPublicProfile: p.showFullNameOnPublicProfile !== false,
         title: p.title,
         photo: p.photo ?? '',
         summary: p.summary,
@@ -160,6 +203,93 @@ export class ProfileTrainComponent implements OnInit {
 
   private markSavedSnapshot(): void {
     this.savedSnapshot.set(serializeProfileTrainForm(this.profileModel()));
+  }
+
+  onUsernameInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const normalized = normalizeUsername(input.value).slice(0, USERNAME_MAX_LENGTH);
+    if (input.value !== normalized) {
+      input.value = normalized;
+    }
+    this.profileModel.update((m) => ({ ...m, username: normalized }));
+    this.usernameAvailable.set(null);
+    this.usernameCheckMessage.set(null);
+  }
+
+  async onUsernameBlur(): Promise<void> {
+    const username = normalizeUsername(this.profileModel().username);
+    this.profileModel.update((m) => ({ ...m, username }));
+    if (!username || this.profileForm.username().invalid()) {
+      this.usernameAvailable.set(null);
+      this.usernameCheckMessage.set(null);
+      return;
+    }
+
+    const user = await this.profileService.currentUserOrNull();
+    if (!user) {
+      this.usernameAvailable.set(false);
+      this.usernameCheckMessage.set('You must be signed in to check username.');
+      return;
+    }
+
+    this.isCheckingUsername.set(true);
+    try {
+      const result = await this.profileService.checkUsernameAvailability(
+        username,
+        user.uid,
+      );
+      if (!result.available) {
+        this.usernameAvailable.set(false);
+        this.usernameCheckMessage.set(
+          result.message ?? 'That username is not available',
+        );
+        return;
+      }
+
+      const alreadySaved =
+        normalizeUsername(this.facade.profile()?.username ?? '') === username;
+      if (alreadySaved) {
+        this.usernameAvailable.set(true);
+        this.usernameCheckMessage.set('Username saved');
+        return;
+      }
+
+      await this.facade.claimUsername(
+        username,
+        this.profileModel().showFullNameOnPublicProfile,
+      );
+      this.profileId.set(this.facade.profile()?.id ?? user.uid);
+      this.patchSavedSnapshotUsername(username);
+      this.usernameAvailable.set(true);
+      this.usernameCheckMessage.set('Username saved');
+    } catch (e: unknown) {
+      this.usernameAvailable.set(false);
+      this.usernameCheckMessage.set(
+        e instanceof Error ? e.message : 'Could not save username.',
+      );
+    } finally {
+      this.isCheckingUsername.set(false);
+    }
+  }
+
+  /** Keep other form dirty state; only mark username as matching the last save. */
+  private patchSavedSnapshotUsername(username: string): void {
+    const previous = this.savedSnapshot();
+    if (!previous) {
+      return;
+    }
+    try {
+      const parsed = JSON.parse(previous) as {
+        username?: string;
+        showFullNameOnPublicProfile?: boolean;
+      };
+      parsed.username = username;
+      parsed.showFullNameOnPublicProfile =
+        this.profileModel().showFullNameOnPublicProfile;
+      this.savedSnapshot.set(JSON.stringify(parsed));
+    } catch {
+      /* ignore malformed snapshot */
+    }
   }
 
   /** Regenerate tailored questions from the current job title and summary. */
@@ -247,6 +377,14 @@ export class ProfileTrainComponent implements OnInit {
     });
   }
 
+  onShowFullNameChange(event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    this.profileModel.update((m) => ({
+      ...m,
+      showFullNameOnPublicProfile: checked,
+    }));
+  }
+
   addLink(): void {
     this.profileModel.update((m) => ({
       ...m,
@@ -277,12 +415,36 @@ export class ProfileTrainComponent implements OnInit {
 
   async onSave(event: Event): Promise<void> {
     event.preventDefault();
+    const username = normalizeUsername(this.profileModel().username);
+    this.profileModel.update((m) => ({ ...m, username }));
+
     if (this.profileForm().invalid()) {
       this.facade.reportInvalidForm();
       return;
     }
+
+    const user = await this.profileService.currentUserOrNull();
+    if (!user) {
+      this.facade.reportInvalidForm();
+      return;
+    }
+
+    const availability = await this.profileService.checkUsernameAvailability(
+      username,
+      user.uid,
+    );
+    if (!availability.available) {
+      this.usernameAvailable.set(false);
+      this.usernameCheckMessage.set(
+        availability.message ?? 'That username is not available',
+      );
+      this.facade.reportInvalidForm();
+      return;
+    }
+
     const {
       name,
+      showFullNameOnPublicProfile,
       title,
       photo,
       summary,
@@ -295,6 +457,8 @@ export class ProfileTrainComponent implements OnInit {
 
     await this.facade.saveProfile({
       name,
+      username,
+      showFullNameOnPublicProfile,
       title,
       photo,
       summary,
