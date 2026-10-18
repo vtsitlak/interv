@@ -15,7 +15,7 @@ export default {
   transformIgnorePatterns: ['node_modules/(?!.*\\.mjs$)'],
   moduleNameMapper: {
     '^@angular/fire/auth$':
-      '<rootDir>/../../src/testing/angular-fire-auth.mock.ts',
+      '<rootDir>/../../apps/interv/src/testing/angular-fire-auth.mock.ts',
   },
   testMatch: ['<rootDir>/src/**/*.spec.ts'],
 };

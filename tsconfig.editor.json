@@ -6,6 +6,11 @@
   "angularCompilerOptions": {
     "strictTemplates": true
   },
-  "include": ["src/**/*.ts", "src/**/*.html", "libs/**/*.ts", "libs/**/*.html"],
+  "include": [
+    "apps/**/*.ts",
+    "apps/**/*.html",
+    "libs/**/*.ts",
+    "libs/**/*.html"
+  ],
   "exclude": ["node_modules", "dist", "tmp", "**/*.spec.ts", "**/*.test.ts"]
 }
