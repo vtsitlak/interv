@@ -1,5 +1,6 @@
 export const PROFILE_FIELD_LIMITS = {
   name: 120,
+  username: 30,
   title: 120,
   summary: 1000,
   cvText: 50_000,

@@ -57,6 +57,78 @@
               </fieldset>
 
               <fieldset class="fieldset">
+                <label class="fieldset-label" for="profile-username"
+                  >Username *</label
+                >
+                <input
+                  id="profile-username"
+                  type="text"
+                  autocomplete="username"
+                  spellcheck="false"
+                  [formField]="profileForm.username"
+                  (input)="onUsernameInput($event)"
+                  (blur)="onUsernameBlur()"
+                  class="input input-bordered w-full"
+                  [class.input-error]="
+                    (profileForm.username().touched() &&
+                      profileForm.username().invalid()) ||
+                    usernameAvailable() === false
+                  "
+                  placeholder="jane-doe"
+                />
+                <p class="text-xs text-base-content/60 mt-1">
+                  Unique public handle for your profile link:
+                  <span class="font-mono">{{ sharePathPreview() }}</span>
+                </p>
+                <interv-remaining-chars
+                  [value]="profileModel().username"
+                  [maxLength]="fieldLimits.username"
+                />
+                <div class="min-h-5">
+                  @if (isCheckingUsername()) {
+                    <p class="text-xs text-base-content/60 mt-1">
+                      Checking and saving username…
+                    </p>
+                  } @else if (usernameCheckMessage()) {
+                    <p
+                      class="text-xs mt-1"
+                      [class.text-success]="usernameAvailable() === true"
+                      [class.text-error]="usernameAvailable() === false"
+                      [class.text-base-content/60]="usernameAvailable() === null"
+                    >
+                      {{ usernameCheckMessage() }}
+                    </p>
+                  }
+                  @if (
+                    profileForm.username().touched() &&
+                    profileForm.username().invalid()
+                  ) {
+                    @for (
+                      err of profileForm.username().errors();
+                      track err.kind
+                    ) {
+                      <p class="text-error text-xs mt-1">{{ err.message }}</p>
+                    }
+                  }
+                </div>
+              </fieldset>
+
+              <fieldset class="fieldset md:col-span-2">
+                <label class="label cursor-pointer justify-start gap-3 py-0">
+                  <input
+                    type="checkbox"
+                    class="checkbox checkbox-primary"
+                    [checked]="profileModel().showFullNameOnPublicProfile"
+                    (change)="onShowFullNameChange($event)"
+                  />
+                  <span class="label-text">
+                    Show my full name on the public profile (when off, visitors
+                    see your username instead)
+                  </span>
+                </label>
+              </fieldset>
+
+              <fieldset class="fieldset">
                 <label class="fieldset-label" for="profile-title">Job title *</label>
                 <input
                   id="profile-title"

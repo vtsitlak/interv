@@ -364,6 +364,7 @@ Guards still call `setUser()` before activating a protected route so role is loa
 ## Configuration notes
 
 - **Frontend API URL:** `src/environments/environment.ts` (local `ws://127.0.0.1:8000`) and `environment.prod.ts` (Cloud Run `wss://interv-api-30333030614.us-central1.run.app`).
+- **Public profile URLs:** Candidates set a unique `username` on Train profile. Share links use `/candidate/{username}`. Legacy `/candidate/{uid}` links still resolve and redirect to the username when one is set. Firestore profile docs stay keyed by Firebase uid; `usernames/{username}` maps handles → uid.
 - **CORS:** `backend/main.py` allows `https://getinterv.web.app` by default; add origins via `BACKEND_CORS_ORIGINS`.
 - **Rate limits:** Ingest cooldown, per-hour caps for Q&A generation and suggested questions — `backend/.env.example`.
 - **Field limits:** Shared constants in `libs/shared/.../field-limits.ts` and mirrored in `backend/services/api_limits.py`.

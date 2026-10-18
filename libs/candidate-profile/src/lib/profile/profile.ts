@@ -6,7 +6,7 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   buildProfileOverview,
   formatWorkPreferenceLabel,
@@ -18,7 +18,6 @@ import {
   type WorkPreference,
 } from '@interv/shared';
 import { ProfileService } from '@interv/state-profile';
-import { InterviewService } from '@interv/state-interview';
 import { RecruiterFacade } from '@interv/state-recruiter';
 
 @Component({
@@ -31,7 +30,7 @@ import { RecruiterFacade } from '@interv/state-recruiter';
 })
 export class ProfileComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
-  private readonly interviewService = inject(InterviewService);
+  private readonly router = inject(Router);
   private readonly profileService = inject(ProfileService);
   readonly recruiterFacade = inject(RecruiterFacade);
 
@@ -46,6 +45,19 @@ export class ProfileComponent implements OnInit {
 
   readonly profileTwinIncompleteMessage = PROFILE_TWIN_INCOMPLETE_MESSAGE;
   readonly canTestInterview = computed(() => isProfileComplete(this.profile()));
+  readonly publicDisplayName = computed(() => {
+    const p = this.profile();
+    if (!p) {
+      return '';
+    }
+    if (this.isOwnerView() || this.recruiterView()) {
+      return p.name;
+    }
+    if (p.showFullNameOnPublicProfile === false && p.username) {
+      return `@${p.username}`;
+    }
+    return p.name;
+  });
 
   ngOnInit(): void {
     this.isOwnerView.set(this.route.snapshot.data['ownerMode'] === true);
@@ -86,8 +98,6 @@ export class ProfileComponent implements OnInit {
   }
 
   private async load(): Promise<void> {
-    let profileId = this.profileId();
-
     if (this.isOwnerView()) {
       const user = await this.profileService.currentUserOrNull();
       if (!user) {
@@ -95,11 +105,24 @@ export class ProfileComponent implements OnInit {
         this.isLoading.set(false);
         return;
       }
-      profileId = user.uid;
-      this.profileId.set(profileId);
+      this.profileId.set(user.uid);
+      try {
+        const p = await this.profileService.getProfile(user.uid);
+        if (!p) {
+          this.error.set('Save and train your profile first.');
+        } else {
+          this.profile.set(p);
+        }
+      } catch (e: unknown) {
+        this.error.set(e instanceof Error ? e.message : String(e));
+      } finally {
+        this.isLoading.set(false);
+      }
+      return;
     }
 
-    if (!profileId) {
+    const handle = this.profileId();
+    if (!handle) {
       this.error.set('Profile not found.');
       this.isLoading.set(false);
       return;
@@ -110,20 +133,36 @@ export class ProfileComponent implements OnInit {
         await this.recruiterFacade.loadInterviews();
       }
 
-      const p = await this.interviewService.getPublicProfile(profileId);
-      if (!p) {
-        this.error.set(
-          this.isOwnerView()
-            ? 'Save and train your profile first.'
-            : 'This profile is not available yet.',
-        );
-      } else if (
+      const resolved = await this.profileService.resolvePublicProfile(handle);
+      if (!resolved) {
+        this.error.set('This profile is not available yet.');
+        return;
+      }
+
+      this.profileId.set(resolved.uid);
+
+      if (
         this.isPublicView() &&
-        p.isPublicProfileEnabled === false
+        resolved.shouldRedirectToUsername &&
+        resolved.canonicalUsername
+      ) {
+        const childPath = this.route.snapshot.url
+          .slice(1)
+          .map((s) => s.path);
+        await this.router.navigate(
+          ['/candidate', resolved.canonicalUsername, ...childPath],
+          { replaceUrl: true, queryParamsHandling: 'preserve' },
+        );
+        return;
+      }
+
+      if (
+        this.isPublicView() &&
+        resolved.profile.isPublicProfileEnabled === false
       ) {
         this.publicProfileDisabled.set(true);
       } else {
-        this.profile.set(p);
+        this.profile.set(resolved.profile);
       }
     } catch (e: unknown) {
       if (this.isPublicView() && this.isAccessDenied(e)) {

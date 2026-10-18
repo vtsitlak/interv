@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { AuthFacade } from '@interv/state-auth';
 import { InterviewFacade, InterviewService } from '@interv/state-interview';
-import { ProfileFacade } from '@interv/state-profile';
+import { ProfileFacade, ProfileService } from '@interv/state-profile';
 import { RecruiterFacade } from '@interv/state-recruiter';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { InterviewComponent } from './interview';
@@ -13,9 +13,25 @@ describe('InterviewComponent', () => {
   let loadProfile: ReturnType<typeof vi.fn>;
   let isComplete: ReturnType<typeof vi.fn>;
 
+  const profileServiceMock = {
+    resolvePublicProfile: vi.fn().mockResolvedValue({
+      profile: { id: 'p1', username: 'ada' },
+      uid: 'p1',
+      canonicalUsername: 'ada',
+      shouldRedirectToUsername: false,
+    }),
+    resolveProfileUid: vi.fn().mockResolvedValue('p1'),
+  };
+
   beforeEach(async () => {
     loadProfile = vi.fn().mockResolvedValue(undefined);
     isComplete = vi.fn().mockReturnValue(true);
+    profileServiceMock.resolvePublicProfile.mockClear().mockResolvedValue({
+      profile: { id: 'p1', username: 'ada' },
+      uid: 'p1',
+      canonicalUsername: 'ada',
+      shouldRedirectToUsername: false,
+    });
 
     await TestBed.configureTestingModule({
       imports: [InterviewComponent],
@@ -44,6 +60,10 @@ describe('InterviewComponent', () => {
             loadProfile,
             isComplete,
           },
+        },
+        {
+          provide: ProfileService,
+          useValue: profileServiceMock,
         },
         {
           provide: RecruiterFacade,
@@ -89,6 +109,7 @@ describe('InterviewComponent', () => {
     fixture = TestBed.createComponent(InterviewComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+    await fixture.whenStable();
   });
 
   it('should create', () => {
@@ -125,6 +146,10 @@ describe('InterviewComponent', () => {
             loadProfile,
             isComplete,
           },
+        },
+        {
+          provide: ProfileService,
+          useValue: profileServiceMock,
         },
         {
           provide: RecruiterFacade,

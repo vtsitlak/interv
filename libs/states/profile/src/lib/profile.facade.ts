@@ -34,6 +34,13 @@ export class ProfileFacade {
     return this.store.saveProfile(data);
   }
 
+  claimUsername(
+    username: string,
+    showFullNameOnPublicProfile: boolean,
+  ): Promise<Profile> {
+    return this.store.claimUsername(username, showFullNameOnPublicProfile);
+  }
+
   setProfileDiscoverability(isPublished: boolean): Promise<void> {
     return this.store.setProfileDiscoverability(isPublished);
   }
