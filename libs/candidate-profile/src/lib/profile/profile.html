@@ -24,11 +24,18 @@
           <div class="flex flex-col sm:flex-row gap-6 items-start">
             <interv-profile-photo
               [photo]="p.photo"
-              [name]="p.name"
+              [name]="publicDisplayName()"
               size="lg"
             />
             <div class="flex-1 min-w-0">
-              <h1 class="text-3xl font-bold">{{ p.name }}</h1>
+              <h1 class="text-3xl font-bold">{{ publicDisplayName() }}</h1>
+              @if (
+                isPublicView() &&
+                p.showFullNameOnPublicProfile !== false &&
+                p.username
+              ) {
+                <p class="text-sm text-base-content/50 mt-0.5">@{{ p.username }}</p>
+              }
               <p class="text-lg text-base-content/70 mt-1">{{ p.title }}</p>
               @if (workPreferences().length) {
                 <div class="flex flex-wrap gap-2 mt-3">

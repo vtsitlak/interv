@@ -14,6 +14,7 @@ const sampleProfile = {
   id: 'u1',
   userId: 'u1',
   name: 'Ada',
+  username: 'ada',
   title: 'Eng',
   photo: '',
   summary: 'Hello',
@@ -21,7 +22,7 @@ const sampleProfile = {
   links: [],
   personalQA: [],
   isPublished: true,
-  shareUrl: '/candidate/u1',
+  shareUrl: '/candidate/ada',
 } as unknown as Profile;
 
 describe('ProfileStore', () => {
@@ -69,7 +70,7 @@ describe('ProfileStore', () => {
     expect(store.profile()).toBe(sampleProfile);
     expect(store.isLoading()).toBe(false);
     expect(store.isComplete()).toBe(true);
-    expect(store.shareUrl()).toBe('/candidate/u1');
+    expect(store.shareUrl()).toBe('/candidate/ada');
   });
 
   it('loadProfile() reports an error when no user is signed in', async () => {

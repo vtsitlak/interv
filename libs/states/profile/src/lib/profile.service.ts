@@ -4,6 +4,7 @@ import {
   doc,
   Firestore,
   getDoc,
+  runTransaction,
   serverTimestamp,
   setDoc,
 } from '@angular/fire/firestore';
@@ -14,7 +15,14 @@ import {
   uploadBytes,
 } from '@angular/fire/storage';
 import type { User } from 'firebase/auth';
-import { API_URL, currentFirebaseUserOrNull } from '@interv/shared';
+import {
+  API_URL,
+  currentFirebaseUserOrNull,
+  isValidUsernameFormat,
+  normalizeUsername,
+  publicSharePathForUsername,
+  usernameFormatError,
+} from '@interv/shared';
 import type { Profile, ProfileLink, QAPair } from '@interv/shared';
 
 export interface IngestResult {
@@ -22,6 +30,21 @@ export interface IngestResult {
   linksSkipped?: number;
   skippedReason?: string | null;
   warning?: string | null;
+}
+
+export interface UsernameAvailability {
+  available: boolean;
+  normalized: string;
+  message: string | null;
+}
+
+export interface ResolvedPublicProfile {
+  profile: Profile;
+  uid: string;
+  /** Canonical public handle when set; otherwise null (legacy uid-only profiles). */
+  canonicalUsername: string | null;
+  /** True when the request handle was a Firebase uid (or stale alias) and a username exists. */
+  shouldRedirectToUsername: boolean;
 }
 
 const MAX_PROFILE_PHOTO_BYTES = 2 * 1024 * 1024;
@@ -59,6 +82,90 @@ export class ProfileService {
   async getProfile(uid: string): Promise<Profile | null> {
     const snap = await getDoc(doc(this.firestore, `profiles/${uid}`));
     return snap.exists() ? (snap.data() as Profile) : null;
+  }
+
+  /**
+   * Resolve a public route handle (`username` or legacy `uid`) to a profile.
+   */
+  async resolvePublicProfile(
+    handle: string,
+  ): Promise<ResolvedPublicProfile | null> {
+    const raw = handle.trim();
+    if (!raw) {
+      return null;
+    }
+
+    const normalized = normalizeUsername(raw);
+    const usernameSnap = await getDoc(
+      doc(this.firestore, `usernames/${normalized}`),
+    );
+    if (usernameSnap.exists()) {
+      const uid = String(usernameSnap.data()?.['uid'] ?? '');
+      if (!uid) {
+        return null;
+      }
+      const profile = await this.getProfile(uid);
+      if (!profile) {
+        return null;
+      }
+      const canonical = profile.username
+        ? normalizeUsername(profile.username)
+        : normalized;
+      return {
+        profile,
+        uid,
+        canonicalUsername: canonical,
+        shouldRedirectToUsername: normalized !== canonical,
+      };
+    }
+
+    const byUid = await this.getProfile(raw);
+    if (!byUid) {
+      return null;
+    }
+    const canonical = byUid.username
+      ? normalizeUsername(byUid.username)
+      : null;
+    return {
+      profile: byUid,
+      uid: byUid.id || raw,
+      canonicalUsername: canonical,
+      shouldRedirectToUsername: !!canonical,
+    };
+  }
+
+  async resolveProfileUid(handle: string): Promise<string | null> {
+    const resolved = await this.resolvePublicProfile(handle);
+    return resolved?.uid ?? null;
+  }
+
+  /**
+   * Format + uniqueness check for Train profile blur / pre-save.
+   * Own current username counts as available.
+   */
+  async checkUsernameAvailability(
+    raw: string,
+    currentUid: string,
+  ): Promise<UsernameAvailability> {
+    const formatError = usernameFormatError(raw);
+    const normalized = normalizeUsername(raw);
+    if (formatError) {
+      return { available: false, normalized, message: formatError };
+    }
+
+    const snap = await getDoc(doc(this.firestore, `usernames/${normalized}`));
+    if (!snap.exists()) {
+      return { available: true, normalized, message: null };
+    }
+    const ownerUid = String(snap.data()?.['uid'] ?? '');
+    if (ownerUid === currentUid) {
+      return { available: true, normalized, message: null };
+    }
+    return {
+      available: false,
+      normalized,
+      message: 'That username is already taken',
+    };
   }
 
   async uploadProfilePhoto(uid: string, file: File): Promise<string> {
@@ -101,17 +208,99 @@ export class ProfileService {
     return headers;
   }
 
+  /**
+   * Claim / persist username + share URL without a full profile train save.
+   * Safe to call on Train profile blur once the handle is valid and available.
+   */
+  async claimUsername(
+    uid: string,
+    rawUsername: string,
+    existing: Profile | null,
+    showFullNameOnPublicProfile?: boolean,
+  ): Promise<Profile> {
+    const formatError = usernameFormatError(rawUsername);
+    if (formatError) {
+      throw new Error(formatError);
+    }
+    const username = normalizeUsername(rawUsername);
+    if (!isValidUsernameFormat(username)) {
+      throw new Error('Invalid username');
+    }
+
+    const showName =
+      showFullNameOnPublicProfile !== undefined
+        ? showFullNameOnPublicProfile
+        : (existing?.showFullNameOnPublicProfile ?? true);
+    const shareUrl = publicSharePathForUsername(username);
+    const profileRef = doc(this.firestore, `profiles/${uid}`);
+    const usernameRef = doc(this.firestore, `usernames/${username}`);
+
+    await runTransaction(this.firestore, async (tx) => {
+      const usernameSnap = await tx.get(usernameRef);
+      if (usernameSnap.exists()) {
+        const ownerUid = String(usernameSnap.data()?.['uid'] ?? '');
+        if (ownerUid !== uid) {
+          throw new Error('That username is already taken');
+        }
+      } else {
+        tx.set(usernameRef, {
+          uid,
+          username,
+          createdAt: serverTimestamp(),
+        });
+      }
+
+      tx.set(
+        profileRef,
+        {
+          id: uid,
+          userId: uid,
+          username,
+          showFullNameOnPublicProfile: showName,
+          shareUrl,
+          isPublished: existing?.isPublished ?? true,
+          isPublicProfileEnabled: existing?.isPublicProfileEnabled ?? true,
+          updatedAt: serverTimestamp(),
+          createdAt: existing?.createdAt ?? serverTimestamp(),
+        },
+        { merge: true },
+      );
+    });
+
+    const refreshed = await getDoc(profileRef);
+    return refreshed.data() as Profile;
+  }
+
   async saveProfile(
     uid: string,
     data: Partial<Profile>,
     existing: Profile | null,
   ): Promise<Profile> {
-    const ref = doc(this.firestore, `profiles/${uid}`);
-    const payload = {
+    const usernameRaw = data.username ?? existing?.username ?? '';
+    const showFullNameOnPublicProfile =
+      data.showFullNameOnPublicProfile !== undefined
+        ? data.showFullNameOnPublicProfile
+        : (existing?.showFullNameOnPublicProfile ?? true);
+
+    // Ensure the handle is claimed first (also writes username/shareUrl).
+    await this.claimUsername(
+      uid,
+      String(usernameRaw),
+      existing,
+      showFullNameOnPublicProfile,
+    );
+
+    const username = normalizeUsername(String(usernameRaw));
+    const shareUrl = publicSharePathForUsername(username);
+    const profileRef = doc(this.firestore, `profiles/${uid}`);
+
+    const payload: Record<string, unknown> = {
       ...data,
       id: uid,
       userId: uid,
-      shareUrl: `/candidate/${uid}`,
+      username,
+      showFullNameOnPublicProfile,
+      shareUrl,
       isPublished:
         data.isPublished !== undefined
           ? data.isPublished
@@ -123,8 +312,9 @@ export class ProfileService {
       updatedAt: serverTimestamp(),
       createdAt: existing?.createdAt ?? serverTimestamp(),
     };
-    await setDoc(ref, payload, { merge: true });
-    const refreshed = await getDoc(ref);
+    await setDoc(profileRef, payload, { merge: true });
+
+    const refreshed = await getDoc(profileRef);
     return refreshed.data() as Profile;
   }
 

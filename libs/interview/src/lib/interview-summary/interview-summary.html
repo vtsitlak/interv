@@ -1,7 +1,7 @@
 <div class="min-h-screen bg-base-200 py-10 px-4">
   <div class="max-w-3xl mx-auto">
     <a
-      [routerLink]="['/candidate', profileId]"
+      [routerLink]="['/candidate', profileId()]"
       [queryParams]="{ interviewId }"
       class="btn btn-ghost btn-sm mb-6"
     >
@@ -133,14 +133,14 @@
 
       <div class="flex flex-wrap gap-3">
         <a
-          [routerLink]="['/candidate', profileId]"
+          [routerLink]="['/candidate', profileId()]"
           [queryParams]="{ interviewId }"
           class="btn btn-ghost"
         >
           Back to profile
         </a>
         <a
-          [routerLink]="['/candidate', profileId, 'interview']"
+          [routerLink]="['/candidate', profileId(), 'interview']"
           class="btn btn-primary"
         >
           Restart interview

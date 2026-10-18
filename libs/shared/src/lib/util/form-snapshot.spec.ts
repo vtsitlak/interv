@@ -9,6 +9,8 @@ describe('form-snapshot', () => {
   it('serializeProfileTrainForm normalizes whitespace and sort order', () => {
     const first = serializeProfileTrainForm({
       name: ' Ada ',
+      username: ' Ada-Dev ',
+      showFullNameOnPublicProfile: true,
       title: 'Engineer',
       photo: '',
       summary: 'Summary',
@@ -20,6 +22,8 @@ describe('form-snapshot', () => {
     });
     const second = serializeProfileTrainForm({
       name: 'Ada',
+      username: 'ada-dev',
+      showFullNameOnPublicProfile: true,
       title: 'Engineer',
       photo: '',
       summary: 'Summary',

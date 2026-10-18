@@ -1,17 +1,46 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
-import { AuthFacade } from '@interv/state-auth';
-import { InterviewService } from '@interv/state-interview';
 import { ProfileService } from '@interv/state-profile';
 import { RecruiterFacade } from '@interv/state-recruiter';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProfileComponent } from './profile';
 
+const adaProfile = {
+  id: 'p1',
+  userId: 'p1',
+  name: 'Ada Lovelace',
+  username: 'ada',
+  title: 'Engineer',
+  photo: '',
+  summary: 'Hello',
+  cvText: 'CV',
+  skills: ['Angular', 'TypeScript'],
+  linkedIn: 'https://www.linkedin.com/in/ada',
+  showFullNameOnPublicProfile: true,
+  isPublicProfileEnabled: true,
+  links: [
+    {
+      description: 'My GitHub profile',
+      link: 'https://github.com/ada',
+    },
+  ],
+};
+
 describe('ProfileComponent', () => {
   let fixture: ComponentFixture<ProfileComponent>;
   let component: ProfileComponent;
+  let resolvePublicProfile: ReturnType<typeof vi.fn>;
+  let getProfile: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
+    resolvePublicProfile = vi.fn().mockResolvedValue({
+      profile: adaProfile,
+      uid: 'p1',
+      canonicalUsername: 'ada',
+      shouldRedirectToUsername: false,
+    });
+    getProfile = vi.fn().mockResolvedValue(adaProfile);
+
     await TestBed.configureTestingModule({
       imports: [ProfileComponent],
       providers: [
@@ -20,44 +49,26 @@ describe('ProfileComponent', () => {
           provide: ActivatedRoute,
           useValue: {
             snapshot: {
-              paramMap: convertToParamMap({ profileId: 'p1' }),
+              paramMap: convertToParamMap({ profileId: 'ada' }),
               queryParamMap: convertToParamMap({}),
               data: { ownerMode: false },
+              url: [{ path: 'ada' }],
             },
-          },
-        },
-        {
-          provide: InterviewService,
-          useValue: {
-            getPublicProfile: vi.fn().mockResolvedValue({
-              id: 'p1',
-              name: 'Ada Lovelace',
-              title: 'Engineer',
-              photo: '',
-              summary: 'Hello',
-              skills: ['Angular', 'TypeScript'],
-              linkedIn: 'https://www.linkedin.com/in/ada',
-              links: [
-                {
-                  description: 'My GitHub profile',
-                  link: 'https://github.com/ada',
-                },
-              ],
-            }),
-            getInterviewForReview: vi.fn().mockResolvedValue(null),
-            getLatestInterviewWithFeedback: vi.fn().mockResolvedValue(null),
           },
         },
         {
           provide: ProfileService,
           useValue: {
             currentUserOrNull: vi.fn().mockResolvedValue(null),
+            resolvePublicProfile,
+            getProfile,
           },
         },
         {
           provide: RecruiterFacade,
           useValue: {
             loadProfile: vi.fn().mockResolvedValue(undefined),
+            loadInterviews: vi.fn().mockResolvedValue(undefined),
             profile: () => null,
             isProfileComplete: () => true,
           },
@@ -90,18 +101,16 @@ describe('ProfileComponent', () => {
   });
 
   it('shows CV overview in profile overview section when trained', async () => {
-    const interviewService = TestBed.inject(InterviewService);
-    vi.mocked(interviewService.getPublicProfile).mockResolvedValueOnce({
-      id: 'p1',
-      name: 'Ada Lovelace',
-      title: 'Engineer',
-      photo: '',
-      summary: 'My short pitch from the summary field.',
-      careerOverview: 'Ada has spent a decade shipping web platforms.',
-      skills: ['Angular'],
-      linkedIn: '',
-      links: [],
-    } as never);
+    resolvePublicProfile.mockResolvedValueOnce({
+      profile: {
+        ...adaProfile,
+        summary: 'My short pitch from the summary field.',
+        careerOverview: 'Ada has spent a decade shipping web platforms.',
+      },
+      uid: 'p1',
+      canonicalUsername: 'ada',
+      shouldRedirectToUsername: false,
+    });
     await component.ngOnInit();
     await fixture.whenStable();
     expect(fixture.nativeElement.textContent).toContain(
@@ -113,22 +122,39 @@ describe('ProfileComponent', () => {
   });
 
   it('hides invalid career overview placeholder text', async () => {
-    const interviewService = TestBed.inject(InterviewService);
-    vi.mocked(interviewService.getPublicProfile).mockResolvedValueOnce({
-      id: 'p1',
-      name: 'Ada Lovelace',
-      title: 'Engineer',
-      photo: '',
-      summary: 'My summary field text.',
-      careerOverview: 'Sentence 1: Introduction, core identity, and experience level',
-      skills: [],
-      linkedIn: '',
-      links: [],
-    } as never);
+    resolvePublicProfile.mockResolvedValueOnce({
+      profile: {
+        ...adaProfile,
+        summary: 'My summary field text.',
+        careerOverview:
+          'Sentence 1: Introduction, core identity, and experience level',
+      },
+      uid: 'p1',
+      canonicalUsername: 'ada',
+      shouldRedirectToUsername: false,
+    });
     await component.ngOnInit();
     await fixture.whenStable();
     expect(component.profileOverview()).toContain('Save and train your profile');
     expect(component.profileOverview()).not.toContain('Sentence 1');
+  });
+
+  it('hides full name on public profile when opted out', async () => {
+    resolvePublicProfile.mockResolvedValueOnce({
+      profile: {
+        ...adaProfile,
+        showFullNameOnPublicProfile: false,
+      },
+      uid: 'p1',
+      canonicalUsername: 'ada',
+      shouldRedirectToUsername: false,
+    });
+    await component.ngOnInit();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(component.publicDisplayName()).toBe('@ada');
+    expect(fixture.nativeElement.textContent).toContain('@ada');
+    expect(fixture.nativeElement.textContent).not.toContain('Ada Lovelace');
   });
 
   it('disables test interview on owner view when profile is incomplete', async () => {
@@ -144,6 +170,7 @@ describe('ProfileComponent', () => {
               paramMap: convertToParamMap({ profileId: 'p1' }),
               queryParamMap: convertToParamMap({}),
               data: { ownerMode: true },
+              url: [],
             },
           },
         },
@@ -151,12 +178,7 @@ describe('ProfileComponent', () => {
           provide: ProfileService,
           useValue: {
             currentUserOrNull: vi.fn().mockResolvedValue({ uid: 'p1' }),
-          },
-        },
-        {
-          provide: InterviewService,
-          useValue: {
-            getPublicProfile: vi.fn().mockResolvedValue({
+            getProfile: vi.fn().mockResolvedValue({
               id: 'p1',
               name: 'Ada Lovelace',
               title: 'Engineer',
@@ -166,12 +188,14 @@ describe('ProfileComponent', () => {
               skills: [],
               links: [],
             }),
+            resolvePublicProfile,
           },
         },
         {
           provide: RecruiterFacade,
           useValue: {
             loadProfile: vi.fn().mockResolvedValue(undefined),
+            loadInterviews: vi.fn().mockResolvedValue(undefined),
             profile: () => null,
             isProfileComplete: () => false,
           },
@@ -194,7 +218,9 @@ describe('ProfileComponent', () => {
       ownerFixture.nativeElement.querySelector('button.btn-disabled'),
     ).toBeTruthy();
     expect(
-      ownerFixture.nativeElement.querySelector('a[routerlink="/candidate/test-interview"]'),
+      ownerFixture.nativeElement.querySelector(
+        'a[routerlink="/candidate/test-interview"]',
+      ),
     ).toBeNull();
   });
 });

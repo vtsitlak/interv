@@ -3,6 +3,8 @@ import type { WorkPreference } from '../models/work-preferences';
 
 export interface ProfileTrainFormSnapshot {
   name: string;
+  username: string;
+  showFullNameOnPublicProfile: boolean;
   title: string;
   photo: string;
   summary: string;
@@ -30,6 +32,8 @@ export function serializeProfileTrainForm(
 ): string {
   return JSON.stringify({
     name: model.name.trim(),
+    username: model.username.trim().toLowerCase(),
+    showFullNameOnPublicProfile: model.showFullNameOnPublicProfile,
     title: model.title.trim(),
     photo: model.photo.trim(),
     summary: model.summary.trim(),

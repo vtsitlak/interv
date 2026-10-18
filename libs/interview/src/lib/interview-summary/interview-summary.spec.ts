@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { convertToParamMap, provideRouter } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
 import { InterviewService } from '@interv/state-interview';
+import { ProfileService } from '@interv/state-profile';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { InterviewSummaryComponent } from './interview-summary';
 
@@ -44,6 +45,12 @@ describe('InterviewSummaryComponent', () => {
             }),
             getInterviewMessages: vi.fn().mockResolvedValue([]),
             submitFeedback: vi.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: ProfileService,
+          useValue: {
+            resolveProfileUid: vi.fn().mockResolvedValue('p1'),
           },
         },
       ],
