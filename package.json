@@ -6,11 +6,11 @@
     "node": "^22.22.3 || >=24.15.0"
   },
   "scripts": {
-    "start": "nx serve",
+    "start": "nx serve interv",
     "start:backend": "cd backend && venv\\Scripts\\uvicorn main:app --reload --host 127.0.0.1 --port 8000",
     "start:all": "concurrently -n app,api -c blue,magenta --kill-others-on-fail \"npm:start\" \"npm:start:backend\"",
-    "build": "nx build",
-    "test": "nx test",
+    "build": "nx build interv",
+    "test": "nx test interv",
     "e2e": "nx e2e e2e",
     "e2e:local": "playwright test --config e2e/playwright.config.ts",
     "e2e:ui": "nx e2e e2e -- --ui",
