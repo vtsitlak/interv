@@ -18,10 +18,10 @@
   "include": [],
   "references": [
     {
-      "path": "./tsconfig.app.json"
+      "path": "./apps/interv/tsconfig.app.json"
     },
     {
-      "path": "./tsconfig.spec.json"
+      "path": "./apps/interv/tsconfig.spec.json"
     },
     {
       "path": "./libs/candidate-dashboard/tsconfig.lib.json"

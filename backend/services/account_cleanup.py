@@ -6,6 +6,7 @@ import logging
 from typing import Any
 
 from firebase_admin import firestore
+from google.cloud.firestore import DELETE_FIELD
 
 from services.vector_store import delete_collection
 
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 _EMPTY_CANDIDATE_PROFILE: dict[str, Any] = {
     'name': '',
-    'username': firestore.DELETE_FIELD,
+    'username': DELETE_FIELD,
     'title': '',
     'photo': '',
     'summary': '',

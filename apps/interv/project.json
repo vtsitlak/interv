@@ -1,34 +1,34 @@
 {
   "name": "interv",
-  "$schema": "node_modules/nx/schemas/project-schema.json",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "includedScripts": [],
   "projectType": "application",
   "prefix": "app",
-  "sourceRoot": "./src",
-  "tags": [],
+  "sourceRoot": "apps/interv/src",
+  "tags": ["type:app", "scope:interv"],
   "targets": {
     "build": {
       "executor": "@angular/build:application",
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/interv",
-        "browser": "./src/main.ts",
-        "tsConfig": "tsconfig.app.json",
+        "browser": "apps/interv/src/main.ts",
+        "tsConfig": "apps/interv/tsconfig.app.json",
         "inlineStyleLanguage": "scss",
         "assets": [
           {
             "glob": "**/*",
-            "input": "public"
+            "input": "apps/interv/public"
           }
         ],
-        "styles": ["./src/styles.css"]
+        "styles": ["apps/interv/src/styles.css"]
       },
       "configurations": {
         "production": {
           "fileReplacements": [
             {
-              "replace": "src/environments/environment.ts",
-              "with": "src/environments/environment.prod.ts"
+              "replace": "apps/interv/src/environments/environment.ts",
+              "with": "apps/interv/src/environments/environment.prod.ts"
             }
           ],
           "budgets": [
@@ -69,15 +69,15 @@
     "lint": {
       "executor": "@nx/eslint:lint",
       "options": {
-        "lintFilePatterns": ["./src"]
+        "lintFilePatterns": ["apps/interv/src"]
       }
     },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectName}"],
       "options": {
-        "jestConfig": "jest.config.cts",
-        "tsConfig": "tsconfig.spec.json"
+        "jestConfig": "apps/interv/jest.config.cts",
+        "tsConfig": "apps/interv/tsconfig.spec.json"
       }
     },
     "serve-static": {

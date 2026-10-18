@@ -8,7 +8,7 @@ export const USERNAME_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,28}[a-z0-9])?$/;
 
 /**
  * Route segments and common words that must not be claimable as usernames.
- * Keep in sync with `src/app/app.routes.ts` under `/candidate`.
+ * Keep in sync with `apps/interv/src/app/app.routes.ts` under `/candidate`.
  */
 export const RESERVED_USERNAMES = new Set([
   'account',
